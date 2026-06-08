@@ -24,54 +24,60 @@ namespace Vena.Framework
         /// </summary>
         /// <param name="description"></param>
         /// <param name="entryLevel"></param>
-        /// <exception cref="Exception"></exception>
         public static async void Launch(GameDescription description, GameLevel entryLevel)
         {
-            _UIRoot = description.UIRoot;
-            _UILoader = description.UILoader;
-            _SceneLoader = description.SceneLoader;
-
-            List<Type> commandTypes = new List<Type>();
-            List<Type> serviceTypes = new List<Type>();
-            List<Type> moduleTypes = new List<Type>();
-            List<Type> stateTypes = new List<Type>();
-            using (var _ = new TimeWatch("collect modules、commands、services"))
+            try
             {
-                foreach (var assembly in description.Assemblies)
+                _UIRoot = description.UIRoot;
+                _UILoader = description.UILoader;
+                _SceneLoader = description.SceneLoader;
+
+                List<Type> commandTypes = new List<Type>();
+                List<Type> serviceTypes = new List<Type>();
+                List<Type> moduleTypes = new List<Type>();
+                List<Type> stateTypes = new List<Type>();
+                using (var _ = new TimeWatch("collect modules、commands、services"))
                 {
-                    foreach (var type in assembly.GetTypes().Where(type => type.IsClass && !type.IsAbstract))
+                    foreach (var assembly in description.Assemblies)
                     {
-                        if (type.IsSubclassOf(typeof(ICommand)))
+                        foreach (var type in assembly.GetTypes().Where(type => type.IsClass && !type.IsAbstract))
                         {
-                            commandTypes.Add(type);
-                        }
-                        else if (type.IsSubclassOf(typeof(Service)))
-                        {
-                            serviceTypes.Add(type);
-                        }
-                        else if (typeof(IModule).IsAssignableFrom(type))
-                        {
-                            moduleTypes.Add(type);
-                        }
-                        else if (type.IsSubclassOf(typeof(BasedStackGameState)))
-                        {
-                            stateTypes.Add(type);
+                            if (type.IsSubclassOf(typeof(ICommand)))
+                            {
+                                commandTypes.Add(type);
+                            }
+                            else if (type.IsSubclassOf(typeof(Service)))
+                            {
+                                serviceTypes.Add(type);
+                            }
+                            else if (typeof(IModule).IsAssignableFrom(type))
+                            {
+                                moduleTypes.Add(type);
+                            }
+                            else if (type.IsSubclassOf(typeof(BasedStackGameState)))
+                            {
+                                stateTypes.Add(type);
+                            }
                         }
                     }
                 }
+
+                // init game commands
+                InitializeCommands(commandTypes.ToArray());
+
+                // init game service
+                InitializeServices(serviceTypes.ToArray());
+
+                // init game module
+                InitializeModules(stateTypes.ToArray(), moduleTypes.ToArray());
+
+                // init default world
+                await _game.Enter(entryLevel, default);
             }
-
-            // init game commands
-            InitializeCommands(commandTypes.ToArray());
-
-            // init game service
-            InitializeServices(serviceTypes.ToArray());
-
-            // init game module
-            InitializeModules(stateTypes.ToArray(), moduleTypes.ToArray());
-
-            // init default world
-            await _game.Enter(entryLevel, default);
+            catch (Exception ex)
+            {
+                Console.WriteLine($"GameWorld launch failed: {ex}");
+            }
         }
 
         public static void Tick(float time, float deltaTime)
