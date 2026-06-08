@@ -1,0 +1,22 @@
+{
+  "name": "com.vena.framework",
+  "version": "1.0.0",
+  "displayName": "Vena Framework",
+  "description": "Unity game framework: GameWorld, State, Module, Character, Pawn, Scene, and full GUI layer (merged from ugui package).",
+  "unity": "2021.3",
+  "license": "MulanPSL-2.0",
+  "author": {
+    "name": "nan023062",
+    "url": "https://github.com/nan023062"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nan023062/vena.git",
+    "directory": "com.vena.framework"
+  },
+  "dependencies": {
+    "com.vena.core": "1.0.0",
+    "com.vena.unity-extensions": "1.0.0",
+    "com.unity.ugui": "1.0.0"
+  }
+}

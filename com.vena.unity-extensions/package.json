@@ -1,0 +1,18 @@
+{
+  "name": "com.vena.unity-extensions",
+  "version": "1.0.0",
+  "displayName": "Vena Unity Extensions",
+  "description": "Unity runtime/editor helpers: NodeReferences, GameObjectExtension, RectTransformExtension, AutoGenTool, ComponentViewer, ReadonlyProperty.",
+  "unity": "2021.3",
+  "license": "MulanPSL-2.0",
+  "author": {
+    "name": "nan023062",
+    "url": "https://github.com/nan023062"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nan023062/vena.git",
+    "directory": "com.vena.unity-extensions"
+  },
+  "dependencies": {}
+}

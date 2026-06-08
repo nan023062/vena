@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "com.vena.core":             "file:../../com.vena.core",
+    "com.vena.math":             "file:../../com.vena.math",
+    "com.vena.unity-extensions": "file:../../com.vena.unity-extensions",
+    "com.vena.framework":        "file:../../com.vena.framework",
+    "com.unity.ugui":            "1.0.0",
+    "com.unity.test-framework":  "1.1.26",
+    "com.unity.modules.ui":      "1.0.0",
+    "com.unity.modules.imgui":   "1.0.0",
+    "com.unity.modules.physics": "1.0.0",
+    "com.unity.modules.animation": "1.0.0"
+  }
+}
