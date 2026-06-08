@@ -6,6 +6,6 @@ Unity-bound game framework layer for Vena.
 
 Includes GameWorld (partial aggregate), State/Level/Mode machine, Module/Service/Command, Character, Pawn, SceneRoot/SceneController, and the full GUI layer (merged from the former ugui package): GuiBase/Panel/Tabs, UIElement/Panel/Root, UIHelper, LoopScrollView, UIColor widgets, UIVfxComponent.
 
-**Dependencies:** com.vena.core, com.vena.unity-extensions, com.unity.ugui
+**Dependencies:** com.vena.core, com.unity.ugui
 
 **License:** MulanPSL-2.0

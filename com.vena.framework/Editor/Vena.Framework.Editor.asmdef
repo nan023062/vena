@@ -1,13 +1,13 @@
 {
-    "name": "Vena.Math",
-    "rootNamespace": "Vena.Math",
-    "references": [],
-    "includePlatforms": [],
+    "name": "Vena.Framework.Editor",
+    "rootNamespace": "Vena.UnityExtensions",
+    "references": ["Vena.Framework", "Vena.Core"],
+    "includePlatforms": ["Editor"],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
-    "autoReferenced": true,
+    "autoReferenced": false,
     "defineConstraints": [],
     "versionDefines": [],
     "noEngineReferences": false
