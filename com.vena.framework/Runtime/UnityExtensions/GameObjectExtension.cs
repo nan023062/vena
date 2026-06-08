@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Vena.UnityExtensions
+namespace Vena
 {
     public static class GameObjectExtension
     {

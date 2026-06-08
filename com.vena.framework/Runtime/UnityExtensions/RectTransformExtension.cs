@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Vena.UnityExtensions
+namespace Vena
 {
     public static class RectTransformExtension
     {
