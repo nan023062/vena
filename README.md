@@ -1,5 +1,7 @@
 # Vena
 
+[中文](README.md) | [English](README.en.md)
+
 Vena 是一个面向 Unity 游戏开发的持续更新多包仓库。仓库中的每个模块都按照 Unity Package Manager package 的形式组织，可以作为独立的 Unity package 被项目依赖和下载。
 
 这个仓库会陆续更新更多 package，用来逐步沉淀个人游戏开发框架、运行时基础设施、工具模块和可复用技术组件。不同 package 可以拥有不同定位：有的提供底层数据结构和运行时原语，有的提供更完整的游戏框架层，有的后续可能专注于编辑器工具、渲染、资源、流程或其他技术方向。

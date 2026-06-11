@@ -1,5 +1,7 @@
 # Vena
 
+[中文](README.md) | [English](README.en.md)
+
 Vena is a continuously updated multi-package Unity repository for game development frameworks and reusable technical modules. Each module is organized as a Unity Package Manager package and can be consumed independently by Unity projects.
 
 More packages will be added over time as the repository grows into a personal open-source collection of runtime foundations, framework layers, editor tooling, and reusable game-development infrastructure. Different packages may have different responsibilities and release scopes.
