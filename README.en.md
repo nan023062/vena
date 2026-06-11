@@ -1,59 +1,107 @@
 # Vena
 
-Vena — the union of Wei (薇) and Nan (南).
+Vena is a continuously updated multi-package Unity repository for game development frameworks and reusable technical modules. Each module is organized as a Unity Package Manager package and can be consumed independently by Unity projects.
 
-Vena is a lightweight Unity game framework monorepo containing 2 independent UPM packages. Migrated from the vena-core / vena-framework source repositories.
+More packages will be added over time as the repository grows into a personal open-source collection of runtime foundations, framework layers, editor tooling, and reusable game-development infrastructure. Different packages may have different responsibilities and release scopes.
 
-## Package Layout
+Vena is also a summary of my personal game-development experience. The design and implementation are not meant to be the only correct answer; they are shared as accumulated framework ideas, module boundaries, and technical practices from real development work. Feedback, corrections, bug reports, and improvement suggestions are welcome.
+
+## Packages
 
 ```
 vena/
-├── com.vena.core             Core: ECS primitives, collections, pool, profiler, FlowGraph, HierarchicalFsm; math library Vena.Math
-└── com.vena.framework        Framework: GameWorld, State, Module, Character, Pawn, Scene, GUI; Unity extensions Vena.UnityExtensions
+├── com.vena.core        Core package: ECS-style world, actor/component/system primitives,
+│                        collections, object pool, math, profiler, task graph, FSM, job balance.
+├── com.vena.framework   Framework package built on Vena Core:
+│                        GameWorld, state/module/service/command, character, scene, GUI, extensions.
+└── unity-project        Development and verification Unity project for packages in this repo.
 ```
 
-## Dependency Graph
+## Dependencies
 
 ```
-com.vena.core           (no dependencies)
-com.vena.framework      → com.vena.core
-                        → com.unity.ugui
+com.vena.core           no package dependency
+com.vena.framework      depends on com.vena.core
+                        depends on com.unity.ugui
 ```
 
-## Local Installation (file: reference)
+`com.vena.core` can be used on its own.
 
-In your Unity project's `Packages/manifest.json`:
+`com.vena.framework` is a higher-level Unity game framework package and should be installed together with `com.vena.core`.
+
+## Install From Git
+
+Add the packages you need to your Unity project's `Packages/manifest.json`. Each package can be referenced from the same Git repository using a different `path`.
+
+Core only:
 
 ```json
 {
   "dependencies": {
-    "com.vena.core":      "file:../../com.vena.core",
+    "com.vena.core": "https://github.com/nan023062/vena.git?path=/com.vena.core#main"
+  }
+}
+```
+
+Framework:
+
+```json
+{
+  "dependencies": {
+    "com.vena.core": "https://github.com/nan023062/vena.git?path=/com.vena.core#main",
+    "com.vena.framework": "https://github.com/nan023062/vena.git?path=/com.vena.framework#main"
+  }
+}
+```
+
+> `com.vena.framework` declares `com.vena.core` as a dependency, but when installing from Git paths it is recommended to declare Core explicitly in the project manifest so Unity does not try to resolve the personal package from a default registry.
+
+## Local Development Install
+
+For local development, use `file:` references:
+
+```json
+{
+  "dependencies": {
+    "com.vena.core": "file:../../com.vena.core",
     "com.vena.framework": "file:../../com.vena.framework"
   }
 }
 ```
 
-(Paths are relative from `UnityProject/Packages/` — two levels up to the repo root, then into each package directory.)
+Paths are relative to the Unity project's `Packages/manifest.json`; adjust them to match your local folder layout.
 
-## Package Descriptions
+## Package Overview
 
 ### com.vena.core
-Namespaces: `Vena` (plus `Vena.Test` for unit tests only); `Vena.Math`
 
-ECS-style World/Actor/Component/System primitives; FastList, SafeMap, and other collections; object pool; GcWatch/ProfilerWatch/TimeWatch; FlowGraph task graph; HierarchicalFsm; JobBalancer.
-
-Math library Vena.Math: Vector2/Vector3/Vector4, Matrix, Matrix2D, Quaternion, AABB, Ray, Rectangle, Transformation, MathHelper, Hierarchy.
+Core runtime foundations for Unity game development:
+- World / Actor / Component / System-style runtime primitives
+- Collections and non-alloc containers
+- Object pool and weak pooled helper structures
+- TaskGraph / TaskClip primitives
+- HierarchicalFsm
+- JobBalance stepped job scheduler
+- `Vena.Math` math types and utilities
+- Profiler / Time / GC watch helpers
 
 ### com.vena.framework
-Namespaces: `Vena.Framework`; `Vena.UnityExtensions`
 
-Unity-bound game framework including:
-- `GameWorld` (partial aggregate), `GameState/Level/Mode`, `Transition`
-- `Module`, `Service`, `Command`
-- `Character`, `Pawn`, `SceneRoot`/`SceneController`
-- `GUI` (merged from the former ugui package): GuiBase/Panel/Tabs, UIElement/Panel/Root, UIHelper, LoopScrollView, UIColor widgets, UIVfxComponent, and more
+Unity-bound game framework layer built on `com.vena.core`:
+- GameWorld
+- GameState / GameLevel / GameMode / Transition
+- Module / Service / Command
+- Character / Pawn / Scene
+- GUI / UI base components and widgets
+- UnityExtensions runtime and editor utilities
 
-Unity extensions Vena.UnityExtensions Runtime: NodeReferences, GameObjectExtension, RectTransformExtension, AutoGenTool; Editor: ComponentViewer, ReadonlyProperty.
+## Repository Policy
+
+- Every `com.vena.*` directory is an independent Unity package.
+- Package relationships are declared through `package.json`.
+- More packages will be added over time according to their module responsibilities.
+- The root `unity-project` is used for development, build verification, and sample integration.
+- Public APIs are intentionally conservative: implementation details stay internal unless they are meant to be extended, called, or composed by package users.
 
 ## License
 
