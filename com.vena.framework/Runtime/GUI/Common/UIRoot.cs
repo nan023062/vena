@@ -1,8 +1,9 @@
-﻿/**********************************************************************************
- * FileName:    UIRoot.cs
- * Description: 处理自定义事件
- * Others:       
- *********************************************************************************/
+﻿// -----------------------------------------------------------------------------
+// Vena Framework
+// Unity game framework layer built on Vena Core.
+// Copyright (c) Nan Li.
+// Licensed under the terms defined in the repository LICENSE file.
+// -----------------------------------------------------------------------------
 
 using UnityEngine;
 using UnityEngine.UI;

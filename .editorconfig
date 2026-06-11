@@ -1,0 +1,9 @@
+root = true
+
+[com.vena.core/**/*.cs]
+file_header_template = -----------------------------------------------------------------------------\nVena Core\nCore primitives for the Vena open-source Unity framework.\nCopyright (c) Nan Li.\nLicensed under the terms defined in the repository LICENSE file.\n-----------------------------------------------------------------------------
+dotnet_diagnostic.IDE0073.severity = suggestion
+
+[com.vena.framework/**/*.cs]
+file_header_template = -----------------------------------------------------------------------------\nVena Framework\nUnity game framework layer built on Vena Core.\nCopyright (c) Nan Li.\nLicensed under the terms defined in the repository LICENSE file.\n-----------------------------------------------------------------------------
+dotnet_diagnostic.IDE0073.severity = suggestion

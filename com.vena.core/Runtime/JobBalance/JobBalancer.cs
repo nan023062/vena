@@ -1,9 +1,9 @@
-﻿// ***********************************************************************************
-// * Author : LiNan
-// * File : JobBalance.cs
-// * Description : for balance job execute in frame
-// * Date : 2023-03-23-13:55
-// ************************************************************************************
+﻿// -----------------------------------------------------------------------------
+// Vena Core
+// Core primitives for the Vena open-source Unity framework.
+// Copyright (c) Nan Li.
+// Licensed under the terms defined in the repository LICENSE file.
+// -----------------------------------------------------------------------------
 
 using System;
 using UnityEngine;

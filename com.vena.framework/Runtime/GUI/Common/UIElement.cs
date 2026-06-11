@@ -1,8 +1,10 @@
-﻿/**********************************************************************************
- * FileName:    UIBase.cs
- * Description: UI基类
- * Others:      处理和引用UI节点 
- *********************************************************************************/
+﻿// -----------------------------------------------------------------------------
+// Vena Framework
+// Unity game framework layer built on Vena Core.
+// Copyright (c) Nan Li.
+// Licensed under the terms defined in the repository LICENSE file.
+// -----------------------------------------------------------------------------
+
 using UnityEngine;
 using System.Collections.Generic;
 using Vena.UnityExtensions;

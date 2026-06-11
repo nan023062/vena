@@ -1,9 +1,9 @@
-﻿//****************************************************************************
-// File: FlowGraph.cs
-// Author: Li Nan
-// Date: 2024-05-15 12:00
-// Version: 1.0
-//****************************************************************************
+﻿// -----------------------------------------------------------------------------
+// Vena Core
+// Core primitives for the Vena open-source Unity framework.
+// Copyright (c) Nan Li.
+// Licensed under the terms defined in the repository LICENSE file.
+// -----------------------------------------------------------------------------
 
 namespace Vena
 {

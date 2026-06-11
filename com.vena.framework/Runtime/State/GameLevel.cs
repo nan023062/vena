@@ -1,4 +1,11 @@
-﻿namespace Vena.Framework
+﻿// -----------------------------------------------------------------------------
+// Vena Framework
+// Unity game framework layer built on Vena Core.
+// Copyright (c) Nan Li.
+// Licensed under the terms defined in the repository LICENSE file.
+// -----------------------------------------------------------------------------
+
+namespace Vena.Framework
 {
     /// <summary>
     ///  game level interface, used for game state machine

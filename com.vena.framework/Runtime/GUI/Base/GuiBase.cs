@@ -1,12 +1,9 @@
-﻿/**********************************************************************************
- * FileName:    UIObjectBase.cs
- * Description: UI对象基类
- *              维护UI的创建的销毁
- *              维护UI的通用功能函数
- * Others:            
- * Func List:
- * History:
- *********************************************************************************/
+﻿// -----------------------------------------------------------------------------
+// Vena Framework
+// Unity game framework layer built on Vena Core.
+// Copyright (c) Nan Li.
+// Licensed under the terms defined in the repository LICENSE file.
+// -----------------------------------------------------------------------------
 
 using UnityEngine;
 using System.Collections.Generic;

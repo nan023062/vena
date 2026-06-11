@@ -1,12 +1,9 @@
-﻿/**********************************************************************************
- * FileName:    UIPanel.cs
- * Description: UI界面的跟节点组件，
- *              额外提供UI界面控制层级的组件
- * Others:
- *          1 记录UI的节点（减少代码逻辑） 
- *          2 处理背景Mask
- *          3 统一处理UI事件    
- *********************************************************************************/
+﻿// -----------------------------------------------------------------------------
+// Vena Framework
+// Unity game framework layer built on Vena Core.
+// Copyright (c) Nan Li.
+// Licensed under the terms defined in the repository LICENSE file.
+// -----------------------------------------------------------------------------
 
 using System;
 using UnityEngine;

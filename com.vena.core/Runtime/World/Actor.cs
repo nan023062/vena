@@ -1,4 +1,11 @@
-﻿#if UNITY_EDITOR
+﻿// -----------------------------------------------------------------------------
+// Vena Core
+// Core primitives for the Vena open-source Unity framework.
+// Copyright (c) Nan Li.
+// Licensed under the terms defined in the repository LICENSE file.
+// -----------------------------------------------------------------------------
+
+#if UNITY_EDITOR
 #define DEBUG_WORLD
 #endif
 using System;

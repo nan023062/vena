@@ -1,9 +1,10 @@
-//****************************************************************************
-// File: GameDescription.cs
-// Author: Li Nan
-// Date: 2023-11-25 12:00
-// Version: 1.0
-//****************************************************************************
+// -----------------------------------------------------------------------------
+// Vena Framework
+// Unity game framework layer built on Vena Core.
+// Copyright (c) Nan Li.
+// Licensed under the terms defined in the repository LICENSE file.
+// -----------------------------------------------------------------------------
+
 using System.Reflection;
 using UnityEngine;
 

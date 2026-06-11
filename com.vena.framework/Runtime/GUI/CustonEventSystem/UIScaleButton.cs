@@ -1,12 +1,9 @@
-﻿/**********************************************************************************
- * FileName:    UIScaleButton.cs
- * Description: UI通用按钮类
- * Others:      支持点击\长按事件
- *              支持UI缩放动画
- *              处理点击音效
- *              处理解锁/未解锁状态
- *              2019-05-16
- *********************************************************************************/
+﻿// -----------------------------------------------------------------------------
+// Vena Framework
+// Unity game framework layer built on Vena Core.
+// Copyright (c) Nan Li.
+// Licensed under the terms defined in the repository LICENSE file.
+// -----------------------------------------------------------------------------
 
 using System;
 using UnityEngine;

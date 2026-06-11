@@ -1,10 +1,9 @@
-﻿/**********************************************************************************
- * FileName:    GUILayer.cs
- * Description: 用来控制UI渲染层级      
- * Others:            
- * Func List:
- * History:
- *********************************************************************************/
+﻿// -----------------------------------------------------------------------------
+// Vena Framework
+// Unity game framework layer built on Vena Core.
+// Copyright (c) Nan Li.
+// Licensed under the terms defined in the repository LICENSE file.
+// -----------------------------------------------------------------------------
 
 using UnityEngine;
 using UnityEngine.UI;

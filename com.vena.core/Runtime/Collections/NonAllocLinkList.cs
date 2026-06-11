@@ -1,8 +1,9 @@
-// ***********************************************************************************
-// * Author : LiNan
-// * File : NoAllocLinkList.cs
-// * Date : 2023-02-16-11:16
-// ************************************************************************************
+// -----------------------------------------------------------------------------
+// Vena Core
+// Core primitives for the Vena open-source Unity framework.
+// Copyright (c) Nan Li.
+// Licensed under the terms defined in the repository LICENSE file.
+// -----------------------------------------------------------------------------
 
 using System;
 using System.Collections.Generic;

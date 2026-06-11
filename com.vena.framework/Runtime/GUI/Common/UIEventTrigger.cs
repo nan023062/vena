@@ -1,13 +1,10 @@
-﻿/**********************************************************************************
- * FileName:    UIEventTrigger.cs
- * Version: 
- * Description: 继承于UnityEngine.EventSystem 的 EventTrigger
- *              添加该组件的UI不需要添加Collider组件，由UGUI系统内部自动识别
- * Others:      对于UGUI中自带事件的UI组件就可以不用这个脚本了，这个脚本专用于自定义
- *              的需要有UI事件的Objcet。
- * Func List: 
- * History:
- *********************************************************************************/
+﻿// -----------------------------------------------------------------------------
+// Vena Framework
+// Unity game framework layer built on Vena Core.
+// Copyright (c) Nan Li.
+// Licensed under the terms defined in the repository LICENSE file.
+// -----------------------------------------------------------------------------
+
 using UnityEngine;
 using UnityEngine.EventSystems;
 

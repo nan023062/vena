@@ -1,9 +1,9 @@
-//****************************************************************************
-// File: ProfilerWatch.cs
-// Author: Li Nan
-// Date: 2023-01-05 12:00
-// Version: 1.0
-//****************************************************************************
+// -----------------------------------------------------------------------------
+// Vena Core
+// Core primitives for the Vena open-source Unity framework.
+// Copyright (c) Nan Li.
+// Licensed under the terms defined in the repository LICENSE file.
+// -----------------------------------------------------------------------------
 
 using System;
 using UnityEngine.Profiling;

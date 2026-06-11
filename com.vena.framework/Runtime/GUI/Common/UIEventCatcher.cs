@@ -1,8 +1,10 @@
-﻿/**********************************************************************************
- * FileName:    UIEventCatcher.cs
- * Description: UI事件统一分发
- * Others:      处理UI事件  
- *********************************************************************************/
+﻿// -----------------------------------------------------------------------------
+// Vena Framework
+// Unity game framework layer built on Vena Core.
+// Copyright (c) Nan Li.
+// Licensed under the terms defined in the repository LICENSE file.
+// -----------------------------------------------------------------------------
+
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
