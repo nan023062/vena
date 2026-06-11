@@ -6,6 +6,7 @@
 // -----------------------------------------------------------------------------
 
 using System.Runtime.CompilerServices;
+using UnityEngine;
 
 namespace Vena.Math
 {
@@ -72,7 +73,7 @@ namespace Vena.Math
 
             if (amount == 0f)
                 result = value1;
-            else if (amount == 1f)
+            else if (Mathf.Approximately(amount, 1f))
                 result = value2;
             else
                 result = (2 * v1 - 2 * v2 + t2 + t1) * sCubed +

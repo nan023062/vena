@@ -997,7 +997,7 @@ namespace Vena
                     return;
                 }
 
-                ExceptionDispatchInfo capturedException = null;
+                Exception capturedException = null;
 
                 LinkedListNode<uint> node = linkedList.First;
 
@@ -1013,7 +1013,7 @@ namespace Vena
                         }
                         catch (Exception e)
                         {
-                            capturedException ??= ExceptionDispatchInfo.Capture(e);
+                            capturedException ??= e;
                         }
                     }
                     else
@@ -1026,7 +1026,7 @@ namespace Vena
 
                 if (capturedException != null)
                 {
-                    capturedException.Throw();
+                    throw capturedException;
                 }
             }
 

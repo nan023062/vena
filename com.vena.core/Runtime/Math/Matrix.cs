@@ -36,7 +36,6 @@ namespace Vena.Math
 
         #endregion Public Constructors
 
-
         #region Public Fields
 
         public float M11;
@@ -58,7 +57,6 @@ namespace Vena.Math
 
         #endregion Public Fields
 
-
         #region Private Members
 
         private static Matrix identity = new Matrix(1f, 0f, 0f, 0f,
@@ -67,7 +65,6 @@ namespace Vena.Math
             0f, 0f, 0f, 1f);
 
         #endregion Private Members
-
 
         #region Public Properties
 
@@ -174,7 +171,6 @@ namespace Vena.Math
         }
 
         #endregion Public Properties
-
 
         #region Public Methods
 
