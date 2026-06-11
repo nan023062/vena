@@ -1,8 +1,6 @@
 # Vena
 
-Vena = 薇南，薇与南的结合。
-
-Vena 是一个面向 Unity 的轻量游戏框架 monorepo，包含 2 个独立 UPM 包。迁移自 vena-core / vena-framework 原始仓库。
+Vena 是一个面向 Unity 的游戏框架 monorepo，包含 2 个独立 UPM 包, 目前就2个后面会慢慢添加补充。
 
 ## 包结构
 
