@@ -62,25 +62,29 @@ namespace Vena
                 Resize(_array.Length * 2);
             }
             
-            ref var newNode = ref _array[_freeHead];
+            int index = _freeHead;
+            ref var newNode = ref _array[index];
+            int nextFree = newNode.Next;
             newNode.Value = item;
+            newNode.Index = index;
             newNode.Prev = _tail;
             newNode.Next = Invalid;
+            newNode.InUse = true;
             
             if (_count == 0)
             {
-                _head = _tail = _freeHead;
+                _head = _tail = index;
             }
             else
             {
-                _array[_tail].Next = _freeHead;
-                _tail = _freeHead;
+                _array[_tail].Next = index;
+                _tail = index;
             }
             
-            _freeHead = _array[_freeHead].Next;
+            _freeHead = nextFree;
             _count++;
             _version = (_version + 1) % (int.MaxValue - 2);
-            return newNode.Index;
+            return index;
         }
         
         public int AddFirst(T item)
@@ -90,25 +94,29 @@ namespace Vena
                 Resize(_array.Length * 2);
             }
             
-            ref var newNode = ref _array[_freeHead];
+            int index = _freeHead;
+            ref var newNode = ref _array[index];
+            int nextFree = newNode.Next;
             newNode.Value = item;
+            newNode.Index = index;
             newNode.Prev = Invalid;
             newNode.Next = _head;
+            newNode.InUse = true;
             
             if (_count == 0)
             {
-                _head = _tail = _freeHead;
+                _head = _tail = index;
             }
             else
             {
-                _array[_head].Prev = _freeHead;
-                _head = _freeHead;
+                _array[_head].Prev = index;
+                _head = index;
             }
             
-            _freeHead = _array[_freeHead].Next;
+            _freeHead = nextFree;
             _count++;
             _version = (_version + 1) % (int.MaxValue - 2);
-            return newNode.Index;
+            return index;
         }
         
         public ref T GetValue(int index)
@@ -117,6 +125,8 @@ namespace Vena
                 throw new System.ArgumentOutOfRangeException(nameof(index));
             
             ref var node = ref _array[index];
+            if (!node.InUse)
+                throw new System.InvalidOperationException("Node is not in the list.");
 
             return ref node.Value;
         }
@@ -133,6 +143,9 @@ namespace Vena
                 throw new System.ArgumentOutOfRangeException(nameof(index));
             
             ref var node = ref _array[index];
+            if (!node.InUse)
+                throw new System.InvalidOperationException("Node is not in the list.");
+
             next = node.Next;
             return ref node.Value;
         }
@@ -150,6 +163,9 @@ namespace Vena
             if(index < 0 || index >= _array.Length)
                 throw new System.ArgumentOutOfRangeException(nameof(index));
             
+            if (!_array[index].InUse)
+                throw new System.InvalidOperationException("Node is not in the list.");
+
             return _array[index].Next;
         }
         
@@ -158,6 +174,9 @@ namespace Vena
             if(index < 0 || index >= _array.Length)
                 throw new System.ArgumentOutOfRangeException(nameof(index));
             
+            if (!_array[index].InUse)
+                throw new System.InvalidOperationException("Node is not in the list.");
+
             return _array[index].Prev;
         }
         
@@ -167,6 +186,9 @@ namespace Vena
                 throw new System.ArgumentOutOfRangeException(nameof(index));
             
             ref var node = ref _array[index];
+            if (!node.InUse)
+                throw new System.InvalidOperationException("Node is not in the list.");
+
             if (node.Prev != Invalid)
             {
                 _array[node.Prev].Next = node.Next;
@@ -188,6 +210,7 @@ namespace Vena
             node.Prev = Invalid;
             node.Value = default;
             node.Next = _freeHead;
+            node.InUse = false;
             _freeHead = index;
             _count--;
             
@@ -211,6 +234,8 @@ namespace Vena
                 node.Prev = i == 0 ? Invalid : i - 1;
                 node.Next = i == _array.Length - 1 ? Invalid : i + 1;
                 node.Value = default;
+                node.Index = i;
+                node.InUse = false;
             }
             
             _head = _tail = Invalid;
@@ -221,19 +246,21 @@ namespace Vena
         
         private void Resize(int capacity)
         {
+            int oldLength = _array.Length;
             Node[] newArray = new Node[capacity];
-            System.Array.Copy( _array, 0, newArray, 0, _array.Length);
+            System.Array.Copy( _array, 0, newArray, 0, oldLength);
             _array = newArray;
             
-            for (int i = _count; i < _array.Length; i++)
+            for (int i = oldLength; i < _array.Length; i++)
             {
                 ref var node = ref _array[i];
                 node.Index = i;
                 node.Value = default;
-                node.Prev = i == 0 ? Invalid : i - 1;
+                node.Prev = Invalid;
                 node.Next = i == _array.Length - 1 ? Invalid : i + 1;
+                node.InUse = false;
             }
-            _freeHead = _count;
+            _freeHead = oldLength;
         }
         
         public IEnumerator<T> GetEnumerator()
@@ -252,6 +279,7 @@ namespace Vena
             public int Index;
             public int Prev;
             public int Next;
+            public bool InUse;
         }
 
         public struct Enumerator : IEnumerator<T>
@@ -262,37 +290,64 @@ namespace Vena
             
             private int _current;
 
+            private int _next;
+
             public Enumerator(ArrayBasedLinkList<T> linkList)
             {
                 _version = linkList._version;
                 _list = linkList;
-                _current = linkList._head;
+                _current = Invalid;
+                _next = linkList._head;
             }
 
-            public object Current => _list._array[_current].Value;
+            public object Current
+            {
+                get
+                {
+                    if (_current == Invalid)
+                        throw new System.InvalidOperationException("Enumeration has either not started or has already finished.");
+
+                    return _list._array[_current].Value;
+                }
+            }
             
-            T IEnumerator<T>.Current => _list._array[_current].Value;
+            T IEnumerator<T>.Current
+            {
+                get
+                {
+                    if (_current == Invalid)
+                        throw new System.InvalidOperationException("Enumeration has either not started or has already finished.");
+
+                    return _list._array[_current].Value;
+                }
+            }
 
             public bool MoveNext()
             {
                 if(_version != _list._version)
                     throw new System.InvalidOperationException("Collection was modified; enumeration operation may not execute.");
                 
-                if (_current == Invalid)
+                if (_next == Invalid)
+                {
+                    _current = Invalid;
                     return false;
+                }
                 
-                _current = _list._array[_current].Next;
-                return _current != Invalid;
+                _current = _next;
+                _next = _list._array[_current].Next;
+                return true;
             }
 
             public void Reset()
             {
-                _current = _list._head;
+                _current = Invalid;
+                _next = _list._head;
             }
             
             public void Dispose()
             {
                 _current = Invalid;
+                _next = Invalid;
             }
         }
     }

@@ -7,7 +7,7 @@
 
 namespace Vena
 {
-    public class TemplateObjectPool
+    internal sealed class TemplateObjectPool
     {
     
     }

@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace Vena
 {
-    public abstract class TaskTrack : TaskNode
+    internal abstract class TaskTrack : TaskNode
     {
         // 0: not started, 1: playing, 2: done
         protected enum State
@@ -85,7 +85,7 @@ namespace Vena
         }
     }
     
-    public sealed class TaskSequence : TaskTrack
+    internal sealed class TaskSequence : TaskTrack
     {
         private Queue<ClipWrapper> _clips = new Queue<ClipWrapper>();
         private Queue<ClipWrapper> _finished = new Queue<ClipWrapper>();
@@ -188,7 +188,7 @@ namespace Vena
         }
     }
 
-    public sealed class TaskParallel : TaskTrack
+    internal sealed class TaskParallel : TaskTrack
     {
         private float _duration;
 

@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Vena.Test
 {
-    public static class FpsBalancerUnitTest
+    internal static class FpsBalancerUnitTest
     {
         class TestJob : ISteppedJob
         {
@@ -62,7 +62,7 @@ namespace Vena.Test
         }
 
 
-        public static void Test()
+        internal static void Test()
         {
             for (int i = 0; i < 25; i++)
             {

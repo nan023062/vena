@@ -21,10 +21,12 @@ namespace Vena
     {
         private Set _object;
 
+        private int _token;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator bool(WeakHashSet<T> obj)
         {
-            return obj._object != null;
+            return obj._object != null && PoolManager.GetToken<Set>(obj._object) == obj._token;
         }
 
         public int Count
@@ -32,14 +34,14 @@ namespace Vena
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                if (_object != null)
+                if (TryGetObject(out var set))
                 {
-                    int count = _object.hashSet.Count;
+                    int count = set.hashSet.Count;
                     if (count == 0)
                     {
-                        var set = _object;
                         PoolManager.Return(set);
                         _object = default;
+                        _token = 0;
                     }
 
                     return count;
@@ -52,12 +54,39 @@ namespace Vena
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            if (_object != null)
+            if (TryGetObject(out var set))
             {
-                var set = _object;
                 PoolManager.Return(set);
                 _object = default;
+                _token = 0;
             }
+        }
+
+        private bool TryGetObject(out Set set)
+        {
+            if (_object != null && PoolManager.GetToken<Set>(_object) == _token)
+            {
+                set = _object;
+                return true;
+            }
+
+            _object = default;
+            _token = 0;
+            set = default;
+            return false;
+        }
+
+        private Set GetOrRentObject()
+        {
+            if (TryGetObject(out var set))
+            {
+                return set;
+            }
+
+            set = PoolManager.Rent<Set>();
+            _object = set;
+            _token = PoolManager.GetToken<Set>(set);
+            return set;
         }
 
         public HashSet<T> HashSet
@@ -65,42 +94,38 @@ namespace Vena
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                _object ??= PoolManager.Rent<Set>();
-
-                return _object.hashSet;
+                return GetOrRentObject().hashSet;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
-            if (_object != null)
+            if (TryGetObject(out var set))
             {
-                var set = _object;
                 PoolManager.Return(set);
                 _object = default;
+                _token = 0;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Add(T item)
         {
-            _object ??= PoolManager.Rent<Set>();
-
-            return _object.hashSet.Add(item);
+            return GetOrRentObject().hashSet.Add(item);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Remove(T item)
         {
-            if (_object != null && _object.hashSet.Remove(item))
+            if (TryGetObject(out var set) && set.hashSet.Remove(item))
             {
-                int count = _object.hashSet.Count;
+                int count = set.hashSet.Count;
                 if (count == 0)
                 {
-                    var set = _object;
                     PoolManager.Return(set);
                     _object = default;
+                    _token = 0;
                 }
 
                 return true;
@@ -112,28 +137,28 @@ namespace Vena
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Contains(T item)
         {
-            return _object != null && _object.hashSet.Contains(item);
+            return TryGetObject(out var set) && set.hashSet.Contains(item);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T[] ToArray()
         {
-            if (null == _object)
+            if (!TryGetObject(out var set))
             {
                 return Array.Empty<T>();
             }
 
-            return _object.hashSet.ToArray();
+            return set.hashSet.ToArray();
         }
 
         public HashSet<T>.Enumerator GetEnumerator()
         {
-            if (null == _object)
+            if (!TryGetObject(out var set))
             {
                 return Set.Default.hashSet.GetEnumerator();
             }
 
-            return _object.hashSet.GetEnumerator();
+            return set.hashSet.GetEnumerator();
         }
 
         sealed class Set : IPoolable

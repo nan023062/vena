@@ -48,6 +48,9 @@ namespace Vena
     
         public ref readonly T Peek()
         {
+            if (Count == 0)
+                throw new InvalidOperationException("PriorityQueue is empty.");
+
             return ref _array[1];
         }
     
@@ -72,11 +75,14 @@ namespace Vena
     
         public T Dequeue()
         {
+            if (Count == 0)
+                throw new InvalidOperationException("PriorityQueue is empty.");
+
             T element = _array[1];
             
-            _array[1] = default;
-            
             Swap(1, Count--);
+
+            _array[Count + 1] = default;
     
             int i = 1;
             

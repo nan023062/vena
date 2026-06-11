@@ -7,7 +7,7 @@
 
 namespace Vena
 {
-    public class FlowGraph
+    internal class FlowGraph
     {
         
         
@@ -17,7 +17,7 @@ namespace Vena
     /// <summary>
     /// A node in the flow graph.
     /// </summary>
-    public abstract class FlowGraphNode<T> where T :FlowGraph
+    internal abstract class FlowGraphNode<T> where T : FlowGraph
     {
         public readonly T Graph;
             
@@ -30,7 +30,7 @@ namespace Vena
     /// <summary>
     /// A node in the flow graph.
     /// </summary>
-    public abstract class LogicNode<T> : FlowGraphNode<T> where T : FlowGraph
+    internal abstract class LogicNode<T> : FlowGraphNode<T> where T : FlowGraph
     {
         protected LogicNode(T graph) : base(graph)
         {
@@ -47,7 +47,7 @@ namespace Vena
     /// <summary>
     ///  An edge in the flow graph. a condition from prev to next.
     /// </summary>
-    public abstract class FlowEdge<TGraph, TPrev, TNext> : FlowGraphNode<TGraph> 
+    internal abstract class FlowEdge<TGraph, TPrev, TNext> : FlowGraphNode<TGraph>
         where TGraph : FlowGraph 
         where TPrev : FlowGraphNode<TGraph>
         where TNext : FlowGraphNode<TGraph>

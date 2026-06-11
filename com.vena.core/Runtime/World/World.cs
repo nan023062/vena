@@ -26,15 +26,15 @@ namespace Vena
     /// </summary>
     public sealed partial class World
     {
-        public static void Log(string log)
+        internal static void Log(string log)
         {
         }
 
-        public static void LogWarning(string log)
+        internal static void LogWarning(string log)
         {
         }
 
-        public static void LogError(string log)
+        internal static void LogError(string log)
         {
         }
 
@@ -273,7 +273,7 @@ namespace Vena
 
         #region filter
 
-        public Filter GetFilter(Type filterType, bool createIfNotExists = true)
+        internal Filter GetFilter(Type filterType, bool createIfNotExists = true)
         {
             if (_filters.TryGetValue(filterType, out var filter))
             {
@@ -287,14 +287,14 @@ namespace Vena
 
             _filters[filterType] = filter;
 
-            foreach (var info in filter.incArchetype.GetTypes())
+            foreach (var info in Archetype.GetTypeInfos(filter.incArchetype))
             {
                 List<Filter> list = GetOrAddFilters(ref _includeFiltersByTypeId, info.Id);
 
                 list.Add(filter);
             }
 
-            foreach (var info in filter.excArchetype.GetTypes())
+            foreach (var info in Archetype.GetTypeInfos(filter.excArchetype))
             {
                 List<Filter> list = GetOrAddFilters(ref _excludeFiltersByTypeId, info.Id);
 
@@ -304,9 +304,9 @@ namespace Vena
             return filter;
         }
 
-        public Filter GetFilter<T>(bool createIfNotExists = true) where T : Filter
+        public T GetFilter<T>(bool createIfNotExists = true) where T : Filter
         {
-            return GetFilter(typeof(T), createIfNotExists);
+            return (T)GetFilter(typeof(T), createIfNotExists);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -533,7 +533,10 @@ namespace Vena
 
         public void GetAllActors(ICollection<Actor> actors)
         {
-            foreach (var actor in actors)
+            if (actors == null)
+                throw new ArgumentNullException(nameof(actors));
+
+            foreach (var actor in _actors.Values)
             {
                 actors.Add(actor);
             }

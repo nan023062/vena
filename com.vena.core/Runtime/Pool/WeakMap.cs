@@ -23,26 +23,57 @@ namespace Vena
 
         private Map _object;
 
+        private int _token;
+
         public WeakMap(int capacity = 0)
         {
             _capacity = capacity;
 
             _object = default;
+
+            _token = 0;
         }
 
         public static implicit operator bool(WeakMap<TKey, TValue> obj)
         {
-            return obj._object != null;
+            return obj._object != null && PoolManager.GetToken<Map, int>(obj._object) == obj._token;
         }
 
         public void Dispose()
         {
-            if (_object != null)
+            if (TryGetObject(out var map))
             {
-                var map = _object;
                 _object = default;
+                _token = 0;
                 PoolManager.Return<Map, int>(map);
             }
+        }
+
+        private bool TryGetObject(out Map map)
+        {
+            if (_object != null && PoolManager.GetToken<Map, int>(_object) == _token)
+            {
+                map = _object;
+                return true;
+            }
+
+            _object = default;
+            _token = 0;
+            map = default;
+            return false;
+        }
+
+        private Map GetOrRentObject()
+        {
+            if (TryGetObject(out var map))
+            {
+                return map;
+            }
+
+            map = PoolManager.Rent<Map, int>(_capacity);
+            _object = map;
+            _token = PoolManager.GetToken<Map, int>(map);
+            return map;
         }
 
         public Dictionary<TKey, TValue> Dictionary
@@ -50,9 +81,7 @@ namespace Vena
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                _object ??= PoolManager.Rent<Map, int>(_capacity);
-
-                return _object.dictionary;
+                return GetOrRentObject().dictionary;
             }
         }
 
@@ -61,12 +90,12 @@ namespace Vena
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                if (null == _object)
+                if (!TryGetObject(out var map))
                 {
                     return Map.Default.Values;
                 }
 
-                return _object.Values;
+                return map.Values;
             }
         }
 
@@ -75,22 +104,22 @@ namespace Vena
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                if (null == _object)
+                if (!TryGetObject(out var map))
                 {
                     return Map.Default.Keys;
                 }
 
-                return _object.Keys;
+                return map.Keys;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
-            if (null != _object)
+            if (TryGetObject(out var map))
             {
-                var map = _object;
                 _object = default;
+                _token = 0;
                 PoolManager.Return<Map, int>(map);
             }
         }
@@ -98,9 +127,7 @@ namespace Vena
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(TKey key, TValue value)
         {
-            _object ??= PoolManager.Rent<Map, int>(_capacity);
-
-            _object.Add(key, value);
+            GetOrRentObject().Add(key, value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -108,18 +135,18 @@ namespace Vena
         {
             value = default;
 
-            return null != _object && _object.TryGetValue(key, out value);
+            return TryGetObject(out var map) && map.TryGetValue(key, out value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Remove(TKey key)
         {
-            if (null != _object && _object.Remove(key))
+            if (TryGetObject(out var map) && map.Remove(key))
             {
-                if (_object.Count == 0)
+                if (map.Count == 0)
                 {
-                    var map = _object;
                     _object = default;
+                    _token = 0;
                     PoolManager.Return<Map, int>(map);
                 }
 
@@ -132,13 +159,13 @@ namespace Vena
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsKey(TKey key)
         {
-            return null != _object && _object.ContainsKey(key);
+            return TryGetObject(out var map) && map.ContainsKey(key);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsValue(TValue value)
         {
-            return null != _object && _object.ContainsValue(value);
+            return TryGetObject(out var map) && map.ContainsValue(value);
         }
 
         public int Count
@@ -146,13 +173,13 @@ namespace Vena
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                if (null != _object)
+                if (TryGetObject(out var map))
                 {
-                    int count = _object.Count;
+                    int count = map.Count;
                     if (count == 0)
                     {
-                        var map = _object;
                         _object = default;
+                        _token = 0;
                         PoolManager.Return<Map, int>(map);
                     }
 
@@ -168,9 +195,9 @@ namespace Vena
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                if (null != _object)
+                if (TryGetObject(out var map))
                 {
-                    return _object[key];
+                    return map[key];
                 }
 
                 throw new KeyNotFoundException();
@@ -179,40 +206,36 @@ namespace Vena
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set
             {
-                _object ??= PoolManager.Rent<Map, int>(_capacity);
-
-                _object[key] = value;
+                GetOrRentObject()[key] = value;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Dictionary<TKey, TValue>.Enumerator GetEnumerator()
         {
-            if (null == _object)
+            if (!TryGetObject(out var map))
             {
                 return Map.Default.GetEnumerator();
             }
 
-            return _object.GetEnumerator();
+            return map.GetEnumerator();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryAdd(TKey key, TValue value)
         {
-            _object ??= PoolManager.Rent<Map, int>(_capacity);
-
-            return _object.TryAdd(key, value);
+            return GetOrRentObject().TryAdd(key, value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryRemove(TKey key, out TValue value)
         {
-            if (null != _object && _object.TryRemove(key, out value))
+            if (TryGetObject(out var map) && map.TryRemove(key, out value))
             {
-                if (_object.Count == 0)
+                if (map.Count == 0)
                 {
-                    var map = _object;
                     _object = default;
+                    _token = 0;
                     PoolManager.Return<Map, int>(map);
                 }
 
@@ -226,9 +249,7 @@ namespace Vena
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryUpdate(TKey key, TValue newValue, TValue comparisonValue)
         {
-            _object ??= PoolManager.Rent<Map, int>(_capacity);
-
-            return _object.TryUpdate(key, newValue, comparisonValue);
+            return GetOrRentObject().TryUpdate(key, newValue, comparisonValue);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -236,7 +257,7 @@ namespace Vena
         {
             value = default;
 
-            return null != _object && _object.TryGetValue(key, out value, defaultValue);
+            return TryGetObject(out var map) && map.TryGetValue(key, out value, defaultValue);
         }
 
 

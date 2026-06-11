@@ -20,20 +20,49 @@ namespace Vena
     {
         private _List _object;
 
+        private int _token;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator bool(WeakList<T> obj)
         {
-            return obj._object != null;
+            return obj._object != null && PoolManager.GetToken<_List, int>(obj._object) == obj._token;
         }
 
         public void Dispose()
         {
-            if (_object != null)
+            if (TryGetObject(out var list))
             {
-                var list = _object;
                 _object = default;
+                _token = 0;
                 PoolManager.Return<_List, int>(list);
             }
+        }
+
+        private bool TryGetObject(out _List list)
+        {
+            if (_object != null && PoolManager.GetToken<_List, int>(_object) == _token)
+            {
+                list = _object;
+                return true;
+            }
+
+            _object = default;
+            _token = 0;
+            list = default;
+            return false;
+        }
+
+        private _List GetOrRentObject(int capacity = 0)
+        {
+            if (TryGetObject(out var list))
+            {
+                return list;
+            }
+
+            list = PoolManager.Rent<_List, int>(capacity);
+            _object = list;
+            _token = PoolManager.GetToken<_List, int>(list);
+            return list;
         }
 
         public List<T> List
@@ -41,9 +70,7 @@ namespace Vena
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                _object ??= PoolManager.Rent<_List, int>(0);
-
-                return _object.list;
+                return GetOrRentObject().list;
             }
         }
 
@@ -52,13 +79,13 @@ namespace Vena
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                if (_object != null)
+                if (TryGetObject(out var list))
                 {
-                    int count = _object.list.Count;
+                    int count = list.list.Count;
                     if (count == 0)
                     {
-                        var list = _object;
                         _object = default;
+                        _token = 0;
                         PoolManager.Return<_List, int>(list);
                     }
 
@@ -72,9 +99,9 @@ namespace Vena
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T[] ToArray()
         {
-            if (_object != null)
+            if (TryGetObject(out var list))
             {
-                return _object.list.ToArray();
+                return list.list.ToArray();
             }
 
             return Array.Empty<T>();
@@ -83,10 +110,10 @@ namespace Vena
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
-            if (_object != null)
+            if (TryGetObject(out var list))
             {
-                var list = _object;
                 _object = default;
+                _token = 0;
                 PoolManager.Return<_List, int>(list);
             }
         }
@@ -94,23 +121,21 @@ namespace Vena
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(T value)
         {
-            _object ??= PoolManager.Rent<_List, int>(0);
-
-            _object.list.Add(value);
+            GetOrRentObject().list.Add(value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Remove(T value)
         {
-            if (_object != null)
+            if (TryGetObject(out var list))
             {
-                if (_object.list.Remove(value))
+                if (list.list.Remove(value))
                 {
-                    int count = _object.list.Count;
+                    int count = list.list.Count;
                     if (count == 0)
                     {
-                        var list = _object;
                         _object = default;
+                        _token = 0;
                         PoolManager.Return<_List, int>(list);
                     }
 
@@ -124,20 +149,20 @@ namespace Vena
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool RemoveAt(int index)
         {
-            if (_object != null)
+            if (TryGetObject(out var list))
             {
-                int count = _object.list.Count;
+                int count = list.list.Count;
 
                 if (index < 0 || index >= count)
                     return false;
 
-                _object.list.RemoveAt(index);
+                list.list.RemoveAt(index);
 
-                count = _object.list.Count;
+                count = list.list.Count;
                 if (count == 0)
                 {
-                    var list = _object;
                     _object = default;
+                    _token = 0;
                     PoolManager.Return<_List, int>(list);
                 }
 
@@ -150,9 +175,9 @@ namespace Vena
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Contains(T value)
         {
-            if (_object != null)
+            if (TryGetObject(out var list))
             {
-                return _object.list.Contains(value);
+                return list.list.Contains(value);
             }
 
             return false;
@@ -163,9 +188,9 @@ namespace Vena
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                if (_object != null)
+                if (TryGetObject(out var list))
                 {
-                    return _object.list[index];
+                    return list.list[index];
                 }
 
                 throw new InvalidOperationException();
@@ -173,9 +198,9 @@ namespace Vena
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set
             {
-                if (_object != null)
+                if (TryGetObject(out var list))
                 {
-                    _object.list[index] = value;
+                    list.list[index] = value;
                     return;
                 }
 
@@ -185,9 +210,9 @@ namespace Vena
 
         public int FindIndex(Predicate<T> match)
         {
-            if (_object != null)
+            if (TryGetObject(out var list))
             {
-                return _object.list.FindIndex(match);
+                return list.list.FindIndex(match);
             }
 
             return -1;
@@ -196,65 +221,65 @@ namespace Vena
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public List<T>.Enumerator GetEnumerator()
         {
-            if (null == _object)
+            if (!TryGetObject(out var list))
             {
                 return _List.Default.list.GetEnumerator();
             }
 
-            return _object.list.GetEnumerator();
+            return list.list.GetEnumerator();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Sort()
         {
-            if (_object != null)
+            if (TryGetObject(out var list))
             {
-                _object.list.Sort();
+                list.list.Sort();
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Sort(Comparison<T> comparison)
         {
-            if (_object != null)
+            if (TryGetObject(out var list))
             {
-                _object.list.Sort(comparison);
+                list.list.Sort(comparison);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Sort(IComparer<T> comparer)
         {
-            if (_object != null)
+            if (TryGetObject(out var list))
             {
-                _object.list.Sort(comparer);
+                list.list.Sort(comparer);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Sort(int index, int count, IComparer<T> comparer)
         {
-            if (_object != null)
+            if (TryGetObject(out var list))
             {
-                _object.list.Sort(index, count, comparer);
+                list.list.Sort(index, count, comparer);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Reverse()
         {
-            if (_object != null)
+            if (TryGetObject(out var list))
             {
-                _object.list.Reverse();
+                list.list.Reverse();
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Reverse(int index, int count)
         {
-            if (_object != null)
+            if (TryGetObject(out var list))
             {
-                _object.list.Reverse(index, count);
+                list.list.Reverse(index, count);
             }
         }
 

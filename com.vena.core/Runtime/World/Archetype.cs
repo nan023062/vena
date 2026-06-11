@@ -24,9 +24,9 @@ namespace Vena
 
         [FieldOffset(0)] private readonly int _id;
 
-        [FieldOffset(2)] public readonly short bucket;
+        [FieldOffset(2)] internal readonly short bucket;
 
-        [FieldOffset(0)] public readonly short index;
+        [FieldOffset(0)] internal readonly short index;
 
         private ArchetypeId(int id)
         {
@@ -35,7 +35,7 @@ namespace Vena
             _id = id;
         }
 
-        public ArchetypeId(short bucket, short index)
+        internal ArchetypeId(short bucket, short index)
         {
             _id = 0;
             this.bucket = bucket;
@@ -46,7 +46,7 @@ namespace Vena
         {
             StringBuilder sb = new StringBuilder();
             sb.Append($"Archetype_{bucket}_{index}:");
-            foreach (var typeInfo in Archetype.GetTypes(this))
+            foreach (var typeInfo in Archetype.GetTypeInfos(this))
             {
                 sb.Append($" {typeInfo.Type.GetTypeName()}");
             }
@@ -86,7 +86,7 @@ namespace Vena
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IReadOnlyCollection<TypeInfo> GetTypes()
+        public IReadOnlyCollection<Type> GetTypes()
         {
             return Archetype.GetTypes(this);
         }
@@ -176,15 +176,15 @@ namespace Vena
         }
     }
 
-    public readonly struct TypeInfo : IComparer<TypeInfo>, IComparable<TypeInfo>
+    internal readonly struct TypeInfo : IComparer<TypeInfo>, IComparable<TypeInfo>
     {
-        public readonly Type Type;
-        public readonly int Id;
-        public readonly ulong BloomFlag;
-        public readonly int Order;
-        public readonly Type[] Dependencies;
+        internal readonly Type Type;
+        internal readonly int Id;
+        internal readonly ulong BloomFlag;
+        internal readonly int Order;
+        internal readonly Type[] Dependencies;
 
-        public TypeInfo(Type type, int id, ulong bloomFlag, int order, Type[] dependencies)
+        internal TypeInfo(Type type, int id, ulong bloomFlag, int order, Type[] dependencies)
         {
             Type = type;
             Id = id;
@@ -193,12 +193,12 @@ namespace Vena
             Dependencies = dependencies;
         }
 
-        public int Compare(TypeInfo x, TypeInfo y)
+        int IComparer<TypeInfo>.Compare(TypeInfo x, TypeInfo y)
         {
             return x.Id.CompareTo(y.Id);
         }
 
-        public int CompareTo(TypeInfo other)
+        int IComparable<TypeInfo>.CompareTo(TypeInfo other)
         {
             return Id.CompareTo(other.Id);
         }
@@ -228,15 +228,15 @@ namespace Vena
             _typeMap = new Dictionary<Type, TypeWrap>();
         }
 
-        public static class type<T>
+        internal static class type<T>
         {
-            public static readonly int Id;
+            internal static readonly int Id;
 
-            public static readonly ulong BloomFlag;
+            internal static readonly ulong BloomFlag;
 
-            public static readonly TypeInfo Info;
+            internal static readonly TypeInfo Info;
 
-            public static readonly int Order;
+            internal static readonly int Order;
 
             static type()
             {
@@ -261,7 +261,7 @@ namespace Vena
         {
             private static int _typesCount;
 
-            public readonly TypeInfo Info;
+            internal readonly TypeInfo Info;
 
             public TypeWrap(Type type)
             {
@@ -285,7 +285,7 @@ namespace Vena
             }
         }
 
-        public static ref readonly TypeInfo GetTypeInfo(Type type)
+        internal static ref readonly TypeInfo GetTypeInfo(Type type)
         {
             if (!_typeMap.TryGetValue(type, out TypeWrap wrap))
             {
@@ -314,7 +314,7 @@ namespace Vena
             return ref bucket.Get(id.index);
         }
 
-        protected static ArchetypeId Register(ref TypeInfo[] types, ulong bloomFlag)
+        internal static ArchetypeId Register(ref TypeInfo[] types, ulong bloomFlag)
         {
             //using var _ = new TimeWatch(" ------- Archetype.Register ");
 
@@ -371,24 +371,28 @@ namespace Vena
             public static readonly ArchetypeInfo Default =
                 new ArchetypeInfo(new List<TypeInfo>(), 0, ArchetypeId.Invalid);
 
-            public readonly ArchetypeId Id;
-            public readonly ulong BloomFlag;
-            public readonly TypeInfo[] Types;
-            public readonly HashSet<int> TypeSet;
+            internal readonly ArchetypeId Id;
+            internal readonly ulong BloomFlag;
+            internal readonly TypeInfo[] Types;
+            internal readonly Type[] ComponentTypes;
+            internal readonly HashSet<int> TypeSet;
 
-            public ArchetypeInfo(List<TypeInfo> types, ulong bloomFlag, ArchetypeId id)
+            internal ArchetypeInfo(List<TypeInfo> types, ulong bloomFlag, ArchetypeId id)
             {
                 Id = id;
                 BloomFlag = bloomFlag;
                 Types = types.ToArray();
+                ComponentTypes = new Type[Types.Length];
                 TypeSet = new HashSet<int>();
-                foreach (var type in types)
+                for (int i = 0; i < Types.Length; i++)
                 {
+                    ref readonly var type = ref Types[i];
+                    ComponentTypes[i] = type.Type;
                     TypeSet.Add(type.Id);
                 }
             }
 
-            public bool Match(List<TypeInfo> types, ulong bloomFlags)
+            internal bool Match(List<TypeInfo> types, ulong bloomFlags)
             {
                 if (BloomFlag != bloomFlags)
                     return false;
@@ -416,7 +420,7 @@ namespace Vena
 
             private ArchetypeInfo[] _archetypes;
 
-            public int Count => _count;
+            internal int Count => _count;
 
             internal Bucket()
             {
@@ -425,7 +429,7 @@ namespace Vena
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public ArchetypeId Add(List<TypeInfo> types, ulong bloomFlag, int bucketIdx)
+            internal ArchetypeId Add(List<TypeInfo> types, ulong bloomFlag, int bucketIdx)
             {
                 if (_count >= _archetypes.Length)
                 {
@@ -441,7 +445,7 @@ namespace Vena
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public ArchetypeId Match(List<TypeInfo> types, ulong bloomFlag)
+            internal ArchetypeId Match(List<TypeInfo> types, ulong bloomFlag)
             {
                 for (int i = 0; i < _count; i++)
                 {
@@ -456,7 +460,7 @@ namespace Vena
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public ref readonly ArchetypeInfo Get(int index)
+            internal ref readonly ArchetypeInfo Get(int index)
             {
                 if (index < 0 || index >= _count)
                     throw new ArgumentOutOfRangeException(nameof(index), $"Invalid Archetype index: {index}");
@@ -466,11 +470,18 @@ namespace Vena
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static IReadOnlyCollection<TypeInfo> GetTypes(in ArchetypeId id)
+        internal static IReadOnlyCollection<TypeInfo> GetTypeInfos(in ArchetypeId id)
         {
             ref readonly var typeInfo = ref Get(id);
 
             return typeInfo.Types;
+        }
+
+        internal static IReadOnlyCollection<Type> GetTypes(in ArchetypeId id)
+        {
+            ref readonly var typeInfo = ref Get(id);
+
+            return typeInfo.ComponentTypes;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -840,7 +851,7 @@ namespace Vena
         /// </summary>
         /// <param name="types"></param>
         /// <returns></returns>
-        public static ArchetypeId RegisterTypes(IReadOnlyCollection<TypeInfo> types)
+        internal static ArchetypeId RegisterTypes(IReadOnlyCollection<TypeInfo> types)
         {
             //using var _ = new TimeWatch(" ------- Archetype.RegisterTypes1 ");
 
@@ -936,8 +947,8 @@ namespace Vena
     public sealed class Archetype<T> : Archetype
     {
         public static readonly ArchetypeId Id;
-        public static readonly TypeInfo[] Types;
-        public static readonly ulong BloomFlag;
+        internal static readonly TypeInfo[] Types;
+        internal static readonly ulong BloomFlag;
 
         static Archetype()
         {
@@ -954,8 +965,8 @@ namespace Vena
     public sealed class Archetype<T1, T2> : Archetype
     {
         public static readonly ArchetypeId Id;
-        public static readonly TypeInfo[] Types;
-        public static readonly ulong BloomFlag;
+        internal static readonly TypeInfo[] Types;
+        internal static readonly ulong BloomFlag;
 
         static Archetype()
         {
@@ -972,8 +983,8 @@ namespace Vena
     public sealed class Archetype<T1, T2, T3> : Archetype
     {
         public static readonly ArchetypeId Id;
-        public static readonly TypeInfo[] Types;
-        public static readonly ulong BloomFlag;
+        internal static readonly TypeInfo[] Types;
+        internal static readonly ulong BloomFlag;
 
         static Archetype()
         {
@@ -991,8 +1002,8 @@ namespace Vena
     public sealed class Archetype<T1, T2, T3, T4> : Archetype
     {
         public static readonly ArchetypeId Id;
-        public static readonly TypeInfo[] Types;
-        public static readonly ulong BloomFlag;
+        internal static readonly TypeInfo[] Types;
+        internal static readonly ulong BloomFlag;
 
         static Archetype()
         {
@@ -1011,8 +1022,8 @@ namespace Vena
     public sealed class Archetype<T1, T2, T3, T4, T5> : Archetype
     {
         public static readonly ArchetypeId Id;
-        public static readonly TypeInfo[] Types;
-        public static readonly ulong BloomFlag;
+        internal static readonly TypeInfo[] Types;
+        internal static readonly ulong BloomFlag;
 
         static Archetype()
         {
@@ -1033,8 +1044,8 @@ namespace Vena
     public sealed class Archetype<T1, T2, T3, T4, T5, T6> : Archetype
     {
         public static readonly ArchetypeId Id;
-        public static readonly TypeInfo[] Types;
-        public static readonly ulong BloomFlag;
+        internal static readonly TypeInfo[] Types;
+        internal static readonly ulong BloomFlag;
 
         static Archetype()
         {
@@ -1056,8 +1067,8 @@ namespace Vena
     public sealed class Archetype<T1, T2, T3, T4, T5, T6, T7> : Archetype
     {
         public static readonly ArchetypeId Id;
-        public static readonly TypeInfo[] Types;
-        public static readonly ulong BloomFlag;
+        internal static readonly TypeInfo[] Types;
+        internal static readonly ulong BloomFlag;
 
         static Archetype()
         {
@@ -1080,8 +1091,8 @@ namespace Vena
     public sealed class Archetype<T1, T2, T3, T4, T5, T6, T7, T8> : Archetype
     {
         public static readonly ArchetypeId Id;
-        public static readonly TypeInfo[] Types;
-        public static readonly ulong BloomFlag;
+        internal static readonly TypeInfo[] Types;
+        internal static readonly ulong BloomFlag;
 
         static Archetype()
         {
@@ -1105,8 +1116,8 @@ namespace Vena
     public sealed class Archetype<T1, T2, T3, T4, T5, T6, T7, T8, T9> : Archetype
     {
         public static readonly ArchetypeId Id;
-        public static readonly TypeInfo[] Types;
-        public static readonly ulong BloomFlag;
+        internal static readonly TypeInfo[] Types;
+        internal static readonly ulong BloomFlag;
 
         static Archetype()
         {
@@ -1132,8 +1143,8 @@ namespace Vena
     public sealed class Archetype<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> : Archetype
     {
         public static readonly ArchetypeId Id;
-        public static readonly TypeInfo[] Types;
-        public static readonly ulong BloomFlag;
+        internal static readonly TypeInfo[] Types;
+        internal static readonly ulong BloomFlag;
 
         static Archetype()
         {

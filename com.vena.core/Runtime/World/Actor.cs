@@ -240,9 +240,9 @@ namespace Vena
                 return false;
             }
 
-            t1 = default;
-            t2 = default;
-            return true;
+            t1 = _componentBlock.Get<T1>(true);
+            t2 = _componentBlock.Get<T2>(true);
+            return t1 != null && t2 != null;
         }
 
         public bool TryGetComponents<T1, T2, T3>(out T1 t1, out T2 t2, out T3 t3)
@@ -256,10 +256,10 @@ namespace Vena
                 return false;
             }
 
-            t1 = default;
-            t2 = default;
-            t3 = default;
-            return true;
+            t1 = _componentBlock.Get<T1>(true);
+            t2 = _componentBlock.Get<T2>(true);
+            t3 = _componentBlock.Get<T3>(true);
+            return t1 != null && t2 != null && t3 != null;
         }
 
         public bool TryGetComponents<T1, T2, T3, T4>(out T1 t1, out T2 t2, out T3 t3, out T4 t4)
@@ -275,11 +275,11 @@ namespace Vena
             }
 
 
-            t1 = default;
-            t2 = default;
-            t3 = default;
-            t4 = default;
-            return true;
+            t1 = _componentBlock.Get<T1>(true);
+            t2 = _componentBlock.Get<T2>(true);
+            t3 = _componentBlock.Get<T3>(true);
+            t4 = _componentBlock.Get<T4>(true);
+            return t1 != null && t2 != null && t3 != null && t4 != null;
         }
 
         public bool TryGetComponents<T1, T2, T3, T4, T5>(out T1 t1, out T2 t2, out T3 t3, out T4 t4, out T5 t5)
@@ -296,12 +296,12 @@ namespace Vena
             }
 
 
-            t1 = default;
-            t2 = default;
-            t3 = default;
-            t4 = default;
-            t5 = default;
-            return true;
+            t1 = _componentBlock.Get<T1>(true);
+            t2 = _componentBlock.Get<T2>(true);
+            t3 = _componentBlock.Get<T3>(true);
+            t4 = _componentBlock.Get<T4>(true);
+            t5 = _componentBlock.Get<T5>(true);
+            return t1 != null && t2 != null && t3 != null && t4 != null && t5 != null;
         }
 
         public sealed override void CopyTo(ObjectWithId target)

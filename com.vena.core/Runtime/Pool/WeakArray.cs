@@ -18,29 +18,59 @@ namespace Vena
 
         private Array _array;
 
+        private int _token;
+
         public WeakArray(int capacity)
         {
             _capacity = capacity;
 
             _array = default;
+
+            _token = 0;
         }
 
         public int Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => null != _array ? _array.array.Length : 0;
+            get => TryGetArray(out var array) ? array.array.Length : 0;
         }
 
         public void Clear()
         {
-            if (null != _array)
+            if (TryGetArray(out var array))
             {
-                var array = _array;
-
                 _array = default;
+                _token = 0;
 
                 PoolManager.Return<Array, int>(array);
             }
+        }
+
+        private bool TryGetArray(out Array array)
+        {
+            if (_array != null && PoolManager.GetToken<Array, int>(_array) == _token)
+            {
+                array = _array;
+                return true;
+            }
+
+            _array = default;
+            _token = 0;
+            array = default;
+            return false;
+        }
+
+        private Array GetOrRentArray()
+        {
+            if (TryGetArray(out var array))
+            {
+                return array;
+            }
+
+            array = PoolManager.Rent<Array, int>(_capacity);
+            _array = array;
+            _token = PoolManager.GetToken<Array, int>(array);
+            return array;
         }
 
         public T this[int index]
@@ -53,9 +83,9 @@ namespace Vena
                     throw new IndexOutOfRangeException();
                 }
 
-                if (_array != null)
+                if (TryGetArray(out var array))
                 {
-                    return _array.array[index];
+                    return array.array[index];
                 }
 
                 return default;
@@ -68,18 +98,16 @@ namespace Vena
                     throw new IndexOutOfRangeException();
                 }
 
-                _array ??= PoolManager.Rent<Array, int>(_capacity);
-
-                _array.array[index] = value;
+                GetOrRentArray().array[index] = value;
             }
         }
 
         public T[] ToArray()
         {
-            if (_array != null)
+            if (TryGetArray(out var array))
             {
-                T[] toArray = new T[_array.array.Length];
-                System.Array.Copy(_array.array, toArray, _array.array.Length);
+                T[] toArray = new T[array.array.Length];
+                System.Array.Copy(array.array, toArray, array.array.Length);
                 return toArray;
             }
 
@@ -95,13 +123,13 @@ namespace Vena
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyTo(int arrayIndex, List<T> destination, int length)
         {
-            if (_array != null)
+            if (TryGetArray(out var array))
             {
-                length = System.Math.Min(arrayIndex + length, _array.array.Length);
+                length = System.Math.Min(arrayIndex + length, array.array.Length);
 
                 for (int i = arrayIndex; i < length; i++)
                 {
-                    destination.Add(_array.array[i]);
+                    destination.Add(array.array[i]);
                 }
             }
         }
@@ -116,17 +144,23 @@ namespace Vena
         public static void Copy(in WeakArray<T> source, int sourceIndex, ref WeakArray<T> destination,
             int destinationIndex, int length)
         {
-            if (source._array != null)
+            if (source._array != null && PoolManager.GetToken<Array, int>(source._array) == source._token)
             {
-                if (destination._array != null)
+                if (destinationIndex < 0 || length < 0 || destinationIndex + length > destination._capacity)
+                {
+                    throw new IndexOutOfRangeException($"destination capacity is not enough");
+                }
+
+                if (destination.TryGetArray(out var destinationArray))
                 {
                     var sourceArray = source._array;
-                    var destinationArray = destination._array;
                     System.Array.Copy(sourceArray.array, sourceIndex, destinationArray.array, destinationIndex, length);
                     return;
                 }
 
-                throw new IndexOutOfRangeException($"destination array is null");
+                destinationArray = destination.GetOrRentArray();
+                System.Array.Copy(source._array.array, sourceIndex, destinationArray.array, destinationIndex, length);
+                return;
             }
 
             throw new IndexOutOfRangeException($"source array is null");
@@ -134,11 +168,10 @@ namespace Vena
 
         public void Dispose()
         {
-            if (null != _array)
+            if (TryGetArray(out var array))
             {
-                var array = _array;
-
                 _array = default;
+                _token = 0;
 
                 PoolManager.Return<Array, int>(array);
             }
@@ -146,9 +179,9 @@ namespace Vena
 
         public Enumerator GetEnumerator()
         {
-            if (null != _array)
+            if (TryGetArray(out var array))
             {
-                return new Enumerator(_array, 0, _array.array.Length);
+                return new Enumerator(array, 0, array.array.Length);
             }
 
             return new Enumerator(Array.Empty, 0, 0);

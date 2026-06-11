@@ -10,22 +10,22 @@ using System;
 namespace Vena
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-    public sealed class AfterSystemAttribute : Attribute
+    internal sealed class AfterSystemAttribute : Attribute
     {
-        public readonly Type SystemType;
+        internal readonly Type SystemType;
 
-        public AfterSystemAttribute(Type systemType)
+        internal AfterSystemAttribute(Type systemType)
         {
             SystemType = systemType;
         }
     }
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-    public sealed class BeforeSystemAttribute : Attribute
+    internal sealed class BeforeSystemAttribute : Attribute
     {
-        public readonly Type SystemType;
+        internal readonly Type SystemType;
 
-        public BeforeSystemAttribute(Type systemType)
+        internal BeforeSystemAttribute(Type systemType)
         {
             SystemType = systemType;
         }
@@ -43,11 +43,11 @@ namespace Vena
     }
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-    public sealed class SystemOrderAttribute : Attribute
+    internal sealed class SystemOrderAttribute : Attribute
     {
-        public readonly int Order;
+        internal readonly int Order;
 
-        public SystemOrderAttribute(int order)
+        internal SystemOrderAttribute(int order)
         {
             Order = order;
         }
