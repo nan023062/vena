@@ -12,10 +12,10 @@ Vena is also a summary of my personal game-development experience. The design an
 
 ```
 vena/
-├── com.vena.core        Core package: ECS-style world, actor/component/system primitives,
-│                        collections, object pool, math, profiler, task graph, FSM, job balance.
-├── com.vena.framework   Framework package built on Vena Core:
-│                        GameWorld, state/module/service/command, character, scene, GUI, extensions.
+├── com.vena.core        Core package. Collections, pool, profiler, FlowGraph, FSM, job balance.
+├── com.vena.math        Math package. Vectors, matrices, quaternion, ray, rectangle, transform helpers.
+├── com.vena.world       World package. World, actor/component/system, controller, lifecycle primitives.
+├── com.vena.framework   Framework package. GameWorld, state/module/service/command, character, scene, GUI.
 └── unity-project        Development and verification Unity project for packages in this repo.
 ```
 
@@ -23,13 +23,18 @@ vena/
 
 ```
 com.vena.core           no package dependency
+com.vena.math           no package dependency
+com.vena.world          no package dependency
 com.vena.framework      depends on com.vena.core
+                        depends on com.vena.world
                         depends on com.unity.ugui
 ```
 
-`com.vena.core` can be used on its own.
+`com.vena.core`, `com.vena.math`, and `com.vena.world` can be used on their own.
 
-`com.vena.framework` is a higher-level Unity game framework package and should be installed together with `com.vena.core`.
+`com.vena.world` provides the World / Actor / Component / System-style runtime organization layer. It does not depend on UnityEngine or any other Vena package. Unity projects can forward `Time.deltaTime` or `Time.time` from MonoBehaviour, while non-Unity applications can use the built-in time source or drive updates manually.
+
+`com.vena.framework` is a higher-level Unity game framework package and should be installed together with `com.vena.core` and `com.vena.world`.
 
 ## Install From Git
 
@@ -45,18 +50,39 @@ Core only:
 }
 ```
 
+Math only:
+
+```json
+{
+  "dependencies": {
+    "com.vena.math": "https://github.com/nan023062/vena.git?path=/com.vena.math#main"
+  }
+}
+```
+
+World:
+
+```json
+{
+  "dependencies": {
+    "com.vena.world": "https://github.com/nan023062/vena.git?path=/com.vena.world#main"
+  }
+}
+```
+
 Framework:
 
 ```json
 {
   "dependencies": {
     "com.vena.core": "https://github.com/nan023062/vena.git?path=/com.vena.core#main",
+    "com.vena.world": "https://github.com/nan023062/vena.git?path=/com.vena.world#main",
     "com.vena.framework": "https://github.com/nan023062/vena.git?path=/com.vena.framework#main"
   }
 }
 ```
 
-> `com.vena.framework` declares `com.vena.core` as a dependency, but when installing from Git paths it is recommended to declare Core explicitly in the project manifest so Unity does not try to resolve the personal package from a default registry.
+> When installing dependency-chain packages from Git paths, it is recommended to declare the required Vena packages explicitly in the project manifest so Unity does not try to resolve personal packages from a default registry.
 
 ## Local Development Install
 
@@ -66,6 +92,8 @@ For local development, use `file:` references:
 {
   "dependencies": {
     "com.vena.core": "file:../../com.vena.core",
+    "com.vena.math": "file:../../com.vena.math",
+    "com.vena.world": "file:../../com.vena.world",
     "com.vena.framework": "file:../../com.vena.framework"
   }
 }
@@ -78,18 +106,35 @@ Paths are relative to the Unity project's `Packages/manifest.json`; adjust them 
 ### com.vena.core
 
 Core runtime foundations for Unity game development:
-- World / Actor / Component / System-style runtime primitives
 - Collections and non-alloc containers
 - Object pool and weak pooled helper structures
 - TaskGraph / TaskClip primitives
 - HierarchicalFsm
 - JobBalance stepped job scheduler
-- `Vena.Math` math types and utilities
 - Profiler / Time / GC watch helpers
+
+### com.vena.math
+
+Standalone math types and utilities for Unity game development:
+- Vector2 / Vector3 / Vector4
+- Matrix / Matrix2D
+- Quaternion
+- Ray / Rectangle / AABB
+- Point / Hierarchy / Transformation
+- MathHelper utilities
+
+### com.vena.world
+
+Standalone runtime world and object organization layer for Unity and non-Unity environments:
+- World / Actor / Component / System-style runtime primitives
+- Controller, filter, and archetype management
+- Lifecycle interfaces and PairwiseLifeCycle
+- Attributes for injection, ordering, requirements, and system markers
+- No UnityEngine references; host applications can manually drive Update / LateUpdate / application events
 
 ### com.vena.framework
 
-Unity-bound game framework layer built on `com.vena.core`:
+Unity-bound game framework layer built on `com.vena.core` and `com.vena.world`:
 - GameWorld
 - GameState / GameLevel / GameMode / Transition
 - Module / Service / Command

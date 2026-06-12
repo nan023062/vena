@@ -1,0 +1,18 @@
+{
+  "name": "com.vena.math",
+  "version": "1.0.0",
+  "displayName": "Vena Math",
+  "description": "Math types and utilities for Unity game development, including vectors, matrices, quaternions, rays, rectangles, transforms, and helpers.",
+  "unity": "2021.3",
+  "license": "MulanPSL-2.0",
+  "author": {
+    "name": "nan023062",
+    "url": "https://github.com/nan023062"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nan023062/vena.git",
+    "directory": "com.vena.math"
+  },
+  "dependencies": {}
+}

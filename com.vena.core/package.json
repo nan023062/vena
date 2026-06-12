@@ -2,7 +2,7 @@
   "name": "com.vena.core",
   "version": "1.0.0",
   "displayName": "Vena Core",
-  "description": "Core ECS-style world, actor/component/system primitives, collections, pool, profiler, FlowGraph, HierarchicalFsm.",
+  "description": "Core runtime foundations for the Vena Unity packages: collections, pool, profiler, FlowGraph, HierarchicalFsm, and job balance utilities.",
   "unity": "2021.3",
   "license": "MulanPSL-2.0",
   "author": {

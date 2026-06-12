@@ -1,0 +1,41 @@
+木兰宽松许可证, 第2版
+Mulan Permissive Software License, Version 2 (Mulan PSL v2)
+
+Copyright (c) 2024 nan023062
+
+您可以自由地：
+复制、分发和使用该软件，为该软件分发更多副本，修改原始软件以创建衍生软件，以任何目的使用、复制、修改或分发该软件及其衍生软件，无论是否收费。
+
+前提是：
+您必须在源代码的副本中包含本许可证的副本，并在二进制分发版的文档和/或其他材料中包含本许可证的副本。
+
+如果您以源代码形式分发修改版，您必须：
+（a）保留原始代码中的版权声明、本许可证的副本，以及其中包含的免责声明；
+（b）在修改版的显著位置说明您修改了该文件，以及修改日期；
+（c）使用您自己的著作权声明，说明版权归属。
+
+免责声明：
+本软件按"原样"提供，不提供任何形式的担保，包括但不限于对商业价值和特定用途的适用性的保证。本软件的版权持有者或任何贡献者，均不对因使用本软件（包括因使用、数据或利润损失引起的直接、间接、偶发、特殊、典型或后续损失）承担责任，即使已被告知可能发生此类损失。
+
+---
+
+Mulan Permissive Software License, Version 2
+
+Copyright (c) 2024 nan023062
+
+Permission is hereby granted to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+persons to whom the Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

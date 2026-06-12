@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 // Vena Framework
-// Unity game framework layer built on Vena Core.
+// Unity game framework layer built on Vena Core and Vena World.
 // Copyright (c) Nan Li.
 // Licensed under the terms defined in the repository LICENSE file.
 // -----------------------------------------------------------------------------
@@ -26,9 +26,9 @@ namespace Vena.Framework
         private static UIRoot _UIRoot;
         private static IUILoader _UILoader;
         public static readonly int MaxCachePanel = 5;
-        private static readonly Dictionary<PanelStyle, PanelGroup<Type>> styleGroups = new Dictionary<PanelStyle, PanelGroup<Type>>();
-        private static readonly Dictionary<Type, PanelData> panels = new Dictionary<Type, PanelData>();
-        private static readonly Dictionary<Type, PanelData> cached = new Dictionary<Type, PanelData>();
+        static readonly Dictionary<PanelStyle, PanelGroup<Type>> styleGroups = new Dictionary<PanelStyle, PanelGroup<Type>>();
+        static readonly Dictionary<Type, PanelData> panels = new Dictionary<Type, PanelData>();
+        static readonly Dictionary<Type, PanelData> cached = new Dictionary<Type, PanelData>();
         
         #region Panel Manager
         

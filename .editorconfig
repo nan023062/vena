@@ -4,6 +4,14 @@ root = true
 file_header_template = -----------------------------------------------------------------------------\nVena Core\nCore primitives for the Vena open-source Unity framework.\nCopyright (c) Nan Li.\nLicensed under the terms defined in the repository LICENSE file.\n-----------------------------------------------------------------------------
 dotnet_diagnostic.IDE0073.severity = suggestion
 
+[com.vena.math/**/*.cs]
+file_header_template = -----------------------------------------------------------------------------\nVena Math\nMath types and utilities for the Vena open-source Unity framework.\nCopyright (c) Nan Li.\nLicensed under the terms defined in the repository LICENSE file.\n-----------------------------------------------------------------------------
+dotnet_diagnostic.IDE0073.severity = suggestion
+
+[com.vena.world/**/*.cs]
+file_header_template = -----------------------------------------------------------------------------\nVena World\nEngine-agnostic world and actor runtime primitives for Vena.\nCopyright (c) Nan Li.\nLicensed under the terms defined in the repository LICENSE file.\n-----------------------------------------------------------------------------
+dotnet_diagnostic.IDE0073.severity = suggestion
+
 [com.vena.framework/**/*.cs]
-file_header_template = -----------------------------------------------------------------------------\nVena Framework\nUnity game framework layer built on Vena Core.\nCopyright (c) Nan Li.\nLicensed under the terms defined in the repository LICENSE file.\n-----------------------------------------------------------------------------
+file_header_template = -----------------------------------------------------------------------------\nVena Framework\nUnity game framework layer built on Vena Core and Vena World.\nCopyright (c) Nan Li.\nLicensed under the terms defined in the repository LICENSE file.\n-----------------------------------------------------------------------------
 dotnet_diagnostic.IDE0073.severity = suggestion

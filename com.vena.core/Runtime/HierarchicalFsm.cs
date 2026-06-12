@@ -177,6 +177,7 @@ namespace Vena
         protected abstract void OnTransitStart();
         
         protected abstract void OnTransitEnd();
+        
         protected float LimitTime = 20f;
     }
 
@@ -278,14 +279,18 @@ namespace Vena
                 throw new ArgumentOutOfRangeException($"FSMStateMachine.Start() defaultStateIndex[{defaultStateIndex}] out of range !!");
             
             Running = true;
+            
             _currentTransition = null;
+            
             SetState(_states[defaultStateIndex]);
         }
         
         public void Stop()
         {
             if (!Running) return;
+            
             Running = false;
+            
             SetState(null);
         }
 
@@ -299,7 +304,9 @@ namespace Vena
                 if (_currentTransition.Transition(time, deltaTime))
                 {
                     _currentTransition.TransitEnd();
+                    
                     _stateMap.TryGetValue(_currentTransition.Second, out var newState);
+                    
                     _currentTransition = null;
                     
                     //DebugSystem.Assert(LogCategory.GameLogic, newState != null);
@@ -311,18 +318,24 @@ namespace Vena
             if (null == _currentTransition && null != _currentStateTransitions)
             {
                 int length = _currentStateTransitions.Count;
+                
                 for (int i = 0; i < length; i++)
                 {
                     var transition = _currentStateTransitions[i];
                     
                     // if transit condition satisfy, active this transition
                     IFSMState nextState = _stateMap[transition.Second];
+                    
                     if (transition.IsSatisfy(actor, _currentState, nextState))
                     {
                         _currentTransition = transition;
+                        
                         _currentTransition.TransitStart(actor, _currentState, nextState);
+                        
                         _currentState.TransitExit(nextState);
+                        
                         nextState.TransitEnter(_currentState);
+                        
                         break;
                     }
                 }
@@ -340,19 +353,26 @@ namespace Vena
             if (_currentState == newState)  return false;
             
             var oldState = _currentState;
+            
             if (oldState != null)
             {
                 oldState.StateExit();
+                
                 actor.OnFsMachineExitState(oldState);
             }
             
             _currentState = null;
+            
             _currentState = newState;
+            
             if (_currentState != null)
             {
                 _transitionMap.TryGetValue(_currentState.GetType(), out _currentStateTransitions);
+                
                 _currentState.StateEnter();
+                
                 actor.OnFsMachineEnterState(_currentState);
+                
                 return true;
             }
             
@@ -362,22 +382,27 @@ namespace Vena
         public bool SetState(IFSMState newState)
         {
             var oldState = _currentState;
+            
             if (newState == oldState) return false;
             
             if (null != _currentTransition)
             {
                 _currentTransition.TransitEnd();
+                
                 _currentTransition = null;
             }
             
             oldState?.TransitExit(newState);
+            
             newState?.TransitEnter(oldState);
+            
             return _SwitchState(newState);
         }
         
         public bool SwitchState<TState>() where  TState : class, IFSMState
         {
             var newState = GetState<TState>();
+            
             if (null == newState)
             {
                 throw new Exception($"newState[{typeof(TState).Name}] == null !!");
@@ -389,6 +414,7 @@ namespace Vena
         public bool SwitchState(int stateIndex)
         {
             var newState = _states[stateIndex];
+            
             if (null == newState)
             {
                 throw new Exception($"index of {stateIndex} == null !!");
@@ -428,6 +454,7 @@ namespace Vena
     public abstract class FSMComplex<T> : IFSMComplex where T : class, IFSMActor
     {
         private T _actor;
+        
         public readonly FSMStateMachine<T> fsMachine;
         
         public T actor => _actor;
@@ -477,6 +504,7 @@ namespace Vena
         void IFSMState.Tick(float time, float deltaTime)
         {
             OnTick(time, deltaTime);
+            
             fsMachine.Tick(time, deltaTime);
         }
         

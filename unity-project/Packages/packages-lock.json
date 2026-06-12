@@ -95,12 +95,25 @@
       "source": "local",
       "dependencies": {}
     },
+    "com.vena.math": {
+      "version": "file:../../com.vena.math",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
+    "com.vena.world": {
+      "version": "file:../../com.vena.world",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
     "com.vena.framework": {
       "version": "file:../../com.vena.framework",
       "depth": 0,
       "source": "local",
       "dependencies": {
         "com.vena.core": "1.0.0",
+        "com.vena.world": "1.0.0",
         "com.unity.ugui": "1.0.0"
       }
     },

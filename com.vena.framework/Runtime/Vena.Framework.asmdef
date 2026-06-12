@@ -2,7 +2,8 @@
     "name": "Vena.Framework",
     "rootNamespace": "Vena.Framework",
     "references": [
-        "Vena.Core"
+        "Vena.Core",
+        "Vena.World"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

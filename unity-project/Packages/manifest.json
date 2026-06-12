@@ -1,6 +1,8 @@
 {
   "dependencies": {
     "com.vena.core":             "file:../../com.vena.core",
+    "com.vena.math":             "file:../../com.vena.math",
+    "com.vena.world":            "file:../../com.vena.world",
     "com.vena.framework":        "file:../../com.vena.framework",
     "com.unity.collab-proxy": "1.5.7",
     "com.unity.ide.rider": "2.0.7",

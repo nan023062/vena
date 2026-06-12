@@ -1,7 +1,7 @@
 {
     "name": "Vena.Framework.Editor",
     "rootNamespace": "Vena.UnityExtensions",
-    "references": ["Vena.Framework", "Vena.Core"],
+    "references": ["Vena.Framework", "Vena.Core", "Vena.World"],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
