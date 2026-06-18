@@ -1,0 +1,18 @@
+{
+  "name": "com.vena.blockly",
+  "version": "1.0.0",
+  "displayName": "Vena Blockly",
+  "description": "Visual scripting block graph runtime for the Vena framework.",
+  "unity": "2021.3",
+  "license": "MulanPSL-2.0",
+  "author": {
+    "name": "nan023062",
+    "url": "https://github.com/nan023062"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nan023062/vena.git",
+    "directory": "com.vena.blockly"
+  },
+  "dependencies": {}
+}

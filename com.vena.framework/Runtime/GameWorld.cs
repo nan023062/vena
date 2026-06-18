@@ -9,6 +9,7 @@ using System.Linq;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+// ReSharper disable All
 
 namespace Vena.Framework
 {

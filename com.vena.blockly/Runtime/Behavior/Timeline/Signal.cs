@@ -1,0 +1,62 @@
+using System;
+
+namespace Vena.Blockly
+{
+
+    internal interface ISignalObject : ITimelineObject
+    {
+        void Execute();
+    }
+
+    /// <summary>
+    /// Expression 驱动的信号源数据（可视化配置路径）
+    /// </summary>
+    [UgcSource("时间线/信号", typeof(Signal.Object))]
+    public sealed class Signal : IBlocklySource, IBlocklySerializable
+    {
+        public ulong Guid { get; set; } = 0;
+
+        [ExpressionSignature]
+        [UgcSourceProperty("表达式", 1)]
+        public LogicGraph source;
+
+        public void Serialize(IBlocklySerializer writer) { }
+
+        public void Deserialize(IBlocklySerializer reader) { }
+
+        internal ISignalObject CreateSignalObject(Timeline timeline)
+        {
+            return new Object(timeline, this);
+        }
+
+        sealed class Object : ISignalObject
+        {
+            private LogicGraph.Blockly _blockly;
+
+            private Signal _signal;
+
+            public Timeline timeline { get; private set; }
+
+            public Object(Timeline timeline, Signal source)
+            {
+                this.timeline = timeline;
+
+                _signal = source;
+
+                _blockly = timeline.blockly.CreateBlockly(_signal.source);
+            }
+
+            void ITimelineObject.OnDestroy()
+            {
+                timeline.blockly.DestroyBlockly(_blockly);
+
+                _blockly = null;
+            }
+
+            void ISignalObject.Execute()
+            {
+                _blockly.Invoke();
+            }
+        }
+    }
+}

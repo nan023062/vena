@@ -1,0 +1,248 @@
+namespace Vena.Blockly
+{
+
+    #region LogicSequence
+
+    [UgcSource("程序节点/控制/顺序执行", typeof(LogicSequence.Node))]
+    public sealed class LogicSequence : Expression
+    {
+        [UgcSourceProperty("语句列表", 1)]
+        public LogicGraph[] statements;
+
+        internal sealed class Node : ILogicNode
+        {
+            public LogicGraph.Blockly Blockly { get; private set; }
+            Blockly IBlock.scope => Blockly;
+            private LogicSequence _source;
+            private LogicGraph.Blockly[] _statements;
+
+            void ILogicNode.Init(LogicGraph.Blockly blockly, Expression source)
+            {
+                Blockly = blockly;
+                _source = (LogicSequence)source;
+                Initialize();
+            }
+
+            void ILogicNode.Evaluate()
+            {
+                if (_statements == null) return;
+                for (int i = 0; i < _statements.Length; i++)
+                {
+                    _statements[i]?.Invoke();
+                }
+            }
+
+            void IBlock.Destroy()
+            {
+                OnDestroy();
+                Blockly = null;
+                _source = null;
+            }
+
+            private void Initialize()
+            {
+                if (_source.statements != null)
+                {
+                    _statements = new LogicGraph.Blockly[_source.statements.Length];
+                    for (int i = 0; i < _source.statements.Length; i++)
+                    {
+                        _statements[i] = Blockly.CreateBlockly(_source.statements[i]);
+                    }
+                }
+            }
+
+            private void OnDestroy()
+            {
+                if (_statements != null)
+                {
+                    for (int i = 0; i < _statements.Length; i++)
+                    {
+                        Blockly.DestroyBlockly(_statements[i]);
+                    }
+                    _statements = null;
+                }
+            }
+        }
+    }
+
+    #endregion
+
+    #region LogicBranch
+
+    [UgcSource("程序节点/控制/条件分支", typeof(LogicBranch.Node))]
+    public sealed class LogicBranch : Expression
+    {
+        [ExpressionSignature(typeof(bool))]
+        [UgcSourceProperty("条件", 1)]
+        public LogicGraph condition;
+
+        [UgcSourceProperty("为真时", 2)]
+        public LogicGraph trueBranch;
+
+        [UgcSourceProperty("为假时", 3)]
+        public LogicGraph falseBranch;
+
+        internal sealed class Node : ILogicNode
+        {
+            public LogicGraph.Blockly Blockly { get; private set; }
+            Blockly IBlock.scope => Blockly;
+            private LogicBranch _source;
+            private LogicGraph.Blockly _condition;
+            private LogicGraph.Blockly _trueBranch;
+            private LogicGraph.Blockly _falseBranch;
+
+            void ILogicNode.Init(LogicGraph.Blockly blockly, Expression source)
+            {
+                Blockly = blockly;
+                _source = (LogicBranch)source;
+                Initialize();
+            }
+
+            void ILogicNode.Evaluate()
+            {
+                bool result = _condition.Call<bool>();
+                if (result)
+                    _trueBranch?.Invoke();
+                else
+                    _falseBranch?.Invoke();
+            }
+
+            void IBlock.Destroy()
+            {
+                OnDestroy();
+                Blockly = null;
+                _source = null;
+            }
+
+            private void Initialize()
+            {
+                _condition = Blockly.CreateBlockly(_source.condition);
+                _trueBranch = Blockly.CreateBlockly(_source.trueBranch);
+                _falseBranch = Blockly.CreateBlockly(_source.falseBranch);
+            }
+
+            private void OnDestroy()
+            {
+                Blockly.DestroyBlockly(_condition);
+                Blockly.DestroyBlockly(_trueBranch);
+                Blockly.DestroyBlockly(_falseBranch);
+                _condition = null;
+                _trueBranch = null;
+                _falseBranch = null;
+            }
+        }
+    }
+
+    #endregion
+
+    #region LogicGetVariable<T>
+
+    public abstract class LogicGetVariable<T> : Expression
+    {
+        [UgcSourceProperty("变量名", 1)]
+        public string variableName;
+
+        protected internal sealed class Node : ILogicNode
+        {
+            public LogicGraph.Blockly Blockly { get; private set; }
+            Blockly IBlock.scope => Blockly;
+            private LogicGetVariable<T> _source;
+
+            void ILogicNode.Init(LogicGraph.Blockly blockly, Expression source)
+            {
+                Blockly = blockly;
+                _source = (LogicGetVariable<T>)source;
+            }
+
+            void ILogicNode.Evaluate()
+            {
+                Blockly.Push<T>(Blockly.GetVariable<T>(_source.variableName));
+            }
+
+            void IBlock.Destroy()
+            {
+                Blockly = null;
+                _source = null;
+            }
+        }
+    }
+
+    [UgcSource("程序节点/变量/获取Int变量", typeof(LogicGetVariable<int>.Node))]
+    public sealed class LogicGetVariableInt : LogicGetVariable<int> { }
+
+    [UgcSource("程序节点/变量/获取Bool变量", typeof(LogicGetVariable<bool>.Node))]
+    public sealed class LogicGetVariableBool : LogicGetVariable<bool> { }
+
+    [UgcSource("程序节点/变量/获取Float变量", typeof(LogicGetVariable<float>.Node))]
+    public sealed class LogicGetVariableFloat : LogicGetVariable<float> { }
+
+    [UgcSource("程序节点/变量/获取String变量", typeof(LogicGetVariable<string>.Node))]
+    public sealed class LogicGetVariableString : LogicGetVariable<string> { }
+
+    #endregion
+
+    #region LogicSetVariable<T>
+
+    public abstract class LogicSetVariable<T> : Expression
+    {
+        [UgcSourceProperty("变量名", 1)]
+        public string variableName;
+
+        [UgcSourceProperty("值", 2)]
+        public LogicGraph value;
+
+        protected internal sealed class Node : ILogicNode
+        {
+            public LogicGraph.Blockly Blockly { get; private set; }
+            Blockly IBlock.scope => Blockly;
+            private LogicSetVariable<T> _source;
+            private LogicGraph.Blockly _value;
+
+            void ILogicNode.Init(LogicGraph.Blockly blockly, Expression source)
+            {
+                Blockly = blockly;
+                _source = (LogicSetVariable<T>)source;
+                Initialize();
+            }
+
+            void ILogicNode.Evaluate()
+            {
+                T result = _value.Call<T>();
+                Blockly.SetVariable<T>(_source.variableName, result);
+            }
+
+            void IBlock.Destroy()
+            {
+                OnDestroy();
+                Blockly = null;
+                _source = null;
+            }
+
+            private void Initialize()
+            {
+                _value = Blockly.CreateBlockly(_source.value);
+            }
+
+            private void OnDestroy()
+            {
+                Blockly.DestroyBlockly(_value);
+                _value = null;
+            }
+        }
+    }
+
+    [UgcSource("程序节点/变量/设置Int变量", typeof(LogicSetVariable<int>.Node))]
+    public sealed class LogicSetVariableInt : LogicSetVariable<int> { }
+
+    [UgcSource("程序节点/变量/设置Bool变量", typeof(LogicSetVariable<bool>.Node))]
+    public sealed class LogicSetVariableBool : LogicSetVariable<bool> { }
+
+    [UgcSource("程序节点/变量/设置Float变量", typeof(LogicSetVariable<float>.Node))]
+    public sealed class LogicSetVariableFloat : LogicSetVariable<float> { }
+
+    [UgcSource("程序节点/变量/设置String变量", typeof(LogicSetVariable<string>.Node))]
+    public sealed class LogicSetVariableString : LogicSetVariable<string> { }
+
+    #endregion
+
+}
