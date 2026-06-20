@@ -106,10 +106,15 @@
 
 ### 命名规则
 
-- `*Impl` 名 ： `<源类简名><成员名>Impl`，如 `InstanceTestMethodImpl`。Property setter / getter 划分 ： `<源类><属性名>Getter` / `<源类><属性名>Setter`。
-- `*Source` 名 ： `<源类简名><成员名>` 如 `InstanceTestMethod`（到该名应与原类不冲突；冲突 → 追加 `Source` 后缀。冲突検测交 codegen 静态举报。）
-- 嵌套 `Node` 不变：`*Source.Node`。
+- `*Impl` 名：`<源类简名><成员名>Impl`，**字面拼接、不做 trailing 裁剪**。
+  - 例：源类 `InstanceMethod` 的 `TestMethod` → `InstanceMethodTestMethodImpl`。
+  - Property setter / getter 划分：`<源类简名><属性名>Getter` / `<源类简名><属性名>Setter`（同样字面拼接、不裁剪）。
+- `*Source` 名：`<源类简名><成员名>`，字面拼接。
+  - 例：源类 `InstanceMethod` 的 `TestMethod` → `InstanceMethodTestMethod`。
+- 嵌套 `Node` 不变：`*Source.Node`（嵌在 `*Source` 内、名字字面为 `Node`）。
 - `[UgcSource]` 第一参 `menuPath` = `$"{UgcClass.displayName}/{UgcMethod.displayName}"`（UgcClass 上未标 → 取源类名）。Property 同样拼接。顶层手写项走原生 `"表达式图"` 这种不带 `/` 的 displayName，不受 codegen 控制。
+- **命名冲突**：同一程序集已有同名类型 → codegen **报错、不产出**；不静默追加后缀 / 不重命名。
+- 用户在 `[UgcMethod]` / `[UgcProperty]` 给出的 `displayName` **不参与类型名**；仅用于 UI 显示与 `menuPath` 拼接。
 
 ### Pop 顺序（§1 `UgcSourceProperty.order` 实例化规则）
 
@@ -133,7 +138,80 @@
 
 ## §4 IR 序列化格式契约
 
-待 Phase 2 第二刀落地后填。
+### §4.1 载体
+
+- IR 落地形态 = `GraphAsset`：`ScriptableObject` + 单字段 `[SerializeField] string _json`。
+- Unity 序列化只触发整串 `_json` 字段写盘 / round-trip；不参与字段级 diff、不依赖 Unity 的对象引用图。
+- 一个 `GraphAsset` = 一张图（`Behavior` 或 `Logic`）；不同图独立资产、独立 `_json`。
+
+### §4.2 顶层 Schema
+
+JSON 顶层对象固定 5 字段（顺序无关、键名固定）：
+
+| 键 | 类型 | 语义 |
+|------|------|------|
+| `schema` | `int` | IR 版本号；当前 = 1。breaking 变更必须升版。 |
+| `kind` | `"Behavior"` \| `"Logic"` | 图类型；Behavior = 控制图、Logic = 逻辑图（表达式图）。其他取值 → 反序列化报错。 |
+| `rootNodeGuid` | `Guid` (string) | 根节点 GUID；Behavior 图 = 入口节点、Logic 图 = 求值终点节点。 |
+| `nodes` | `NodeIR[]` | 节点列表，元素结构见 §4.3。 |
+| `edges` | `EdgeIR[]` | 边列表，元素结构见 §4.4。 |
+
+顶层不含 `version` / `meta` / `comment` 等附加字段；如需扩展走 §4.6 AOT 不变量与版本升级路径。
+
+### §4.3 Node 字段
+
+`NodeIR` 固定 4 字段：
+
+| 键 | 类型 | 语义 |
+|------|------|------|
+| `guid` | `Guid` (string) | 节点稳定身份；新建时分配、跨 round-trip 保留（§4.5）。 |
+| `sourceType` | `string` (AQN) | 节点 Source 类的程序集限定名（`Type.AssemblyQualifiedName` 的稳定子集：`Namespace.TypeName, AssemblyName`，不含版本/文化/公钥）。 |
+| `properties` | `KV[]`（`{key:string, value:json}`） | `[UgcSourceProperty]` 槽位的字面值或子节点引用；顺序按 `[UgcSourceProperty.order]` 升序、与 §1 / §2 锁的三者一致原则对齐。 |
+| `position` | `Vector2` (`{x:float, y:float}`) | 编辑器画布坐标；运行期忽略、仅供 Editor.UI 复原布局。 |
+
+`properties[].value` 表达子节点引用时 = `{nodeGuid: Guid}` 单字段对象；表达字面值时 = 原始 JSON 标量 / 对象。
+
+### §4.4 Edge 字段
+
+`EdgeIR` 固定 3 字段：
+
+| 键 | 类型 | 语义 |
+|------|------|------|
+| `from` | `PortRef` (`{nodeGuid:Guid, port:string}`) | 出端。 |
+| `to` | `PortRef` (`{nodeGuid:Guid, port:string}`) | 入端。 |
+| `wireKind` | `"Control"` \| `"Value"` | **显式无默认**；缺字段 / 其他取值 → 反序列化报错。 |
+
+`port` 字段语义：Control 端口 = 节点声明的具名出/入口（如 `"next"`、`"true"`、`"false"`）；Value 端口 = `[UgcSourceProperty]` 槽位名（与 §4.3 `properties[].key` 对齐）。
+
+### §4.5 round-trip 不变量
+
+1. **Guid 保留**：`FromJson(json) → ToJson` 后所有 `NodeIR.guid` 与原 json 完全一致；新建节点时分配的 Guid 不因 round-trip 改变。
+2. **字节级对称**：`ToJson(FromJson(json)) ≡ canonicalize(json)`。canonical 形态 = 顶层与 NodeIR / EdgeIR 字段固定顺序（§4.2 / §4.3 / §4.4 表内顺序）+ 紧凑分隔符 + UTF-8 无 BOM + 无尾随换行。Editor 写盘前调用 canonicalize；非 canonical 输入允许读、写出必为 canonical。
+3. **数组顺序保留**：`nodes[]` / `edges[]` / `properties[]` 顺序 round-trip 等价。`properties[]` 顺序由 `[UgcSourceProperty.order]` 决定（§4.3）。
+4. **未知字段拒绝**：节点 / 边 / 顶层出现表外字段 → 反序列化报错；不静默丢弃。
+
+### §4.6 AOT 不变量
+
+1. `sourceType` 解析仅限 codegen 产物 `*Source`（带 `[UgcSource]` + `[UgcGenerated]`）与手写 Source；不允许运行期反射构造任意 `Type`。
+2. `properties[].key` 必须能在 `sourceType` 的 `[UgcSourceProperty]` 槽位集合内静态匹配；未匹配 → 反序列化报错（不容错回填默认）。
+3. `properties[].value` 字面值类型必须能静态推断（由 `[UgcSourceProperty]` 字段类型锁定），不允许 `object` / 多态运行期分发。
+4. `EdgeIR.wireKind` 与 `from/to.port` 类型在静态期可推断（Control 端口集 / Value 端口集 codegen 期已知），AOT 不引入运行期端口类型字典查找。
+5. 反序列化路径不调 `Activator.CreateInstance(Type)`；走 `IBlocklyNodeFactory.Create<T>(IBlocklySource)` + codegen 产出的具型构造，AOT 平台可静态裁剪。
+
+### §4.7 接口
+
+```
+interface IBlocklyGraphSerializer
+{
+    string ToJson(GraphIR ir);
+    GraphIR FromJson(string json);
+}
+```
+
+- 归属：Editor 子模块（`Vena.Blockly.Editor`）、IR 编解码原语；Editor.UI 与 Runtime IR 加载器均消费。
+- **不复用** Runtime `IBlocklySerializer`：`IBlocklySerializer` = 字节流原语（host 通用持久化），`IBlocklyGraphSerializer` = IR 结构化编解码，二者输入域 / 输出域 / 变更原因均不同。
+- **不进父 §6 聚合门面**：`IBlocklyHost` 不持有 `IBlocklyGraphSerializer` 字段；Runtime 加载器从 `GraphAsset._json` 字符串通过本接口反序列化为 `GraphIR`、再交节点工厂构造。
+- 错误模式：所有 §4.2–§4.6 校验失败抛 `BlocklyIRSchemaException`（Editor 子模块定义）；调用方负责定位与上报，不静默修复。
 
 ## §5 编辑器入口契约
 

@@ -122,4 +122,3 @@ classDiagram
 ## Phase 3 锚
 
 Phase 3 = AOT（IR → 原生 C# 代码）。Phase 2 IR 设计须保 AOT 友好（节点连接静态可推断、避免运行时动态分发埋入 IR 形态）。
-

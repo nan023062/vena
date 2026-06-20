@@ -126,3 +126,7 @@ classDiagram
 
 - **Phase 2** = codegen（扫 `[UgcMethod]` / `[UgcProperty]` / `[UgcSource]` 注解导出 Impl 扩展代码）+ 编辑器配置工具
 
+## Phase 2 Ratchet
+
+- Phase 2 第二刀 = IR 序列化（JSON in SO）+ Runtime IR 加载器 + GraphView 双 wire 单画布 + Toolbox + Inspector + 调试通道 v0；不解冻父 §6。
+
