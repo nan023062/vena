@@ -1,93 +1,18 @@
-using System;
-
 namespace Vena.Blockly
 {
 
     /// <summary>
-    /// 变量访问器扩展方法。
-    /// 通过作用域链实现变量的读写：GetVariable 向上查找，SetVariable 写入当前作用域。
+    /// 变量访问器：保留 Blockly 主类的变量公开 API（GetVariable / SetVariable / HasVariable / ClearVariables），
+    /// 内部全部委托给 <see cref="ScopeChain"/> —— 业务方调用代码零修改。
     /// </summary>
     public abstract partial class Blockly
     {
-        public T GetVariable<T>(string name)
-        {
-            if (_variables != null && _variables.HasValue(name))
-            {
-                return _variables.GetValue<T>(name);
-            }
-            
-            if (_parent != null)
-            {
-                return _parent.GetVariable<T>(name);
-            }
-            
-            return default;
-        }
-        
-        public void SetVariable<T>(string name, T value)
-        {
-            Variables.SetValue(name, value);
-        }
-        
-        public bool HasVariable(string name)
-        {
-            if (_variables != null && _variables.HasValue(name))
-            {
-                return true;
-            }
-            
-            return _parent != null && _parent.HasVariable(name);
-        }
+        public T GetVariable<T>(string name) => Scope.GetVariable<T>(name);
 
-        public void ClearVariables()
-        {
-            _variables?.ClearValues();
-        }
+        public void SetVariable<T>(string name, T value) => Scope.SetVariable(name, value);
 
-        /// <summary>
-        /// 作用域变量存储，声明时检查整个作用域链是否重名
-        /// </summary>
-        sealed class ScopeVariables : IBlocklyVariableStorage
-        {
-            private readonly Blockly _scope;
+        public bool HasVariable(string name) => Scope.HasVariable(name);
 
-            private readonly IBlocklyVariableStorage _inner;
-
-            public ScopeVariables(Blockly scope)
-            {
-                _scope = scope;
-                _inner = _scope.Host.VariableStorageFactory.Create(scope);
-            }
-
-            public void SetValue<T>(string name, T value)
-            {
-                if (!_inner.HasValue(name) && _scope._parent != null && _scope._parent.HasVariable(name))
-                {
-                    throw new InvalidOperationException(
-                        $"Variable '{name}' already exists in a parent scope. Variable names must be unique across the entire scope chain.");
-                }
-                _inner.SetValue(name, value);
-            }
-
-            public void SetUValue(string name, IBoxedValue value)
-            {
-                if (!_inner.HasValue(name) && _scope._parent != null && _scope._parent.HasVariable(name))
-                {
-                    throw new InvalidOperationException(
-                        $"Variable '{name}' already exists in a parent scope. Variable names must be unique across the entire scope chain.");
-                }
-                _inner.SetUValue(name, value);
-            }
-
-            public T GetValue<T>(string name) => _inner.GetValue<T>(name);
-
-            public void GetValue(string name, IBoxedValue output) => _inner.GetValue(name, output);
-
-            public bool HasValue(string name) => _inner.HasValue(name);
-
-            public void ClearValues() => _inner.ClearValues();
-
-            public System.Collections.Generic.IReadOnlyDictionary<string, IBoxedValue> GetAllVariables() => _inner.GetAllVariables();
-        }
+        public void ClearVariables() => _scope?.ClearVariables();
     }
 }

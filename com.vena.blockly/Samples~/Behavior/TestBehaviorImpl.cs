@@ -10,10 +10,10 @@ namespace Vena.Blockly.Samples
             // DebugSystem.LogWarning( LogCategory.Framework, "测试行为/测试行为1... Start");
         }
 
-        public bool Tick(BehaviorGraph.Blockly graph, float deltaTime)
+        public BehaviorResult Tick(BehaviorGraph.Blockly graph, float deltaTime)
         {
             // DebugSystem.LogWarning( LogCategory.Framework, "测试行为/测试行为1... Tick");
-            return true;
+            return BehaviorResult.Done;
         }
 
         public void LateTick(BehaviorGraph.Blockly graph, float deltaTime)
@@ -67,10 +67,10 @@ namespace Vena.Blockly.Samples
             // DebugSystem.LogWarning( LogCategory.Framework, $"测试行为/测试行为2... Start, {message}");
         }
 
-        public bool Tick(BehaviorGraph.Blockly graph, float deltaTime)
+        public BehaviorResult Tick(BehaviorGraph.Blockly graph, float deltaTime)
         {
             // DebugSystem.LogWarning( LogCategory.Framework, $"测试行为/测试行为2... Tick, {message}");
-            return true;
+            return BehaviorResult.Done;
         }
 
         public void LateTick(BehaviorGraph.Blockly graph, float deltaTime)

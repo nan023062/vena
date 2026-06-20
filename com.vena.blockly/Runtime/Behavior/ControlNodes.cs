@@ -53,9 +53,9 @@ namespace Vena.Blockly
                 _selectedSource?.Start();
             }
 
-            protected override bool OnTick(float deltaTime)
+            protected override BehaviorResult OnTick(float deltaTime)
             {
-                if (null == _selectedSource) return true;
+                if (null == _selectedSource) return BehaviorResult.Done;
 
                 return _selectedSource.Tick(deltaTime);
             }
@@ -163,9 +163,9 @@ namespace Vena.Blockly
                 _selectedSource?.Start();
             }
 
-            protected override bool OnTick(float deltaTime)
+            protected override BehaviorResult OnTick(float deltaTime)
             {
-                if (null == _selectedSource) return true;
+                if (null == _selectedSource) return BehaviorResult.Done;
 
                 return _selectedSource.Tick(deltaTime);
             }
@@ -274,9 +274,9 @@ namespace Vena.Blockly
                 _selected?.Start();
             }
 
-            protected override bool OnTick(float deltaTime)
+            protected override BehaviorResult OnTick(float deltaTime)
             {
-                if (null == _selected) return true;
+                if (null == _selected) return BehaviorResult.Done;
 
                 return _selected.Tick(deltaTime);
             }
@@ -354,9 +354,9 @@ namespace Vena.Blockly
                 _behavior.Start();
             }
 
-            protected override bool OnTick(float deltaTime)
+            protected override BehaviorResult OnTick(float deltaTime)
             {
-                if (_running && _behavior.Tick(deltaTime))
+                if (_running && _behavior.Tick(deltaTime) != BehaviorResult.Running)
                 {
                     _behavior.Finish();
 
@@ -371,7 +371,7 @@ namespace Vena.Blockly
                         _running = true;
                     }
                 }
-                return !_running;
+                return _running ? BehaviorResult.Running : BehaviorResult.Done;
             }
 
             protected override void OnLateTick(float deltaTime)

@@ -30,7 +30,7 @@ namespace Vena.Blockly
 
         private object _subject;
 
-        private IBlocklyVariableStorage _variables;
+        private ScopeChain _scope;
 
         public IBlocklyHost Host
         {
@@ -50,7 +50,10 @@ namespace Vena.Blockly
             get => _subject ?? _parent?.Subject;
         }
 
-        public IBlocklyVariableStorage Variables => _variables ??= new ScopeVariables(this);
+        /// <summary>本作用域上的作用域链句柄。变量逻辑全部委托至此。</summary>
+        public ScopeChain Scope => _scope ??= new ScopeChain(this);
+
+        public IBlocklyVariableStorage Variables => Scope.Variables;
 
         public void Set(object subject, IBlocklyHost host = null)
         {
@@ -79,7 +82,8 @@ namespace Vena.Blockly
         public virtual void Destroy()
         {
             ClearVariables();
-            _variables = null;
+            _scope?.DropStorage();
+            _scope = null;
 
             ClearAllInstances();
             _host = null;
@@ -96,26 +100,26 @@ namespace Vena.Blockly
 
         protected readonly struct ExceptionCapture : IDisposable
         {
-            private readonly Blockly _scope;
+            private readonly Blockly _owner;
 
             public ExceptionCapture(Blockly scope)
             {
-                _scope = scope;
+                _owner = scope;
 
-                if (_scope._capturing)
+                if (_owner._capturing)
                 {
                     throw new InvalidOperationException("Cannot start an ExceptionCapture while it is capturing.");
                 }
 
-                _scope._capturing = true;
+                _owner._capturing = true;
             }
 
             public void Dispose()
             {
-                _scope._capturing = false;
+                _owner._capturing = false;
 
-                var exception = _scope._raisedException;
-                _scope._raisedException = null;
+                var exception = _owner._raisedException;
+                _owner._raisedException = null;
                 exception?.Throw();
             }
         }

@@ -73,7 +73,7 @@ namespace Vena.Blockly
             _timelineRunning = true;
         }
 
-        protected override bool OnTick(float deltaTime)
+        protected override BehaviorResult OnTick(float deltaTime)
         {
             using var capture = new ExceptionCapture(this);
 
@@ -95,7 +95,7 @@ namespace Vena.Blockly
                 StopUnsafe();
             }
 
-            return !_timelineRunning;
+            return _timelineRunning ? BehaviorResult.Running : BehaviorResult.Done;
         }
 
         protected override void OnLateTick(float deltaTime)

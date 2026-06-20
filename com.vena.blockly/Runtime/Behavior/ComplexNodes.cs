@@ -76,7 +76,7 @@ namespace Vena.Blockly
                 {
                     try
                     {
-                        if (clip.Tick(deltaTime))
+                        if (clip.Tick(deltaTime) != BehaviorResult.Running)
                             SetState(State.Done);
                     }
                     catch (Exception e)
@@ -143,7 +143,7 @@ namespace Vena.Blockly
                 }
             }
 
-            protected override bool OnTick(float deltaTime)
+            protected override BehaviorResult OnTick(float deltaTime)
             {
                 bool hasRun = false;
 
@@ -154,7 +154,7 @@ namespace Vena.Blockly
                         hasRun = true;
                 }
 
-                return !hasRun;
+                return hasRun ? BehaviorResult.Running : BehaviorResult.Done;
             }
 
             protected override void OnLateTick(float deltaTime)
@@ -231,7 +231,7 @@ namespace Vena.Blockly
                 _segment.SetState(State.Playing);
             }
 
-            protected override bool OnTick(float deltaTime)
+            protected override BehaviorResult OnTick(float deltaTime)
             {
                 if (_segment != null)
                 {
@@ -240,7 +240,7 @@ namespace Vena.Blockly
                     if (_segment.Update(deltaTime))
                     {
                         if (!_tickValid)
-                            return false;
+                            return BehaviorResult.Running;
 
                         _finished.Enqueue(_segment);
                         _segment = null;
@@ -253,7 +253,7 @@ namespace Vena.Blockly
                     }
                 }
 
-                return null == _segment;
+                return null == _segment ? BehaviorResult.Done : BehaviorResult.Running;
             }
 
             protected override void OnLateTick(float deltaTime)

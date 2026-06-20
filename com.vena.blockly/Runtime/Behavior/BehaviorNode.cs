@@ -30,7 +30,7 @@ namespace Vena.Blockly
 
         void Start();
 
-        bool Tick(float deltaTime);
+        BehaviorResult Tick(float deltaTime);
 
         void LateTick(float deltaTime);
 
@@ -46,7 +46,7 @@ namespace Vena.Blockly
     {
         void Start(BehaviorGraph.Blockly blockly);
 
-        bool Tick(BehaviorGraph.Blockly blockly, float deltaTime);
+        BehaviorResult Tick(BehaviorGraph.Blockly blockly, float deltaTime);
 
         void LateTick(BehaviorGraph.Blockly blockly, float deltaTime);
 
@@ -136,9 +136,9 @@ namespace Vena.Blockly
             }
         }
 
-        bool IBehaviorNode.Tick(float deltaTime)
+        BehaviorResult IBehaviorNode.Tick(float deltaTime)
         {
-            if (!isPlaying) return true;
+            if (!isPlaying) return BehaviorResult.Done;
 
             elapsedTime += deltaTime;
             frame++;
@@ -149,9 +149,10 @@ namespace Vena.Blockly
             }
             catch (Exception e)
             {
+                // 合约 §7：异常路径策略 B —— Logger.Error + Done 收尾，不承载于返回值。
                 blockly.Host?.Logger?.Error(
                     $"{GetType().Name}.Tick() : error = {e.Message}\n{e.StackTrace}");
-                return true;
+                return BehaviorResult.Done;
             }
         }
 
@@ -297,9 +298,9 @@ namespace Vena.Blockly
             }
         }
 
-        bool IBehaviorNode.Tick(float deltaTime)
+        BehaviorResult IBehaviorNode.Tick(float deltaTime)
         {
-            if (!isPlaying) return true;
+            if (!isPlaying) return BehaviorResult.Done;
 
             elapsedTime += deltaTime;
             frame++;
@@ -310,9 +311,10 @@ namespace Vena.Blockly
             }
             catch (Exception e)
             {
+                // 合约 §7：异常路径策略 B —— Logger.Error + Done 收尾，不承载于返回值。
                 blockly.Host?.Logger?.Error(
                     $"{GetType().Name}.Tick() : error = {e.Message}\n{e.StackTrace}");
-                return true;
+                return BehaviorResult.Done;
             }
         }
 
@@ -375,7 +377,7 @@ namespace Vena.Blockly
 
         protected abstract void OnStart();
 
-        protected abstract bool OnTick(float deltaTime);
+        protected abstract BehaviorResult OnTick(float deltaTime);
 
         protected abstract void OnLateTick(float deltaTime);
 

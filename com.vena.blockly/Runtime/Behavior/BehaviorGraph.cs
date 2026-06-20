@@ -90,7 +90,7 @@ namespace Vena.Blockly
                 _elapsedTime += deltaTime;
                 _frameCount++;
 
-                if (_start.Tick(deltaTime))
+                if (_start.Tick(deltaTime) != BehaviorResult.Running)
                 {
                     StopUnsafe();
                 }
