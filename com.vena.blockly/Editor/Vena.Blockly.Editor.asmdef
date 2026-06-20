@@ -1,0 +1,18 @@
+{
+    "name": "Vena.Blockly.Editor",
+    "rootNamespace": "Vena.Blockly.Editor",
+    "references": [
+        "Vena.Blockly"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,7 +1,7 @@
 ## §0 命名空间与冻结范围
 
 - 命名空间：`Vena.Blockly`。
-- 冻结：§1–§6。不冻结：§7。
+- 冻结：§1–§5。§6 默认冻结，本文§6 内已明示追加项除外。不冻结：§7。
 
 ## §1 双图同步性边界
 
@@ -69,6 +69,10 @@
 - 能力接口冻结清单：`IBlocklyLogger` / `IBlocklyNodeFactory` / `IBlocklyPool` / `IBlocklySerializer` / `IBlocklyVariableStorage` + `IBlocklyVariableStorageFactory` / `IBlocklySource`。
 - **节点身份**：`IBehaviorNode` / `IProcedureImpl` 实例由宿主分配 Guid，`IBlocklyHost` 提供 Guid ↔ 节点双向映射查询。具体签名 Phase 2 锁。
 - **`IBlocklySerializer` 不变量**：(a) 序列化保留节点 Guid，反序列化不重新生成；(b) round-trip 语义等价。IR 格式 Phase 2 锁。
+- **`IBlocklyNodeFactory` 扩展（Phase 2 解冻追加）**：
+    - `void Initialize()` —— per-host 一次性反射注册入口；多次调用幂等。
+    - 与之配套的 `INodeMetadataProvider` 由 Editor 子模块定义并锁，工厂内部消费（运行期接口、Editor → Runtime 单向落点）。父合约只锁「工厂多了个 `Initialize()`」与「工厂依赖 `INodeMetadataProvider` 抽象」。
+- **解冻范围声明**：本节自 Phase 2 起对 `IBlocklyNodeFactory` 一项放开，仅允许「追加非破坏成员 + 追加抽象依赖」；其余冻结接口仍冻。
 
 ## §7 错误处理与非冻结声明
 

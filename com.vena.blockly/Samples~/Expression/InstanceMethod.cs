@@ -24,9 +24,10 @@ namespace Vena.Blockly.Samples
 
     #region Impl
 
-    public class InstanceTestMethodImpl : IFunctionImpl<int>
+    [UgcGenerated]
+    public sealed class InstanceMethodTestMethodImpl : IFunctionImpl<int>
     {
-        public InstanceMethod instance;
+        public Vena.Blockly.Samples.InstanceMethod instance;
 
         public int a;
 
@@ -38,9 +39,10 @@ namespace Vena.Blockly.Samples
         }
     }
 
-    public class InstancePrintMessageImpl : IProcedureImpl
+    [UgcGenerated]
+    public sealed class InstanceMethodPrintMessageImpl : IProcedureImpl
     {
-        public InstanceMethod instance;
+        public Vena.Blockly.Samples.InstanceMethod instance;
 
         public string message;
 
@@ -49,13 +51,13 @@ namespace Vena.Blockly.Samples
             instance.PrintMessage(message);
         }
     }
-
     #endregion
 
     #region Source
 
-    [UgcSource("测试对象/加法", typeof(InstanceTestMethod.Node))]
-    public sealed class InstanceTestMethod : Function<InstanceTestMethodImpl, int>
+    [UgcGenerated]
+    [UgcSource("测试对象/加法", typeof(InstanceMethodTestMethod.Node))]
+    public sealed class InstanceMethodTestMethod : Function<InstanceMethodTestMethodImpl, int>
     {
         [UgcSourceProperty("实例", 1)]
         public Expression instance;
@@ -66,36 +68,31 @@ namespace Vena.Blockly.Samples
         [UgcSourceProperty("参数2", 3)]
         public Expression b;
 
-        sealed class Node : Block<InstanceTestMethod>
+        [UgcGenerated]
+        sealed class Node : Block<InstanceMethodTestMethod>
         {
             private ILogicNode _instance;
-
             private ILogicNode _a;
-
             private ILogicNode _b;
 
             protected override void Initialize()
             {
                 _instance = Blockly.CreateBlock(source.instance);
-
                 _a = Blockly.CreateBlock(source.a);
-
                 _b = Blockly.CreateBlock(source.b);
             }
 
-            protected override void InitializeProperties(InstanceTestMethodImpl impl)
+            protected override void InitializeProperties(InstanceMethodTestMethodImpl impl)
             {
                 _instance.Evaluate();
-                impl.instance = Blockly.Pop<InstanceMethod>();
-
+                impl.instance = Blockly.Pop<Vena.Blockly.Samples.InstanceMethod>();
                 _a.Evaluate();
                 impl.a = Blockly.Pop<int>();
-
                 _b.Evaluate();
                 impl.b = Blockly.Pop<int>();
             }
 
-            protected override void CleanProperties(InstanceTestMethodImpl impl)
+            protected override void CleanProperties(InstanceMethodTestMethodImpl impl)
             {
                 impl.instance = null;
             }
@@ -104,51 +101,47 @@ namespace Vena.Blockly.Samples
             {
                 Blockly.DestroyBlock(_instance);
                 _instance = null;
-
                 Blockly.DestroyBlock(_a);
                 _a = null;
-
                 Blockly.DestroyBlock(_b);
                 _b = null;
             }
         }
     }
 
-    [UgcSource("测试对象/打印消息", typeof(InstancePrintMessage.Node))]
-    public sealed class InstancePrintMessage : Procedure<InstancePrintMessageImpl>
+    [UgcGenerated]
+    [UgcSource("测试对象/打印消息", typeof(InstanceMethodPrintMessage.Node))]
+    public sealed class InstanceMethodPrintMessage : Procedure<InstanceMethodPrintMessageImpl>
     {
         [UgcSourceProperty("实例", 1)]
         public Expression instance;
 
-        [UgcSourceProperty("消息", 2)]
+        [UgcSourceProperty("消息内容", 2)]
         public Expression message;
 
-        sealed class Node : Block<InstancePrintMessage>
+        [UgcGenerated]
+        sealed class Node : Block<InstanceMethodPrintMessage>
         {
             private ILogicNode _instance;
-
             private ILogicNode _message;
 
             protected override void Initialize()
             {
                 _instance = Blockly.CreateBlock(source.instance);
-
                 _message = Blockly.CreateBlock(source.message);
             }
 
-            protected override void InitializeProperties(InstancePrintMessageImpl impl)
+            protected override void InitializeProperties(InstanceMethodPrintMessageImpl impl)
             {
                 _instance.Evaluate();
-                impl.instance = Blockly.Pop<InstanceMethod>();
-
+                impl.instance = Blockly.Pop<Vena.Blockly.Samples.InstanceMethod>();
                 _message.Evaluate();
                 impl.message = Blockly.Pop<string>();
             }
 
-            protected override void CleanProperties(InstancePrintMessageImpl impl)
+            protected override void CleanProperties(InstanceMethodPrintMessageImpl impl)
             {
                 impl.instance = null;
-
                 impl.message = null;
             }
 
@@ -156,12 +149,10 @@ namespace Vena.Blockly.Samples
             {
                 Blockly.DestroyBlock(_instance);
                 _instance = null;
-
                 Blockly.DestroyBlock(_message);
                 _message = null;
             }
         }
     }
-
     #endregion
 }
