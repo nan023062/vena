@@ -43,7 +43,7 @@ namespace Vena.Blockly
     [UgcSource("表达式图", typeof(LogicGraph.Blockly))]
     public sealed class LogicGraph : IBlocklySource
     {
-        public ulong Guid { get; set; } = 0;
+        public ulong InstanceId { get; set; } = 0;
 
         [UgcSourceProperty("根表达式", 1)]
         public Expression root;
@@ -164,7 +164,7 @@ namespace Vena.Blockly
             {
                 var block = Host.NodeFactory.Create<ILogicNode>(source);
                 block.Init(this, source);
-                RegisterInstanceInternal(source.Guid, block);
+                RegisterInstanceInternal(source.InstanceId, block);
                 return block;
             }
 

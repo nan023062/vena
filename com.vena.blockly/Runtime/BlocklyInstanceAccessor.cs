@@ -14,47 +14,47 @@ namespace Vena.Blockly
 
     /// <summary>
     /// Blockly 实例管理 (partial)。
-    /// 统一管理 Source.Guid → Instance.InstanceID 映射。
+    /// 统一管理 Source.InstanceId → Instance 映射。
     /// 所有创建/销毁都对接 IBlocklyHost.Pool / NodeFactory（预留 pool 化）。
     /// </summary>
     public abstract partial class Blockly
     {
-        private Dictionary<object, ulong> _instance2Guid;
+        private Dictionary<object, ulong> _instance2Id;
 
-        private Dictionary<ulong, object> _guid2Instance;
+        private Dictionary<ulong, object> _id2Instance;
 
-        public T GetInstanceByGuid<T>(ulong guid) where T : class
+        public T GetInstanceById<T>(ulong instanceId) where T : class
         {
             // 在自己作用域查找实例
-            if (null != _guid2Instance && _guid2Instance.TryGetValue(guid, out object instance))
+            if (null != _id2Instance && _id2Instance.TryGetValue(instanceId, out object instance))
             {
                 return (T)instance;
             }
             // 沿作用域链向上查找
-            return _parent?.GetInstanceByGuid<T>(guid);
+            return _parent?.GetInstanceById<T>(instanceId);
         }
 
-        protected void RegisterInstanceInternal(ulong guid, object instance)
+        protected void RegisterInstanceInternal(ulong instanceId, object instance)
         {
-            if (null == _guid2Instance)
+            if (null == _id2Instance)
             {
-                _guid2Instance = new Dictionary<ulong, object>();
+                _id2Instance = new Dictionary<ulong, object>();
 
-                _instance2Guid = new Dictionary<object, ulong>();
+                _instance2Id = new Dictionary<object, ulong>();
             }
 
-            _guid2Instance.Add(guid, instance);
+            _id2Instance.Add(instanceId, instance);
 
-            _instance2Guid.Add(instance, guid);
+            _instance2Id.Add(instance, instanceId);
         }
 
         protected bool UnregisterInstanceInternal(object instance)
         {
-            if(null != _guid2Instance && _instance2Guid.TryGetValue(instance, out ulong guid))
+            if(null != _id2Instance && _instance2Id.TryGetValue(instance, out ulong instanceId))
             {
-                _guid2Instance.Remove(guid);
+                _id2Instance.Remove(instanceId);
 
-                _instance2Guid.Remove(instance);
+                _instance2Id.Remove(instance);
 
                 return true;
             }
@@ -65,9 +65,9 @@ namespace Vena.Blockly
         {
             try
             {
-                if (_guid2Instance != null && _guid2Instance.Count > 0)
+                if (_id2Instance != null && _id2Instance.Count > 0)
                 {
-                    object[] array = _guid2Instance.Values.ToArray();
+                    object[] array = _id2Instance.Values.ToArray();
 
                     // back to pool
                     foreach (var instance in array)
@@ -85,9 +85,9 @@ namespace Vena.Blockly
             }
             finally
             {
-                _guid2Instance?.Clear();
+                _id2Instance?.Clear();
 
-                _instance2Guid?.Clear();
+                _instance2Id?.Clear();
             }
         }
 
@@ -97,7 +97,7 @@ namespace Vena.Blockly
         {
             var blockly = Host.Pool.Get<LogicGraph.Blockly>();
 
-            RegisterInstanceInternal( source.Guid, blockly);
+            RegisterInstanceInternal( source.InstanceId, blockly);
 
             blockly.SetParent(this);
 

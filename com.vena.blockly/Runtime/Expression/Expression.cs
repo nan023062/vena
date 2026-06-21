@@ -15,7 +15,9 @@ namespace Vena.Blockly
     /// </summary>
     public abstract class Expression : IBlocklySource
     {
-        public ulong Guid { get; set; } = 0;
+        // 包心 plain 路径自动分配进程内单调递增 InstanceId（构造时即赋值）。
+        // setter 保留 public：GraphLoader.TrySetInstanceId 通过反射用 IR Guid 折叠值覆盖（公共 BindingFlags）。
+        public ulong InstanceId { get; set; } = InstanceIdAllocator.Next();
     }
 
     /// <summary>
@@ -103,7 +105,7 @@ namespace Vena.Blockly
     /// </summary>
     public abstract class Procedure<TImpl> : Expression where TImpl : class, IProcedureImpl, new()
     {
-        protected abstract class Block<TSource> : ILogicNode where TSource : Expression
+        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
         {
             private readonly TImpl _impl = new TImpl();
             public LogicGraph.Blockly Blockly { get; private set; }
@@ -119,6 +121,7 @@ namespace Vena.Blockly
 
             void ILogicNode.Evaluate()
             {
+                EvaluateChildren();
                 InitializeProperties(_impl);
                 _impl.Evaluate();
             }
@@ -131,6 +134,7 @@ namespace Vena.Blockly
             }
 
             protected abstract void Initialize();
+            protected virtual void EvaluateChildren() { }
             protected abstract void InitializeProperties(TImpl impl);
             protected abstract void CleanProperties(TImpl impl);
             protected virtual void OnDestroy() { }
@@ -142,7 +146,7 @@ namespace Vena.Blockly
     /// </summary>
     public abstract class Function<TImpl, TOutput> : Expression where TImpl : class, IFunctionImpl<TOutput>, new()
     {
-        protected abstract class Block<TSource> : ILogicNode where TSource : Expression
+        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
         {
             private readonly TImpl _impl = new TImpl();
             public LogicGraph.Blockly Blockly { get; private set; }
@@ -159,6 +163,7 @@ namespace Vena.Blockly
 
             void ILogicNode.Evaluate()
             {
+                EvaluateChildren();
                 InitializeProperties(_impl);
                 TOutput result = _impl.Evaluate();
                 Blockly.Push(result);
@@ -172,6 +177,7 @@ namespace Vena.Blockly
             }
 
             protected abstract void Initialize();
+            protected virtual void EvaluateChildren() { }
             protected abstract void InitializeProperties(TImpl impl);
             protected abstract void CleanProperties(TImpl impl);
             protected virtual void OnDestroy() { }
@@ -183,7 +189,7 @@ namespace Vena.Blockly
     /// </summary>
     public abstract class Procedure<TImpl, T1> : Expression where TImpl : class, IProcedureImpl<T1>, new()
     {
-        protected abstract class Block<TSource> : ILogicNode where TSource : Expression
+        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
         {
             private readonly TImpl _impl = new TImpl();
             public LogicGraph.Blockly Blockly { get; private set; }
@@ -199,6 +205,7 @@ namespace Vena.Blockly
 
             void ILogicNode.Evaluate()
             {
+                EvaluateChildren();
                 T1 arg1 = Blockly.Pop<T1>();
                 InitializeProperties(_impl);
                 _impl.Evaluate(arg1);
@@ -211,6 +218,7 @@ namespace Vena.Blockly
             }
 
             protected abstract void Initialize();
+            protected virtual void EvaluateChildren() { }
             protected abstract void InitializeProperties(TImpl impl);
             protected abstract void CleanProperties(TImpl impl);
             protected virtual void OnDestroy() { }
@@ -223,7 +231,7 @@ namespace Vena.Blockly
     public abstract class Function<TImpl, T1, TOutput> : Expression
         where TImpl : class, IFunctionImpl<T1, TOutput>, new()
     {
-        protected abstract class Block<TSource> : ILogicNode where TSource : Expression
+        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
         {
             private readonly TImpl _impl = new TImpl();
             public LogicGraph.Blockly Blockly { get; private set; }
@@ -239,6 +247,7 @@ namespace Vena.Blockly
 
             void ILogicNode.Evaluate()
             {
+                EvaluateChildren();
                 T1 arg1 = Blockly.Pop<T1>();
                 InitializeProperties(_impl);
                 TOutput result = _impl.Evaluate(arg1);
@@ -252,6 +261,7 @@ namespace Vena.Blockly
             }
 
             protected abstract void Initialize();
+            protected virtual void EvaluateChildren() { }
             protected abstract void InitializeProperties(TImpl impl);
             protected abstract void CleanProperties(TImpl impl);
             protected virtual void OnDestroy() { }
@@ -263,7 +273,7 @@ namespace Vena.Blockly
     /// </summary>
     public abstract class Procedure<TImpl, T1, T2> : Expression where TImpl : class, IProcedureImpl<T1, T2>, new()
     {
-        protected abstract class Block<TSource> : ILogicNode where TSource : Expression
+        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
         {
             private readonly TImpl _impl = new TImpl();
             public LogicGraph.Blockly Blockly { get; private set; }
@@ -279,6 +289,7 @@ namespace Vena.Blockly
 
             void ILogicNode.Evaluate()
             {
+                EvaluateChildren();
                 T2 arg2 = Blockly.Pop<T2>();
                 T1 arg1 = Blockly.Pop<T1>();
                 InitializeProperties(_impl);
@@ -293,6 +304,7 @@ namespace Vena.Blockly
             }
 
             protected abstract void Initialize();
+            protected virtual void EvaluateChildren() { }
             protected abstract void InitializeProperties(TImpl impl);
             protected abstract void CleanProperties(TImpl impl);
             protected virtual void OnDestroy() { }
@@ -304,7 +316,7 @@ namespace Vena.Blockly
     /// </summary>
     public abstract class Function<TImpl, T1, T2, TOutput> : Expression where TImpl : class, IFunctionImpl<T1, T2, TOutput>, new()
     {
-        protected abstract class Block<TSource> : ILogicNode where TSource : Expression
+        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
         {
             private readonly TImpl _impl = new TImpl();
             public LogicGraph.Blockly Blockly { get; private set; }
@@ -320,6 +332,7 @@ namespace Vena.Blockly
 
             void ILogicNode.Evaluate()
             {
+                EvaluateChildren();
                 T2 arg2 = Blockly.Pop<T2>();
                 T1 arg1 = Blockly.Pop<T1>();
                 InitializeProperties(_impl);
@@ -334,6 +347,7 @@ namespace Vena.Blockly
             }
 
             protected abstract void Initialize();
+            protected virtual void EvaluateChildren() { }
             protected abstract void InitializeProperties(TImpl impl);
             protected abstract void CleanProperties(TImpl impl);
             protected virtual void OnDestroy() { }
@@ -345,7 +359,7 @@ namespace Vena.Blockly
     /// </summary>
     public abstract class Procedure<TImpl, T1, T2, T3> : Expression where TImpl : class, IProcedureImpl<T1, T2, T3>, new()
     {
-        protected abstract class Block<TSource> : ILogicNode where TSource : Expression
+        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
         {
             private readonly TImpl _impl = new TImpl();
             public LogicGraph.Blockly Blockly { get; private set; }
@@ -361,6 +375,7 @@ namespace Vena.Blockly
 
             void ILogicNode.Evaluate()
             {
+                EvaluateChildren();
                 T3 arg3 = Blockly.Pop<T3>();
                 T2 arg2 = Blockly.Pop<T2>();
                 T1 arg1 = Blockly.Pop<T1>();
@@ -375,6 +390,7 @@ namespace Vena.Blockly
             }
 
             protected abstract void Initialize();
+            protected virtual void EvaluateChildren() { }
             protected abstract void InitializeProperties(TImpl impl);
             protected abstract void CleanProperties(TImpl impl);
             protected virtual void OnDestroy() { }
@@ -386,7 +402,7 @@ namespace Vena.Blockly
     /// </summary>
     public abstract class Function<TImpl, T1, T2, T3, TOutput> : Expression where TImpl : class, IFunctionImpl<T1, T2, T3, TOutput>, new()
     {
-        protected abstract class Block<TSource> : ILogicNode where TSource : Expression
+        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
         {
             private readonly TImpl _impl = new TImpl();
             public LogicGraph.Blockly Blockly { get; private set; }
@@ -402,6 +418,7 @@ namespace Vena.Blockly
 
             void ILogicNode.Evaluate()
             {
+                EvaluateChildren();
                 T3 arg3 = Blockly.Pop<T3>();
                 T2 arg2 = Blockly.Pop<T2>();
                 T1 arg1 = Blockly.Pop<T1>();
@@ -417,6 +434,7 @@ namespace Vena.Blockly
             }
 
             protected abstract void Initialize();
+            protected virtual void EvaluateChildren() { }
             protected abstract void InitializeProperties(TImpl impl);
             protected abstract void CleanProperties(TImpl impl);
             protected virtual void OnDestroy() { }
@@ -428,7 +446,7 @@ namespace Vena.Blockly
     /// </summary>
     public abstract class Procedure<TImpl, T1, T2, T3, T4> : Expression where TImpl : class, IProcedureImpl<T1, T2, T3, T4>, new()
     {
-        protected abstract class Block<TSource> : ILogicNode where TSource : Expression
+        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
         {
             private readonly TImpl _impl = new TImpl();
             public LogicGraph.Blockly Blockly { get; private set; }
@@ -444,6 +462,7 @@ namespace Vena.Blockly
 
             void ILogicNode.Evaluate()
             {
+                EvaluateChildren();
                 T4 arg4 = Blockly.Pop<T4>();
                 T3 arg3 = Blockly.Pop<T3>();
                 T2 arg2 = Blockly.Pop<T2>();
@@ -459,6 +478,7 @@ namespace Vena.Blockly
             }
 
             protected abstract void Initialize();
+            protected virtual void EvaluateChildren() { }
             protected abstract void InitializeProperties(TImpl impl);
             protected abstract void CleanProperties(TImpl impl);
             protected virtual void OnDestroy() { }
@@ -470,7 +490,7 @@ namespace Vena.Blockly
     /// </summary>
     public abstract class Function<TImpl, T1, T2, T3, T4, TOutput> : Expression where TImpl : class, IFunctionImpl<T1, T2, T3, T4, TOutput>, new()
     {
-        protected abstract class Block<TSource> : ILogicNode where TSource : Expression
+        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
         {
             private readonly TImpl _impl = new TImpl();
             public LogicGraph.Blockly Blockly { get; private set; }
@@ -486,6 +506,7 @@ namespace Vena.Blockly
 
             void ILogicNode.Evaluate()
             {
+                EvaluateChildren();
                 T4 arg4 = Blockly.Pop<T4>();
                 T3 arg3 = Blockly.Pop<T3>();
                 T2 arg2 = Blockly.Pop<T2>();
@@ -502,6 +523,7 @@ namespace Vena.Blockly
             }
 
             protected abstract void Initialize();
+            protected virtual void EvaluateChildren() { }
             protected abstract void InitializeProperties(TImpl impl);
             protected abstract void CleanProperties(TImpl impl);
             protected virtual void OnDestroy() { }
@@ -513,7 +535,7 @@ namespace Vena.Blockly
     /// </summary>
     public abstract class Procedure<TImpl, T1, T2, T3, T4, T5> : Expression where TImpl : class, IProcedureImpl<T1, T2, T3, T4, T5>, new()
     {
-        protected abstract class Block<TSource> : ILogicNode where TSource : Expression
+        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
         {
             private readonly TImpl _impl = new TImpl();
             public LogicGraph.Blockly Blockly { get; private set; }
@@ -529,6 +551,7 @@ namespace Vena.Blockly
 
             void ILogicNode.Evaluate()
             {
+                EvaluateChildren();
                 T5 arg5 = Blockly.Pop<T5>();
                 T4 arg4 = Blockly.Pop<T4>();
                 T3 arg3 = Blockly.Pop<T3>();
@@ -545,6 +568,7 @@ namespace Vena.Blockly
             }
 
             protected abstract void Initialize();
+            protected virtual void EvaluateChildren() { }
             protected abstract void InitializeProperties(TImpl impl);
             protected abstract void CleanProperties(TImpl impl);
             protected virtual void OnDestroy() { }
@@ -556,7 +580,7 @@ namespace Vena.Blockly
     /// </summary>
     public abstract class Function<TImpl, T1, T2, T3, T4, T5, TOutput> : Expression where TImpl : class, IFunctionImpl<T1, T2, T3, T4, T5, TOutput>, new()
     {
-        protected abstract class Block<TSource> : ILogicNode where TSource : Expression
+        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
         {
             private readonly TImpl _impl = new TImpl();
             public LogicGraph.Blockly Blockly { get; private set; }
@@ -572,6 +596,7 @@ namespace Vena.Blockly
 
             void ILogicNode.Evaluate()
             {
+                EvaluateChildren();
                 T5 arg5 = Blockly.Pop<T5>();
                 T4 arg4 = Blockly.Pop<T4>();
                 T3 arg3 = Blockly.Pop<T3>();
@@ -589,6 +614,7 @@ namespace Vena.Blockly
             }
 
             protected abstract void Initialize();
+            protected virtual void EvaluateChildren() { }
             protected abstract void InitializeProperties(TImpl impl);
             protected abstract void CleanProperties(TImpl impl);
             protected virtual void OnDestroy() { }

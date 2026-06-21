@@ -17,7 +17,7 @@ namespace Vena.Blockly
     [UgcSource("逻辑图", typeof(BehaviorGraph.Blockly))]
     public sealed class BehaviorGraph : IBlocklySource
     {
-        public ulong Guid { get; set; } = 0;
+        public ulong InstanceId { get; set; } = 0;
 
         [UgcSourceProperty("根节点", 1)]
         public BehaviorNodeSource root;
@@ -169,7 +169,7 @@ namespace Vena.Blockly
                 if (behavior != null)
                 {
                     behavior.Init(this, source);
-                    RegisterInstanceInternal(source.Guid, behavior);
+                    RegisterInstanceInternal(source.InstanceId, behavior);
                     return behavior;
                 }
                 return null;

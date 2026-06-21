@@ -90,13 +90,15 @@ namespace Vena.Blockly.Tests.LogicRuntime
                 _b = Blockly.CreateBlock(source.b);
             }
 
-            protected override void InitializeProperties(AddIntImpl impl)
+            protected override void EvaluateChildren()
             {
                 // Function<TImpl, T1, T2, TOutput> 基类 Pop 顺序为先 T2 后 T1，
                 // 因此这里先 Evaluate(a) 让其 Push T1，再 Evaluate(b) 让其 Push T2。
                 _a.Evaluate();
                 _b.Evaluate();
             }
+
+            protected override void InitializeProperties(AddIntImpl impl) { }
 
             protected override void CleanProperties(AddIntImpl impl) { }
 

@@ -27,7 +27,7 @@ namespace Vena.Blockly.Editor.UI
 
         public void OnNodeEnter(Guid nodeGuid)
         {
-            // 由于 IR Guid (128bit) → Runtime IBlocklySource.Guid (ulong) 折叠，
+            // 由于 IR Guid (128bit) → Runtime IBlocklySource.InstanceId (ulong) 折叠，
             // 这里收到的 nodeGuid 来自 Runtime，需要由 host 注入回 IR Guid。
             // 当前仅记录到 console；UI 节点高亮的精确映射延后。
             UnityEngine.Debug.Log($"[BlocklyDebug] Enter {nodeGuid:D}");

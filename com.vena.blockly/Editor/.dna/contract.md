@@ -96,7 +96,9 @@
 |---|------|------|------|
 | `*Impl` | `class : IFunctionImpl<TOutput>` 或 `IProcedureImpl`（**均 0-arity**） | 纯逻辑容器：按参数/接收者顺序列出 `public` 字段，`Evaluate()` 调目标方法。 | codegen |
 | `*Source` | `sealed class : Function<*Impl, TOutput>` 或 `Procedure<*Impl>`（**均 0 泛型 arity**） | 编辑期可见节点源：有 `[UgcSource(menuPath, typeof(*Source.Node))]` + N 个 `[UgcSourceProperty(name, order)] public Expression 槽位` 字段。 | codegen |
-| `*Source.Node` | `sealed class : Block<*Source>`，嵌套在 `*Source` 内 | 运行期手动 Pop 接线：`Initialize()` 调 `Blockly.CreateBlock(source.槽)` 创子节点；`InitializeProperties(*Impl)` **按 `[UgcSourceProperty.order]` 升序**逐项 `_field.Evaluate(); impl.field = Blockly.Pop<T>();`；`CleanProperties` 清 impl 引用、`OnDestroy` 释放子节点。 | codegen |
+| `*Source.Node` | `sealed class : Block<*Source>`，嵌套在 `*Source` 内 | 运行期手动 Pop 接线，**严格遵循父合约 §4 的 5 步协议**：`EvaluateChildren()` override 触发所有子节点 `_field.Evaluate()`（按 `[UgcSourceProperty.order]` 升序、每项内部 Push 出栈值）；`InitializeProperties(*Impl impl)` **只做字段拷贝**（按同序 `impl.field = Blockly.Pop<T>();`），**不得**含任何 `_child.Evaluate()` 副作用；`Initialize()` 调 `Blockly.CreateBlock(source.槽)` 创子节点；`CleanProperties` 清 impl 引用、`OnDestroy` 释放子节点。Procedure 形态省 Push（Function 形态由基类 `Function<*Impl,TOutput>` 在第 5 步统一 Push 返回值）。 | codegen |
+
+> **5 步铁律**（与父合约 §4 对齐）：`EvaluateChildren → Pop → InitializeProperties → Impl.Evaluate → Push`（Procedure 无 Push）。codegen 产出 `*Source.Node` 模板必须按此 5 步切分；`InitializeProperties` 写入 `_field.Evaluate()` = 破坏合约（撞空栈）。执行点 = `Editor/Codegen/UgcCodeWriter.cs` 内 `EmitSourceNode`（或同义产出方法）的 Node body 模板。
 
 ### 产物顶部头部
 
@@ -119,7 +121,7 @@
 
 ### Pop 顺序（§1 `UgcSourceProperty.order` 实例化规则）
 
-- N 个槽位 → N 个 `_field` 节点 → 在 `InitializeProperties` 中 **按 order 升序**逐项 evaluate + Pop。
+- N 个槽位 → N 个 `_field` 节点 → 在 `EvaluateChildren()` 中 **按 order 升序**逐项 `_field.Evaluate()`（每项内部 Push）；`InitializeProperties(impl)` 中按同序 `impl.field = Blockly.Pop<T>();`（**仅字段拷贝，无 Evaluate 副作用**）。
 - order 全项锁住三者一致（§1）：**Pop 顺序 ≡ IR 字段顺序 ≡ UI 顺序**。
 - order 重复 / 跨 source 跨序 → codegen 报错、不产出。
 

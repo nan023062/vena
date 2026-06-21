@@ -101,7 +101,7 @@ namespace Vena.Blockly
     /// </summary>
     public abstract class UClipSource : IBlocklySource, IBlocklySerializable
     {
-        public ulong Guid { get; set; } = 0;
+        public ulong InstanceId { get; set; } = 0;
 
         public float duration;
 

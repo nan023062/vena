@@ -16,7 +16,9 @@ namespace Vena.Blockly
     /// </summary>
     public abstract class BehaviorNodeSource : IBlocklySource
     {
-        public ulong Guid { get; set; } = 0;
+        // 包心 plain 路径自动分配进程内单调递增 InstanceId（构造时即赋值）。
+        // setter 保留 public：GraphLoader.TrySetInstanceId 通过反射用 IR Guid 折叠值覆盖（公共 BindingFlags）。
+        public ulong InstanceId { get; set; } = InstanceIdAllocator.Next();
     }
 
     /// <summary>
@@ -232,7 +234,7 @@ namespace Vena.Blockly
     /// <summary>
     /// CompositeBehavior is an abstract class for control-flow behavior nodes.
     /// </summary>
-    public abstract class CompositeBehavior<TSource> : ICompositeBehaviorNode where TSource : BehaviorNodeSource
+    public abstract class CompositeBehavior<TSource> : ICompositeBehaviorNode where TSource : class, IBlocklySource
     {
         public BehaviorGraph.Blockly blockly { get; private set; }
 

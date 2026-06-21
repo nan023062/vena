@@ -115,11 +115,12 @@ namespace Vena.Blockly
                     $"ISourceActivator returned null for type {sourceType.FullName}.");
             instances[nodeIR.Guid] = instance;
 
-            // 把 NodeIR.Guid 投影到 IBlocklySource.Guid（ulong 域）—— 取低 64 位。
-            // 仅作为运行期身份占位；IR 端 Guid（128 位）才是稳定身份。
-            // 设置 Guid 走反射 setter（IBlocklySource.Guid 接口仅 readonly，但具体类有 set；
-            // 这里允许具体类没有 setter 时静默跳过）。
-            TrySetGuid(instance, nodeIR.Guid);
+            // 把 IR 端持久 System.Guid（128-bit）折叠为 runtime ulong InstanceId（64-bit），
+            // 覆盖 IBlocklySource 实现类构造时由 InstanceIdAllocator 分配的 fallback 占位。
+            // 仅作为运行期身份键；IR 端 Guid 才是跨会话稳定身份。
+            // 设置 InstanceId 走反射 setter（IBlocklySource.InstanceId 接口仅 readonly，
+            // 但具体类有 set；这里允许具体类没有 setter 时静默跳过）。
+            TrySetInstanceId(instance, nodeIR.Guid);
 
             // 字段填充：每个 [UgcSourceProperty] 槽位一条 NodePropertyIR。
             // 槽位类型：
@@ -234,19 +235,22 @@ namespace Vena.Blockly
             }
         }
 
-        private static void TrySetGuid(IBlocklySource instance, Guid g)
+        private static void TrySetInstanceId(IBlocklySource instance, Guid g)
         {
-            // IBlocklySource.Guid 是 ulong；把 IR Guid 折叠到 ulong（取前 8 字节大端）。
-            var pi = instance.GetType().GetProperty("Guid",
+            // 桥接：把 IR 端持久 System.Guid（128-bit）折叠为 runtime ulong InstanceId（64-bit），
+            // 覆盖默认 Interlocked 分配的 fallback。
+            var pi = instance.GetType().GetProperty("InstanceId",
                 BindingFlags.Public | BindingFlags.Instance);
             if (pi == null || !pi.CanWrite) return;
             if (pi.PropertyType != typeof(ulong)) return;
-            ulong folded = FoldGuidToUlong(g);
+            ulong folded = FoldGuidToInstanceId(g);
             pi.SetValue(instance, folded);
         }
 
-        private static ulong FoldGuidToUlong(Guid g)
+        private static ulong FoldGuidToInstanceId(Guid g)
         {
+            // 桥接折叠：IR 持久 System.Guid（128-bit）→ runtime InstanceId（ulong, 64-bit）。
+            // 取前 8 字节与后 8 字节按位异或。
             var bytes = g.ToByteArray(); // 16 bytes
             ulong hi = 0, lo = 0;
             for (int i = 0; i < 8; i++) hi = (hi << 8) | bytes[i];

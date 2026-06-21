@@ -35,6 +35,14 @@
   - `IFunctionImpl<T1..Tn,TOutput>` n=0..5
 - 基类包装：`Procedure<TImpl,T1..Tn>` / `Function<TImpl,T1..Tn,TOutput>`。
 - **Pop 顺序**：从右到左（`T_N` 先 Pop，`T_1` 最后）。
+- **Block.Evaluate 求值协议（铁律，顺序不可换）**：
+  1. `EvaluateChildren()` —— 触发子节点 `Evaluate`（每个内部 Push）。
+  2. `Pop<T_N>() ... Pop<T_1>()` —— §4 右→左规则。
+  3. `InitializeProperties(_impl)` —— **只**做字段拷贝，**不得**触发任何 `_child.Evaluate()` 副作用。
+  4. `_impl.Evaluate(...)` —— 调实现。
+  5. `Blockly.Push(result)` —— 仅 `Function` 形态。
+  - 子节点求值副作用必须落在 `EvaluateChildren()` 中；放进 `InitializeProperties` = 撞空栈。
+  - 0-arity Function：`EvaluateChildren()` 与 Pop 段为空；其余四步顺序不变。
 
 ## §5 行为图 Tick 协议
 
@@ -67,8 +75,11 @@
 
 - 入口 API 仅接收 `IBlocklyHost`。
 - 能力接口冻结清单：`IBlocklyLogger` / `IBlocklyNodeFactory` / `IBlocklyPool` / `IBlocklySerializer` / `IBlocklyVariableStorage` + `IBlocklyVariableStorageFactory` / `IBlocklySource`。
-- **节点身份**：`IBehaviorNode` / `IProcedureImpl` 实例由宿主分配 Guid，`IBlocklyHost` 提供 Guid ↔ 节点双向映射查询。具体签名 Phase 2 锁。
-- **`IBlocklySerializer` 不变量**：(a) 序列化保留节点 Guid，反序列化不重新生成；(b) round-trip 语义等价。IR 格式 Phase 2 锁。
+- **节点身份（二层）**：
+    - **runtime 端 = `ulong InstanceId`（会话内身份键）**：`IBlocklySource` 携带 `InstanceId`，`IBehaviorNode` / `IProcedureImpl` 实例经此键由宿主登记；`IBlocklyHost` 提供 `InstanceId` ↔ 节点双向映射查询。`InstanceId` 仅在当前 host 生命周期内唯一、跨会话不稳定（类比 Unity `InstanceID`）。具体签名 Phase 2 锁。
+    - **IR 端 = `System.Guid`（128-bit 持久身份）**：编辑器分配、入盘、跨 round-trip 永不变；runtime 加载 IR 时由 `GraphLoader` 折叠为 `ulong InstanceId` 覆盖会话内键。
+    - **二者不互换**：`InstanceId` 不入盘、不跨进程；`System.Guid` 不参与 runtime 注册查询。
+- **`IBlocklySerializer` 不变量**：(a) 序列化保留节点 `System.Guid`，反序列化不重新生成；(b) round-trip 语义等价。IR 格式 Phase 2 锁。
 - **`IBlocklyNodeFactory` 扩展（Phase 2 解冻追加）**：
     - `void Initialize()` —— per-host 一次性反射注册入口；多次调用幂等。
     - 与之配套的 `INodeMetadataProvider` 由 Editor 子模块定义并锁，工厂内部消费（运行期接口、Editor → Runtime 单向落点）。父合约只锁「工厂多了个 `Initialize()`」与「工厂依赖 `INodeMetadataProvider` 抽象」。

@@ -21,7 +21,7 @@ namespace Vena.Blockly
     [UgcSource("时间线/信号", typeof(Signal.Object))]
     public sealed class Signal : IBlocklySource, IBlocklySerializable
     {
-        public ulong Guid { get; set; } = 0;
+        public ulong InstanceId { get; set; } = 0;
 
         [ExpressionSignature]
         [UgcSourceProperty("表达式", 1)]

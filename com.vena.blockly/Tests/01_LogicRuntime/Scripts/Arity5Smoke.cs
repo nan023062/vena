@@ -43,7 +43,7 @@ namespace Vena.Blockly.Tests.LogicRuntime
                 _e = Blockly.CreateBlock(source.e);
             }
 
-            protected override void InitializeProperties(Sum5IntsImpl impl)
+            protected override void EvaluateChildren()
             {
                 // 求值顺序：a、b、c、d、e 依次 Evaluate（每个内部 Push）
                 // 调用方 Block 包装层会自上而下 Pop：T5 先 Pop（即 e），T1 最后 Pop（即 a），
@@ -54,6 +54,8 @@ namespace Vena.Blockly.Tests.LogicRuntime
                 _d.Evaluate();
                 _e.Evaluate();
             }
+
+            protected override void InitializeProperties(Sum5IntsImpl impl) { }
 
             protected override void CleanProperties(Sum5IntsImpl impl) { }
 
@@ -108,7 +110,7 @@ namespace Vena.Blockly.Tests.LogicRuntime
                 _d = Blockly.CreateBlock(source.d);
             }
 
-            protected override void InitializeProperties(AccumulateInto5Impl impl)
+            protected override void EvaluateChildren()
             {
                 _sink.Evaluate();
                 _a.Evaluate();
@@ -116,6 +118,8 @@ namespace Vena.Blockly.Tests.LogicRuntime
                 _c.Evaluate();
                 _d.Evaluate();
             }
+
+            protected override void InitializeProperties(AccumulateInto5Impl impl) { }
 
             protected override void CleanProperties(AccumulateInto5Impl impl) { }
 
