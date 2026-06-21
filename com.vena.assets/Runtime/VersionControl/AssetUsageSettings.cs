@@ -41,13 +41,23 @@ namespace Vena.Assets
         private static void CreateAssetProductSettings()
         {
             _instance = CreateInstance<AssetUsageSetting>();
-            
+
+            // AssetDatabase.CreateAsset requires the parent folder to already exist.
+            // First-time use in a fresh project has no Assets/Resources/ — create it
+            // through AssetDatabase (not Directory.CreateDirectory) so the import
+            // pipeline registers the new folder immediately.
+            const string ResourcesDir = "Assets/Resources";
+            if (!AssetDatabase.IsValidFolder(ResourcesDir))
+            {
+                AssetDatabase.CreateFolder("Assets", "Resources");
+            }
+
             AssetDatabase.CreateAsset(_instance, SettingsPath);
-            
+
             AssetDatabase.SaveAssets();
-            
+
             EditorUtility.FocusProjectWindow();
-            
+
             Selection.activeObject = _instance;
         }
 
