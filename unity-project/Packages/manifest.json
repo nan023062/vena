@@ -4,6 +4,7 @@
     "com.vena.math":             "file:../../com.vena.math",
     "com.vena.world":            "file:../../com.vena.world",
     "com.vena.framework":        "file:../../com.vena.framework",
+    "com.vena.blockly":          "file:../../com.vena.blockly",
     "com.unity.collab-proxy": "1.5.7",
     "com.unity.ide.rider": "2.0.7",
     "com.unity.ide.visualstudio": "2.0.9",
