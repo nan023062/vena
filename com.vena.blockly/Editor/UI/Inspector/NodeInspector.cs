@@ -6,11 +6,11 @@ namespace Vena.Blockly.Editor.UI
 {
 
     /// <summary>
-    /// 节点属性面板（Editor/UI 合约 §2 / Key Decision 5）。
+    /// 节点属性面板。
     ///
     /// 数据源 = NodeIR.Properties（kv 直绑）；编辑回写 IR、不直接持有运行期实例。
-    /// 字段顺序按 [UgcSourceProperty.order] 升序（顺序锁三者一致）；这里按 IR 列表顺序。
-    /// PR-9：当 DebugChannel 触发 OnValueProduced 时叠加 value 预览。
+    /// 字段顺序按 IR 列表顺序（即 [UgcSourceProperty.order] 升序，UI / IR / Pop 三者一致）。
+    /// 当 DebugChannel 触发 OnValueProduced 时叠加 value 预览。
     /// </summary>
     public sealed class NodeInspector : VisualElement
     {
@@ -83,7 +83,7 @@ namespace Vena.Blockly.Editor.UI
                 return row;
             }
 
-            // literal 编辑器 —— 简化为 TextField；真实形态按目标字段类型做精细化（PR-8 锁）。
+            // literal 编辑器 —— 简化为 TextField；后续按目标字段类型做精细化分发。
             var tf = new TextField { value = prop.Value.Value?.ToString() ?? "" };
             tf.style.flexGrow = 1;
             tf.RegisterValueChangedCallback(ev =>

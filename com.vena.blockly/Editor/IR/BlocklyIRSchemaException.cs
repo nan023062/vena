@@ -4,8 +4,8 @@ namespace Vena.Blockly.Editor
 {
 
     /// <summary>
-    /// IR Schema 校验失败抛出（合约 §4.7）。
-    /// §4.2–§4.6 任何不变量失败均经此异常上报；不静默修复。
+    /// IR Schema 校验失败抛出。
+    /// 任何 schema 不变量失败均经此异常上报；不静默修复。
     /// </summary>
     public sealed class BlocklyIRSchemaException : Exception
     {

@@ -6,7 +6,7 @@ namespace Vena.Blockly.Editor
 {
 
     /// <summary>
-    /// 资产创建菜单（Editor/UI 合约 §1）：
+    /// 资产创建菜单：
     ///   Assets/Create/Vena/Blockly/Behavior Graph → 新建 GraphAsset，kind="Behavior"。
     ///   Assets/Create/Vena/Blockly/Logic Graph    → 同上、kind="Logic"。
     /// `_json` 初始化为最小骨架（schema / kind / rootNodeGuid / nodes:[] / edges:[]）。

@@ -5,7 +5,7 @@ namespace Vena.Blockly.Editor.UI
 {
 
     /// <summary>
-    /// Debug Toggle（Editor/UI 合约 §2 顶部工具条）。
+    /// 顶部工具栏 Debug 开关。
     /// 启用时把 EditorDebugChannel 接入 BlocklyDebugChannelRegistry；运行节点时将命中可视化。
     /// </summary>
     public sealed class DebugToggle

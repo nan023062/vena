@@ -9,8 +9,7 @@ namespace Vena.Blockly.Editor
 
     /// <summary>
     /// 三件套 emitter：把 <see cref="ScannedSource"/> 集合写盘为 `<源类名>.g.cs`。
-    /// 每个被扫描源类一个 .g.cs，含其全部 [UgcMethod] / [UgcProperty] 成员的三件套。
-    /// 详见 Editor 合约 §2、module.md `UgcCodeWriter`。
+    /// 每个被扫描源类一个 .g.cs，含其全部 [UgcMethod] / [UgcProperty] 成员的三件套（Impl + Source + Source.Node）。
     /// </summary>
     internal static class UgcCodeWriter
     {
@@ -378,14 +377,12 @@ namespace Vena.Blockly.Editor
         // ---- 命名规则 ----
 
         /// <summary>
-        /// 命名规则（Editor 合约 §2）：`*Impl` = `<源类简名><成员名>Impl`。
-        /// 实现解读：源类简名 = `sourceType.Name` 字面量。
-        /// 合约示例 `InstanceTestMethodImpl` 与字面拼接结果（如 `InstanceMethodTestMethodImpl`）不一致 ——
-        /// 字面拼接更通用、可泛化、无歧义；以此为准。冲突由 <see cref="SourceName"/> 追加 `Source` 后缀解决。
+        /// 命名规则：`*Impl` = `<源类简名><成员名>Impl`，源类简名取 <c>sourceType.Name</c>。
+        /// 字面拼接更通用、可泛化、无歧义。冲突由 <see cref="SourceName"/> 追加 `Source` 后缀解决。
         /// </summary>
         private static string ImplName(Type sourceType, ScannedMember m) => sourceType.Name + MemberSuffix(m) + "Impl";
 
-        /// <summary>命名规则（Editor 合约 §2）：`*Source` = `<源类简名><成员名>`。冲突时追加 `Source` 后缀。</summary>
+        /// <summary>命名规则：`*Source` = `<源类简名><成员名>`；与源类同名时追加 `Source` 后缀消歧。</summary>
         private static string SourceName(Type sourceType, ScannedMember m)
         {
             var candidate = sourceType.Name + MemberSuffix(m);

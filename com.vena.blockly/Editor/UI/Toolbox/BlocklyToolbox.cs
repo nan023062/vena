@@ -7,11 +7,11 @@ namespace Vena.Blockly.Editor.UI
 {
 
     /// <summary>
-    /// 节点调色板（Editor/UI 合约 §2 / Key Decision 4）。
+    /// 节点调色板。
     ///
     /// 数据源 = INodeMetadataProvider.All()（codegen 生成、Runtime 实现）。
     /// 菜单分层：[UgcSource.menuPath] 原值按 `/` 切分；UI 端自行树形展开。
-    /// 当前 PR-7：双击触发 OnPick。PR-8 接拖拽落画布。
+    /// 双击触发 OnPick；后续可接拖拽落画布。
     /// </summary>
     public sealed class BlocklyToolbox : VisualElement
     {

@@ -5,8 +5,7 @@ namespace Vena.Blockly.Editor
 {
 
     /// <summary>
-    /// UGC codegen 菜单触发入口。Phase 2 PR-1 = 骨架（仅定位 config + 报告状态，不产代码）。
-    /// PR-2 接入 UgcAnnotationScanner / UgcCodeWriter 后产出三件套。
+    /// UGC codegen 菜单触发入口。扫描白名单内带 [UgcClass] 的源类、生成三件套并写盘到 OutputRoot。
     /// </summary>
     public static class UgcCodegenMenu
     {

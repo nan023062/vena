@@ -5,7 +5,7 @@ namespace Vena.Blockly
 
     /// <summary>
     /// 节点元数据查询入口。Editor codegen 阶段填充 / 运行期消费。
-    /// 单向落点：Editor → Runtime；具体实现可由 codegen 一并产出（Phase 2 PR-3）。
+    /// 单向落点：Editor → Runtime；具体实现由 codegen 一并产出。
     /// </summary>
     public interface INodeMetadataProvider
     {

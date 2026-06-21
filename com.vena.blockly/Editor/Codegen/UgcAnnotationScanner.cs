@@ -9,7 +9,7 @@ namespace Vena.Blockly.Editor
     /// <summary>
     /// 程序集级 UGC 注解扫描器。识别带 [UgcClass] 的源类、收集其内部 [UgcMethod]/[UgcProperty] 成员，
     /// 计算并返回每个成员对应的 codegen 输入项 <see cref="ScannedMember"/>。
-    /// 不发射代码、不写盘 —— Editor only POCO 阶段。详见 module.md `UgcAnnotationScanner`。
+    /// 不发射代码、不写盘 —— 仅产出可被 emitter 消费的 POCO 集合。
     /// </summary>
     internal static class UgcAnnotationScanner
     {
@@ -64,7 +64,7 @@ namespace Vena.Blockly.Editor
         {
             var list = new List<ScannedMember>();
 
-            // 仅扫描 public instance/static 成员。private 不进入扫描集（Editor 合约 §1 注解作用面要求）。
+            // 仅扫描 public instance/static 成员。private 不进入扫描集（注解仅作用于公共 API）。
             const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
 
             foreach (var method in type.GetMethods(flags))
@@ -102,7 +102,7 @@ namespace Vena.Blockly.Editor
             {
                 throw new InvalidOperationException(
                     $"[Vena.Blockly] {type.FullName}.{method.Name}: [UgcMethod] parameterNames 数 ({declaredNames.Length}) " +
-                    $"与方法签名参数数 ({paramInfos.Length}) 不匹配。Editor 合约 §1 要求严格一致。");
+                    $"与方法签名参数数 ({paramInfos.Length}) 不匹配。");
             }
             if (attr.IsStatic && !method.IsStatic)
             {

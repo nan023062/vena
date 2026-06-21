@@ -6,28 +6,23 @@ namespace Vena.Blockly
 {
 
     /// <summary>
-    /// IR → Source 树加载器（Phase 2 第二刀 PR-6）。
+    /// IR → Source 树加载器。
     ///
     /// 输入：<see cref="GraphIR"/>（已由 Editor 侧 <c>IBlocklyGraphSerializer.FromJson</c> 解码）。
     /// 输出：根 <see cref="IBlocklySource"/>（`BehaviorGraph` / `LogicGraph`），调用方再交给 NodeFactory 构造运行期节点。
     ///
-    /// 合约对齐：
-    /// - Editor 顶层 §4.7：Runtime 加载器从 _json 字符串通过 IBlocklyGraphSerializer 反序列化为 GraphIR、再交节点工厂构造。
-    ///   本类承担 GraphIR → IBlocklySource 树这一步，节点工厂由调用方装配。
-    /// - 父 §6 不动：本类不进 IBlocklyHost、不扩聚合门面；调用方持有引用即可。
-    /// - 父 §7 第 3 项（IR 序列化）：本类是 IR 落点的 Runtime 消费方。
-    ///
-    /// AOT 友好：source 实例化经 <see cref="ISourceActivator"/> 抽象（Phase 2 默认走反射；Phase 3 codegen 可注入静态产物）。
+    /// 不进 IBlocklyHost、不扩聚合门面；调用方持有引用即可。
+    /// AOT 友好：source 实例化经 <see cref="ISourceActivator"/> 抽象（默认走反射；codegen 可注入静态产物）。
     /// 本身实现仅用 <see cref="System.Reflection"/>（mscorlib 自带），不引 UnityEngine。
     /// </summary>
     public sealed class GraphLoader
     {
         private readonly ISourceActivator _activator;
 
-        /// <summary>使用反射 activator（Phase 2 默认）。</summary>
+        /// <summary>使用反射 activator 的默认构造。</summary>
         public GraphLoader() : this(new ReflectionSourceActivator()) { }
 
-        /// <summary>注入自定义 activator（Phase 3 AOT 时由 codegen 提供静态委托表）。</summary>
+        /// <summary>注入自定义 activator（AOT 时由 codegen 提供静态委托表）。</summary>
         public GraphLoader(ISourceActivator activator)
         {
             _activator = activator ?? throw new ArgumentNullException(nameof(activator));
@@ -65,14 +60,14 @@ namespace Vena.Blockly
             }
 
             // 2. 拆 value-edges：to(nodeGuid+port) -> from(nodeGuid)。
-            //    Editor/UI 合约 §3 锁定值入度=1，因此每个 (nodeGuid,port) 对应至多一条 value 入边。
+            //    值入度上限 = 1，因此每个 (nodeGuid,port) 对应至多一条 value 入边。
             var valueEdges = new Dictionary<PortRef, Guid>(ir.Edges.Count);
             foreach (var e in ir.Edges)
             {
                 if (e.WireKind != WireKind.Value) continue;
                 if (valueEdges.ContainsKey(e.To))
                     throw new InvalidOperationException(
-                        $"Multiple value edges target port ({e.To.NodeGuid},{e.To.Port}); §3 入度上限 = 1.");
+                        $"Multiple value edges target port ({e.To.NodeGuid},{e.To.Port}); 值入度上限 = 1.");
                 valueEdges.Add(e.To, e.From.NodeGuid);
             }
 
@@ -123,16 +118,16 @@ namespace Vena.Blockly
             // 槽位类型：
             //   - 值流子节点（如 BehaviorNodeSource / Expression 引用）→ properties[].value 应为 nodeRef。
             //   - 字面值（int / string / bool / float / ...）            → properties[].value 应为 literal。
-            // 顺序按 IR 给出（合约 §4.5 不变量 3 / §1 / §2 三者一致）。
+            // 顺序按 IR 给出。
             foreach (var prop in nodeIR.Properties)
             {
                 var fi = ResolvePropertySlot(sourceType, prop.Key);
                 AssignSlot(instance, fi, prop, nodeIR, byGuid, valueEdges, instances, visiting);
             }
 
-            // 子节点引用：除字段直填外，IR 中可能用 ValueWire 表达连线（合约 §4.4）。
+            // 子节点引用：除字段直填外，IR 中可能用 ValueWire 表达连线。
             // valueEdges[(nodeGuid=nodeIR.Guid, port=<key>)] = sourceGuid → 等价覆写槽位为该子节点。
-            // 这条路径是 Editor.UI 写图的标准形态（§3 ValueWire 显式连线）；
+            // 这条路径是 Editor.UI 写图的标准形态（ValueWire 显式连线）；
             // 与 properties[].value=nodeRef（内嵌引用）等价且可共存。优先 valueEdges 表达。
             if (valueEdges.Count > 0)
             {
@@ -192,7 +187,7 @@ namespace Vena.Blockly
         {
             var fi = sourceType.GetField(key, BindingFlags.Public | BindingFlags.Instance);
             if (fi != null) return fi;
-            // 父类继承字段也允许（虽然合约 §4.6 不变量 2 严格要求静态匹配）。
+            // 父类继承字段也允许（静态匹配优先，但向上回退至基类）。
             for (var t = sourceType.BaseType; t != null; t = t.BaseType)
             {
                 fi = t.GetField(key, BindingFlags.Public | BindingFlags.Instance);
@@ -275,14 +270,14 @@ namespace Vena.Blockly
     }
 
     /// <summary>
-    /// Source 实例化抽象 —— Phase 2 默认走反射；Phase 3 AOT 由 codegen 注入静态委托表替换实现。
+    /// Source 实例化抽象 —— 默认走反射；AOT 场景由 codegen 注入静态委托表替换实现。
     /// </summary>
     public interface ISourceActivator
     {
         IBlocklySource Activate(Type sourceType);
     }
 
-    /// <summary>反射默认实现：<c>Activator.CreateInstance</c> + 公共无参构造。</summary>
+    /// <summary>反射默认实现：通过公共无参构造创建实例。</summary>
     public sealed class ReflectionSourceActivator : ISourceActivator
     {
         public IBlocklySource Activate(Type sourceType)

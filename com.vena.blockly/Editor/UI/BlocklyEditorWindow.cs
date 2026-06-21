@@ -8,7 +8,7 @@ namespace Vena.Blockly.Editor.UI
 {
 
     /// <summary>
-    /// Blockly 编辑器主窗口（Editor/UI 合约 §2）。
+    /// Blockly 编辑器主窗口。
     ///
     /// 三区布局：
     ///   左：Toolbox（折叠）—— 节点调色板，数据源 = INodeMetadataProvider.All()。

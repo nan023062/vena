@@ -50,8 +50,8 @@ namespace Vena.Blockly
 
         protected override BehaviorResult OnTick(float deltaTime)
         {
-            // 合约 §5 叶子时长门控：onTick (bool 表达式) 求值 —— true 表示本帧完事、false 表示再来一帧。
-            // 这是叶子对自身活动周期的时长控制，与 §1 节点间分支决策正交。
+            // 叶子时长门控：onTick (bool 表达式) 求值 —— true 表示本帧完事、false 表示再来一帧。
+            // 这是叶子对自身活动周期的时长控制，与节点间分支决策正交。
             if (_onTickScope == null) return BehaviorResult.Done;
             return _onTickScope.Call<bool>() ? BehaviorResult.Done : BehaviorResult.Running;
         }

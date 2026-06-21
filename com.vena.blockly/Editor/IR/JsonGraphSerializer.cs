@@ -7,9 +7,9 @@ namespace Vena.Blockly.Editor
 {
 
     /// <summary>
-    /// IR JSON 序列化器（合约 §4 完整实现）。
+    /// IR JSON 序列化器。
     ///
-    /// canonical 形态（合约 §4.5 不变量 2）：
+    /// canonical 形态：
     /// - 字段顺序固定：顶层 schema/kind/rootNodeGuid/nodes/edges；
     ///   NodeIR  guid/sourceType/properties/position；
     ///   EdgeIR  from/to/wireKind；
@@ -313,7 +313,7 @@ namespace Vena.Blockly.Editor
                     case "nodes": nodes = ParseNodes(ExpectArray(kv.Value, "nodes")); break;
                     case "edges": edges = ParseEdges(ExpectArray(kv.Value, "edges")); break;
                     default:
-                        throw new BlocklyIRSchemaException($"Unknown top-level key: {kv.Key}");  // §4.5 不变量 4
+                        throw new BlocklyIRSchemaException($"Unknown top-level key: {kv.Key}");  // 拒绝未知字段
                 }
             }
 

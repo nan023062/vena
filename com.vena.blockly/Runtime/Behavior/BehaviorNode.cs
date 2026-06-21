@@ -149,7 +149,7 @@ namespace Vena.Blockly
             }
             catch (Exception e)
             {
-                // 合约 §7：异常路径策略 B —— Logger.Error + Done 收尾，不承载于返回值。
+                // 异常路径：Logger.Error 旁路报告 + Done 收尾，不承载于 Tick 返回值。
                 blockly.Host?.Logger?.Error(
                     $"{GetType().Name}.Tick() : error = {e.Message}\n{e.StackTrace}");
                 return BehaviorResult.Done;
@@ -311,7 +311,7 @@ namespace Vena.Blockly
             }
             catch (Exception e)
             {
-                // 合约 §7：异常路径策略 B —— Logger.Error + Done 收尾，不承载于返回值。
+                // 异常路径：Logger.Error 旁路报告 + Done 收尾，不承载于 Tick 返回值。
                 blockly.Host?.Logger?.Error(
                     $"{GetType().Name}.Tick() : error = {e.Message}\n{e.StackTrace}");
                 return BehaviorResult.Done;

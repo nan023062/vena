@@ -5,28 +5,27 @@ namespace Vena.Blockly
 {
 
     /// <summary>
-    /// 节点 IR —— 一个画布节点的内存形态（Editor 顶层合约 §4.3）。
+    /// 节点 IR —— 一个画布节点的内存形态。
     /// 固定 4 字段：guid / sourceType / properties / position；其他字段禁。
     /// </summary>
     public sealed class NodeIR
     {
-        /// <summary>节点稳定身份；新建分配、跨 round-trip 保留（§4.5 不变量 1）。</summary>
+        /// <summary>节点稳定身份；新建分配、跨 round-trip 保留。</summary>
         public Guid Guid;
 
         /// <summary>
         /// Source 类的程序集限定名（AQN 稳定子集：`Namespace.TypeName, AssemblyName`）。
-        /// AOT 不变量 1：仅限 codegen 产物 *Source 与手写 Source；不允许运行期反射构造任意 Type。
+        /// AOT 不变量：仅限 codegen 产物 *Source 与手写 Source；不允许运行期反射构造任意 Type。
         /// </summary>
         public string SourceType;
 
         /// <summary>
         /// [UgcSourceProperty] 槽位的字面值或子节点引用。
-        /// 顺序按 [UgcSourceProperty.order] 升序（§4.3 / §1 / §2 三者一致原则）。
-        /// 顺序 round-trip 等价（§4.5 不变量 3）。
+        /// 顺序按 [UgcSourceProperty.order] 升序；顺序 round-trip 等价。
         /// </summary>
         public List<NodePropertyIR> Properties;
 
-        /// <summary>编辑器画布坐标；运行期忽略（§4.3）。JSON 出 {x,y}。</summary>
+        /// <summary>编辑器画布坐标；运行期忽略。JSON 出 {x,y}。</summary>
         public Vec2 Position;
 
         public NodeIR()
@@ -40,13 +39,13 @@ namespace Vena.Blockly
 
     /// <summary>
     /// NodeIR.Properties 的单条目 —— 表达一个 [UgcSourceProperty] 槽位。
-    /// JSON 形态：`{key:string, value:json}`。键名固定（§4.3）。
+    /// JSON 形态：`{key:string, value:json}`。键名固定。
     /// </summary>
     public sealed class NodePropertyIR
     {
         /// <summary>
         /// 槽位 key —— 与 [UgcSourceProperty] 字段名严格对齐。
-        /// AOT 不变量 2：必须能在 sourceType 槽位集合内静态匹配。
+        /// AOT 不变量：必须能在 sourceType 槽位集合内静态匹配。
         /// </summary>
         public string Key;
 
@@ -54,7 +53,7 @@ namespace Vena.Blockly
         /// 槽位 value —— 字面值或子节点引用。
         /// 字面值：`PropertyValueIR.Type = "literal"`、Value = 原始 JSON 标量 / 对象。
         /// 子节点引用：`PropertyValueIR.Type = "nodeRef"`、Value = `{nodeGuid: Guid}`。
-        /// AOT 不变量 3：字面值类型由 sourceType 槽位字段类型静态锁定。
+        /// AOT 不变量：字面值类型由 sourceType 槽位字段类型静态锁定。
         /// </summary>
         public PropertyValueIR Value;
 
@@ -72,8 +71,8 @@ namespace Vena.Blockly
     }
 
     /// <summary>
-    /// 二维坐标，用于 NodeIR.Position（合约 §4.3 描述为 Vector2）。
-    /// 这里独立 plain struct，不依赖 UnityEngine.Vector2，保 Runtime asmdef noEngineReferences=true。
+    /// 二维坐标，用于 NodeIR.Position。
+    /// 独立 plain struct，不依赖 UnityEngine.Vector2，保 Runtime asmdef noEngineReferences=true。
     /// JSON 形态：`{x:float, y:float}`。
     /// </summary>
     public struct Vec2 : IEquatable<Vec2>

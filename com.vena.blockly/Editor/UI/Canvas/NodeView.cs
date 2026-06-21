@@ -8,10 +8,10 @@ namespace Vena.Blockly.Editor.UI
 {
 
     /// <summary>
-    /// GraphView Node 视图 —— 单节点的端口 + 标签呈现（Editor/UI 合约 §3）。
+    /// GraphView Node 视图 —— 单节点的端口 + 标签呈现。
     /// 端口规则：
     ///   控制端口（如 "next" / "true" / "false"）：Color/Capacity = single（入度 1）。
-    ///   值端口（[UgcSourceProperty] 槽位）：Capacity = single（值入度 1，§3）。
+    ///   值端口（[UgcSourceProperty] 槽位）：Capacity = single（值入度 1）。
     /// </summary>
     public sealed class NodeView : Node
     {
@@ -28,7 +28,7 @@ namespace Vena.Blockly.Editor.UI
             title = ShortName(nodeIR.SourceType);
 
             // 默认端口：控制流入/出 + 每个属性槽位一个值入端口。
-            // PR-7 骨架；PR-8 由 EdgeConnector / metadata 驱动精细化。
+            // 后续可由 EdgeConnector / metadata 驱动更精细的端口集。
             var controlIn = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(ControlFlow));
             controlIn.portName = "in";
             controlIn.userData = WireKind.Control;
@@ -41,7 +41,7 @@ namespace Vena.Blockly.Editor.UI
             outputContainer.Add(controlOut);
             _outputPorts["next"] = controlOut;
 
-            // 值端口：每个 NodeIR.Properties 一条值入端口（PR-8 锁更精细，按 [UgcSourceProperty] 升序）。
+            // 值端口：每个 NodeIR.Properties 一条值入端口（按 [UgcSourceProperty] 升序，与 IR 顺序一致）。
             if (nodeIR.Properties != null)
             {
                 foreach (var p in nodeIR.Properties)
@@ -54,7 +54,7 @@ namespace Vena.Blockly.Editor.UI
                 }
             }
 
-            // 值出端口（用于 LogicGraph 节点）—— 默认提供单 "out"；PR-8 可按 ExpressionSignature 锁返回型。
+            // 值出端口（用于 LogicGraph 节点）—— 默认提供单 "out"；后续可按 ExpressionSignature 锁返回型。
             var valueOut = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(ValueFlow));
             valueOut.portName = "out";
             valueOut.userData = WireKind.Value;

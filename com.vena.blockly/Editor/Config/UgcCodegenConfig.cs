@@ -6,7 +6,6 @@ namespace Vena.Blockly.Editor
     /// <summary>
     /// UGC codegen 白名单 + 输出根目录配置。
     /// 资产路径约定：项目内 `Assets/.../UgcCodegenConfig.asset` 或包内 `Editor/Config/UgcCodegenConfig.asset`。
-    /// 见 module.md Key Decisions §3。
     /// </summary>
     [CreateAssetMenu(fileName = "UgcCodegenConfig", menuName = "Vena/Blockly/UGC Codegen Config", order = 0)]
     public sealed class UgcCodegenConfig : ScriptableObject

@@ -5,7 +5,7 @@ namespace Vena.Blockly.Editor.UI
 {
 
     /// <summary>
-    /// Editor 端 IBlocklyDebugChannel 实现 v0（Editor/UI 合约 §4）。
+    /// Editor 端 IBlocklyDebugChannel 实现。
     /// 三事件 → BlocklyEditorWindow 端的节点高亮 / 值预览 stub。
     /// 单线程、同步回调；不做时间轴 / 历史回放 / 远程调试。
     /// </summary>
@@ -22,7 +22,7 @@ namespace Vena.Blockly.Editor.UI
         {
             // 由于 IR Guid (128bit) → Runtime IBlocklySource.Guid (ulong) 折叠，
             // 这里收到的 nodeGuid 来自 Runtime，需要由 host 注入回 IR Guid。
-            // PR-9 v0：仅记录到 console；UI 节点高亮的精确映射延后。
+            // 当前仅记录到 console；UI 节点高亮的精确映射延后。
             UnityEngine.Debug.Log($"[BlocklyDebug] Enter {nodeGuid:D}");
         }
 

@@ -6,14 +6,14 @@ namespace Vena.Blockly.Editor.UI
 {
 
     /// <summary>
-    /// 工具栏「运行」按钮（Editor/UI 合约 §4 v0）。
+    /// 工具栏「运行」按钮。
     ///
     /// 行为：
     ///   - 根据当前 GraphIR.Kind 加载并 Tick 一帧（Behavior）或 Invoke 一次（Logic）。
     ///   - 注入 EditorDebugChannel —— 节点高亮 + 值预览 stub。
     ///   - 仅 Editor 模式驱动；不接 PlayMode。
     ///
-    /// host 由调用方通过 EditorRunHostRegistry 提供（IBlocklyHost 不进，§6 不动）。
+    /// host 由调用方通过 EditorRunHostRegistry 提供；不进 IBlocklyHost 聚合门面。
     /// </summary>
     public sealed class RunButton
     {
@@ -37,7 +37,7 @@ namespace Vena.Blockly.Editor.UI
                 return;
             }
 
-            // 注入 debug channel（PR-9 v0：节点高亮 + 值预览 stub）。
+            // 注入 debug channel：节点高亮 + 值预览 stub。
             BlocklyDebugChannelRegistry.Current = new EditorDebugChannel(owner);
             try
             {
@@ -75,7 +75,7 @@ namespace Vena.Blockly.Editor.UI
 
     /// <summary>
     /// Editor 端注入 host 入口 —— 业务工程注册 resolver、编辑器运行按钮按需取用。
-    /// 不进 §6 聚合门面、不强绑死。
+    /// 不进 IBlocklyHost 聚合门面，避免 Editor 工程绑死 Runtime 形状。
     /// </summary>
     public static class EditorRunHostRegistry
     {

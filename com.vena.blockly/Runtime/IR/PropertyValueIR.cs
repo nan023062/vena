@@ -4,11 +4,11 @@ namespace Vena.Blockly
 {
 
     /// <summary>
-    /// NodeIR.Properties[].value 的统一包装（合约 §4.3）。
+    /// NodeIR.Properties[].value 的统一包装。
     /// 两种形态：
     ///   - 字面值：<see cref="Type"/> = "literal"、<see cref="Value"/> = bool/int/long/float/double/string/null（基本 JSON 标量）。
     ///   - 子节点引用：<see cref="Type"/> = "nodeRef"、<see cref="Value"/> = <see cref="System.Guid"/>（指向同图内 NodeIR.Guid）。
-    /// AOT 不变量 3：字面值类型由 source 槽位静态锁定，不允许 object / 多态运行期分发。
+    /// AOT 不变量：字面值类型由 source 槽位静态锁定，不允许 object / 多态运行期分发。
     /// </summary>
     public sealed class PropertyValueIR
     {

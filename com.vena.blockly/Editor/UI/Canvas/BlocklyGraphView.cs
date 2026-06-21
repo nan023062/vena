@@ -8,13 +8,13 @@ namespace Vena.Blockly.Editor.UI
 {
 
     /// <summary>
-    /// Blockly 画布 —— 单 GraphView 双 wire（Editor/UI 合约 §2 / §3）。
+    /// Blockly 画布 —— 单 GraphView 双 wire。
     ///
     /// LoadIR(GraphIR) → 绘出节点+连线；DumpIR() : GraphIR → 反射出当前画布形态。
     /// 双 wire：
-    ///   ControlWire（实色粗）— 控制流（IBehaviorNode 之间，§3）。
-    ///   ValueWire  （虚线细）— 值流（ILogicNode → 任意端口，§3）。
-    /// 入度上限：控制 1 / 值 1，出度无限；环 / 类型不符 → UI 拒绝（PR-8 走 EdgeConnector 校验）。
+    ///   ControlWire（实色粗）— 控制流（IBehaviorNode 之间）。
+    ///   ValueWire  （虚线细）— 值流（ILogicNode → 任意端口）。
+    /// 入度上限：控制 1 / 值 1，出度无限；环 / 类型不符 → UI 拒绝（由 EdgeConnector 校验）。
     /// </summary>
     public sealed class BlocklyGraphView : GraphView
     {
@@ -208,7 +208,7 @@ namespace Vena.Blockly.Editor.UI
         }
     }
 
-    /// <summary>EdgeStyle —— 控制 wire 实色粗 / 值 wire 虚线细（Editor/UI 合约 §3）。</summary>
+    /// <summary>EdgeStyle —— 控制 wire 实色粗 / 值 wire 虚线细。</summary>
     internal static class EdgeStyle
     {
         public static void Apply(Edge edge, WireKind kind)

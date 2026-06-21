@@ -6,7 +6,7 @@ namespace Vena.Blockly
 
     /// <summary>
     /// 节点元数据 —— Editor 扫描期收集、运行期通过 <c>INodeMetadataProvider</c> 查询。
-    /// 字段语义对齐 Editor 合约 §1（注解原值透传）。
+    /// 字段值由 <c>[UgcSource]</c> / <c>[UgcSourceProperty]</c> 注解原值透传。
     /// </summary>
     public sealed class NodeMetadata
     {
