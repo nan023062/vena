@@ -56,7 +56,7 @@ namespace Vena.Blockly.Editor.UI
         public void LoadIR(GraphIR ir)
         {
             _currentIR = ir ?? new GraphIR();
-            DeleteElements(graphElements);
+            DeleteElements(graphElements.ToList());
             _nodeViews.Clear();
 
             if (_currentIR.Nodes != null)
