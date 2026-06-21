@@ -1,0 +1,17 @@
+{
+  "name": "Vena.Blockly.Tests.GraphEditorUI.Editor",
+  "rootNamespace": "Vena.Blockly.Tests.GraphEditorUI",
+  "references": [
+    "Vena.Blockly",
+    "Vena.Blockly.Editor"
+  ],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

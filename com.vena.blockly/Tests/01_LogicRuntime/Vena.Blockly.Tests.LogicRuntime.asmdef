@@ -1,0 +1,14 @@
+{
+  "name": "Vena.Blockly.Tests.LogicRuntime",
+  "rootNamespace": "Vena.Blockly.Tests.LogicRuntime",
+  "references": ["Vena.Blockly"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

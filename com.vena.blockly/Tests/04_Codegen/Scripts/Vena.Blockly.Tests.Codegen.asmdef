@@ -1,0 +1,14 @@
+{
+  "name": "Vena.Blockly.Tests.Codegen",
+  "rootNamespace": "Vena.Blockly.Tests.Codegen",
+  "references": ["Vena.Blockly"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
