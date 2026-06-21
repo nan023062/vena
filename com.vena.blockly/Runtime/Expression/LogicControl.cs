@@ -5,6 +5,8 @@
 // Licensed under the terms defined in the repository LICENSE file.
 // -----------------------------------------------------------------------------
 
+using System;
+
 namespace Vena.Blockly
 {
 
@@ -136,6 +138,74 @@ namespace Vena.Blockly
                 _condition = null;
                 _trueBranch = null;
                 _falseBranch = null;
+            }
+        }
+    }
+
+    #endregion
+
+    #region LogicWhile
+
+    [UgcSource("程序节点/控制/While循环", typeof(LogicWhile.Node))]
+    public sealed class LogicWhile : Expression
+    {
+        [ExpressionSignature(typeof(bool))]
+        [UgcSourceProperty("条件", 1)]
+        public LogicGraph condition;
+
+        [UgcSourceProperty("循环体", 2)]
+        public LogicGraph body;
+
+        [UgcSourceProperty("最大迭代次数", 3)]
+        public int maxIterations = 10000;
+
+        internal sealed class Node : ILogicNode
+        {
+            public LogicGraph.Blockly Blockly { get; private set; }
+            Blockly IBlock.scope => Blockly;
+            private LogicWhile _source;
+            private LogicGraph.Blockly _condition;
+            private LogicGraph.Blockly _body;
+
+            void ILogicNode.Init(LogicGraph.Blockly blockly, Expression source)
+            {
+                Blockly = blockly;
+                _source = (LogicWhile)source;
+                Initialize();
+            }
+
+            void ILogicNode.Evaluate()
+            {
+                int max = _source.maxIterations;
+                int count = 0;
+                while (_condition.Call<bool>())
+                {
+                    _body?.Invoke();
+                    if (++count >= max)
+                        throw new InvalidOperationException(
+                            $"LogicWhile exceeded maxIterations={max}, possible infinite loop");
+                }
+            }
+
+            void IBlock.Destroy()
+            {
+                OnDestroy();
+                Blockly = null;
+                _source = null;
+            }
+
+            private void Initialize()
+            {
+                _condition = Blockly.CreateBlockly(_source.condition);
+                _body = Blockly.CreateBlockly(_source.body);
+            }
+
+            private void OnDestroy()
+            {
+                Blockly.DestroyBlockly(_condition);
+                Blockly.DestroyBlockly(_body);
+                _condition = null;
+                _body = null;
             }
         }
     }
