@@ -106,12 +106,12 @@ classDiagram
 ## Key Decisions
 
 1. 原子节点 = 函数；行为差异 = 注入哪个函数。
-2. **依赖白名单 = 空（零 Vena 业务层 / 零 Unity 引擎）—— 永久铁律，不可解冻。**
+2. **依赖白名单 = 空（零 Vena 业务层 / 零 Unity 引擎）——永久铁律，不可解冻。**
    - 短期红利：服务器 AI 推理 / dotnet console 直跑 / 跨平台 IR 传输。
    - **长期红利（产品路径）：runtime UGC 玩家编辑器**——玩家 game build 里没有 `AssetDatabase`、不能造 `ScriptableObject`、只能加载 IR JSON。plain class + IR JSON 是 runtime UGC 唯一可行路径。
    - 一旦解冻 = 关闭 runtime UGC 这条产品路径。任何「让包心引 UnityEngine 一下下」的提案直接驳回；唯一例外见 KD#9 `Tests/` 包内测试目录与 KD#13 `Vena.Blockly.SO` 程序集，且二者均不污染 `Vena.Blockly` 主程序集。
 3. 控制图调用逻辑图，单向。
-4. ScopeChain = 双图共享基础；变量整链唯一。
+4. ScopeChain = 双图共享基础；变量整链唯一。写路径 lexical resolve，详见合约 §2。
 5. `IBlocklyHost` = 聚合门面；细粒度接口（Logger / NodeFactory / Pool / Serializer / VariableStorageFactory / Source）独立变更原因。
 6. 入口 API 接收类型 = `IBlocklyHost`。
 7. 对外暴露 = `ScopeChain` + `IBlock` + `IBlocklyHost` + 细粒度接口；`EditorIR` / `BlocklyFrontend` 包内不可见。
@@ -171,3 +171,4 @@ classDiagram
 ## Phase 2 Ratchet
 
 - Phase 2 第二刀 = IR 序列化（JSON in SO）+ Runtime IR 加载器 + GraphView 双 wire 单画布 + Toolbox + Inspector + 调试通道 v0；不解冻父 §6。
+

@@ -113,4 +113,192 @@ namespace Vena.Blockly.Tests.LogicRuntime
     }
 
     #endregion
+
+    #region SubtractInt
+
+    /// <summary>(int, int) → int 减法求值实现。</summary>
+    public sealed class SubtractIntImpl : IFunctionImpl<int, int, int>
+    {
+        public int Evaluate(in int a, in int b) => a - b;
+    }
+
+    /// <summary>SubtractInt 的 source + Node 装配。结构同 AddIntSource。</summary>
+    [UgcSource("示例表达式/Int减法", typeof(SubtractIntSource.Node))]
+    public sealed class SubtractIntSource : Function<SubtractIntImpl, int, int, int>
+    {
+        [UgcSourceProperty("a", 1)] public Expression a;
+        [UgcSourceProperty("b", 2)] public Expression b;
+
+        sealed class Node : Block<SubtractIntSource>
+        {
+            private ILogicNode _a;
+            private ILogicNode _b;
+
+            protected override void Initialize()
+            {
+                _a = Blockly.CreateBlock(source.a);
+                _b = Blockly.CreateBlock(source.b);
+            }
+
+            protected override void EvaluateChildren()
+            {
+                _a.Evaluate();
+                _b.Evaluate();
+            }
+
+            protected override void InitializeProperties(SubtractIntImpl impl) { }
+
+            protected override void CleanProperties(SubtractIntImpl impl) { }
+
+            protected override void OnDestroy()
+            {
+                Blockly.DestroyBlock(_a); _a = null;
+                Blockly.DestroyBlock(_b); _b = null;
+            }
+        }
+    }
+
+    #endregion
+
+    #region MultiplyInt
+
+    /// <summary>(int, int) → int 乘法求值实现。</summary>
+    public sealed class MultiplyIntImpl : IFunctionImpl<int, int, int>
+    {
+        public int Evaluate(in int a, in int b) => a * b;
+    }
+
+    /// <summary>MultiplyInt 的 source + Node 装配。结构同 AddIntSource。</summary>
+    [UgcSource("示例表达式/Int乘法", typeof(MultiplyIntSource.Node))]
+    public sealed class MultiplyIntSource : Function<MultiplyIntImpl, int, int, int>
+    {
+        [UgcSourceProperty("a", 1)] public Expression a;
+        [UgcSourceProperty("b", 2)] public Expression b;
+
+        sealed class Node : Block<MultiplyIntSource>
+        {
+            private ILogicNode _a;
+            private ILogicNode _b;
+
+            protected override void Initialize()
+            {
+                _a = Blockly.CreateBlock(source.a);
+                _b = Blockly.CreateBlock(source.b);
+            }
+
+            protected override void EvaluateChildren()
+            {
+                _a.Evaluate();
+                _b.Evaluate();
+            }
+
+            protected override void InitializeProperties(MultiplyIntImpl impl) { }
+
+            protected override void CleanProperties(MultiplyIntImpl impl) { }
+
+            protected override void OnDestroy()
+            {
+                Blockly.DestroyBlock(_a); _a = null;
+                Blockly.DestroyBlock(_b); _b = null;
+            }
+        }
+    }
+
+    #endregion
+
+    #region GreaterThanInt
+
+    /// <summary>(int, int) → bool 大于比较求值实现。</summary>
+    public sealed class GreaterThanIntImpl : IFunctionImpl<int, int, bool>
+    {
+        public bool Evaluate(in int a, in int b) => a > b;
+    }
+
+    /// <summary>
+    /// GreaterThanInt 的 source + Node 装配。返回 bool — Function 基类
+    /// Block.Evaluate() 内部会 Push&lt;bool&gt; 结果，调用方（如 LogicBranch.condition
+    /// 的 LogicGraph.Call&lt;bool&gt;()）Pop&lt;bool&gt; 取出。
+    /// </summary>
+    [UgcSource("示例表达式/Int大于", typeof(GreaterThanIntSource.Node))]
+    public sealed class GreaterThanIntSource : Function<GreaterThanIntImpl, int, int, bool>
+    {
+        [UgcSourceProperty("a", 1)] public Expression a;
+        [UgcSourceProperty("b", 2)] public Expression b;
+
+        sealed class Node : Block<GreaterThanIntSource>
+        {
+            private ILogicNode _a;
+            private ILogicNode _b;
+
+            protected override void Initialize()
+            {
+                _a = Blockly.CreateBlock(source.a);
+                _b = Blockly.CreateBlock(source.b);
+            }
+
+            protected override void EvaluateChildren()
+            {
+                _a.Evaluate();
+                _b.Evaluate();
+            }
+
+            protected override void InitializeProperties(GreaterThanIntImpl impl) { }
+
+            protected override void CleanProperties(GreaterThanIntImpl impl) { }
+
+            protected override void OnDestroy()
+            {
+                Blockly.DestroyBlock(_a); _a = null;
+                Blockly.DestroyBlock(_b); _b = null;
+            }
+        }
+    }
+
+    #endregion
+
+    #region LessThanOrEqualInt
+
+    /// <summary>(int, int) → bool 小于等于比较求值实现。</summary>
+    public sealed class LessThanOrEqualIntImpl : IFunctionImpl<int, int, bool>
+    {
+        public bool Evaluate(in int a, in int b) => a <= b;
+    }
+
+    /// <summary>LessThanOrEqualInt 的 source + Node 装配。返回 bool。</summary>
+    [UgcSource("示例表达式/Int小于等于", typeof(LessThanOrEqualIntSource.Node))]
+    public sealed class LessThanOrEqualIntSource : Function<LessThanOrEqualIntImpl, int, int, bool>
+    {
+        [UgcSourceProperty("a", 1)] public Expression a;
+        [UgcSourceProperty("b", 2)] public Expression b;
+
+        sealed class Node : Block<LessThanOrEqualIntSource>
+        {
+            private ILogicNode _a;
+            private ILogicNode _b;
+
+            protected override void Initialize()
+            {
+                _a = Blockly.CreateBlock(source.a);
+                _b = Blockly.CreateBlock(source.b);
+            }
+
+            protected override void EvaluateChildren()
+            {
+                _a.Evaluate();
+                _b.Evaluate();
+            }
+
+            protected override void InitializeProperties(LessThanOrEqualIntImpl impl) { }
+
+            protected override void CleanProperties(LessThanOrEqualIntImpl impl) { }
+
+            protected override void OnDestroy()
+            {
+                Blockly.DestroyBlock(_a); _a = null;
+                Blockly.DestroyBlock(_b); _b = null;
+            }
+        }
+    }
+
+    #endregion
 }

@@ -21,6 +21,7 @@
 - 作用域嵌套深度无 N 约束（N=5 仅指 §4 arity）。
 - 变量后端：`IBlocklyVariableStorage` 由 `IBlocklyHost.VariableStorageFactory.Create(scope)` 提供。
 - **业务方调用代码零修改**。
+- **变量写语义（lexical-by-default）**：`SetVariable<T>(name, value)` 沿父链向上查找最近一层已持有该变量的 scope 并写入；全链均无该变量时，在当前 scope 创建。整链唯一性约束（重名抛 `InvalidOperationException`）保持不变——「整链唯一」与「lexical 写穿透」不冲突：lexical 写命中已有变量 = 更新而非声明，不触发重名。
 
 ## §3 值容器与值栈
 
