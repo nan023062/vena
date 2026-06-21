@@ -3,8 +3,8 @@ namespace Vena.Blockly.Samples
 
     /// <summary>
     /// BehaviorResult 双态返回值 smoke 用例 —— 装配 Selector / Sequence / Parallel 的最小图，
-    /// 验证双态语义（Running / Done）在父子节点间正确推进（合约 §5）；
-    /// 另验证异常路径策略 B（基类 try/catch + Logger.Error + Done 收尾，不承载于返回值；合约 §7）。
+    /// 验证双态语义（Running / Done）在父子节点间正确推进；
+    /// 另验证异常路径（基类 try/catch + Logger.Error + Done 收尾，不承载于返回值）。
     ///
     /// 运行约定：
     ///   var smoke = new BehaviorResultSmoke(host);
@@ -105,7 +105,7 @@ namespace Vena.Blockly.Samples
         }
 
         /// <summary>
-        /// 异常路径用例（合约 §7 策略 B）：
+        /// 异常路径用例：
         ///   叶子 Tick 抛出异常 → 基类 try/catch 捕获 → Logger.Error 记录 → 返回 BehaviorResult.Done →
         ///   图视作正常完成、推进到 !playing；调用方不应观察到异常逃逸。
         ///

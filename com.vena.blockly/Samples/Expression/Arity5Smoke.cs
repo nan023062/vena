@@ -3,7 +3,6 @@ namespace Vena.Blockly.Samples
 
     /// <summary>
     /// 5 参 smoke 用例 —— 验证 IProcedureImpl / IFunctionImpl 高 arity 接口与基类包装编译/调用对齐。
-    /// 用于第一阶段 N=5 补齐验收（合约 §4）。
     /// </summary>
 
     #region 5 参 IFunctionImpl smoke
