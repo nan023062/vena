@@ -355,12 +355,26 @@ namespace Vena.Blockly.Editor
             sb.Append(indent).Append("    }").Append(NL);
             sb.Append(NL);
 
-            sb.Append(indent).Append("    protected override void InitializeProperties(")
-                .Append(implName).Append(" impl)").Append(NL);
+            // EvaluateChildren：按 order 升序触发子节点 Evaluate（每个子 Push 一次值到栈）。
+            // 5 步协议（合约 §4 / Editor §2）锁定：所有子节点 Push 必须先于 Pop，因此 Evaluate 不能再混在
+            // InitializeProperties 里——否则栈是空的，Pop 立刻撞底。
+            sb.Append(indent).Append("    protected override void EvaluateChildren()").Append(NL);
             sb.Append(indent).Append("    {").Append(NL);
             foreach (var slot in slots)
             {
                 sb.Append(indent).Append("        _").Append(slot.FieldName).Append(".Evaluate();").Append(NL);
+            }
+            sb.Append(indent).Append("    }").Append(NL);
+            sb.Append(NL);
+
+            // InitializeProperties：仅 Pop + 字段拷贝，无副作用。栈是 LIFO——Push 顺序 = order 升序，
+            // 因此 Pop 顺序 = order 降序（最后入栈的最先出栈）。
+            sb.Append(indent).Append("    protected override void InitializeProperties(")
+                .Append(implName).Append(" impl)").Append(NL);
+            sb.Append(indent).Append("    {").Append(NL);
+            for (int i = slots.Count - 1; i >= 0; i--)
+            {
+                var slot = slots[i];
                 sb.Append(indent).Append("        impl.").Append(slot.FieldName)
                     .Append(" = Blockly.Pop<").Append(TypeRef(slot.PopType)).Append(">();").Append(NL);
             }

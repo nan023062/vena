@@ -28,7 +28,7 @@
 | AllowMultiple | `false` |
 | sealed | 是 |
 | 字段语义 | `displayName` = UI 显示名；`isStatic` = 生成静态 / 实例胶水分路；`parameterNames[]` = 参数顺序与取名，必须与方法签名参数位置严格一致。 |
-| codegen 处理 | 生成三件套（§2）；Impl 采用 0-arity `IFunctionImpl<TOutput>` / `IProcedureImpl`（静态 N 参 → N 个字段 + 1 个 `instance` 字段只在 `isStatic=false` 时生成），Pop 顺序交由 Node 手动 Pop 路径、严格按 `[UgcSourceProperty.order]` 升序。 |
+| codegen 处理 | 生成三件套（§2）；Impl 采用 0-arity `IFunctionImpl<TOutput>` / `IProcedureImpl`（静态 N 参 → N 个字段 + 1 个 `instance` 字段只在 `isStatic=false` 时生成）。Pop 路径语义以 §2 为准：Push 按 `[UgcSourceProperty.order]` 升序（`EvaluateChildren()` 逐项）、Pop 按 order 降序（`InitializeProperties` 逐项，栈 LIFO 反向）；二者同序 = 撞类型、合约违反。 |
 
 ### `[UgcProperty(displayName)]`
 
@@ -60,8 +60,8 @@
 | Inherited | `false` |
 | AllowMultiple | `false` |
 | sealed | 是 |
-| 字段语义 | `displayName` = UI 字段名；`order:int` = **全项顺序、三者一致、不允许任何脱钩**——同时锁住（1）参数 Pop 顺序（运行期值栈消费顺序）、（2）IR 序列化字段顺序（存图字段排列）、（3）编辑器 UI 显示顺序（面板字段从上到下）。 |
-| codegen 处理 | 按 `order` 升序输出三个语义的顺序；breaking。同一 source 内 `order` 重复 → codegen 报错、不产出。 |
+| 字段语义 | `displayName` = UI 字段名；`order:int` = **全项顺序、三者一致、不允许任何脱钩**——同时锁住（·order 升序·轴）：（1）参数 Push 顺序（`EvaluateChildren()` 逐项 `_field.Evaluate()` 依序 Push）、（2）IR 序列化字段顺序（存图字段排列）、（3）编辑器 UI 显示顺序（面板字段从上到下）。**Pop 顺序 ≠ 以上三者**：运行期 Pop = Push 顺序的反序（栈 LIFO，按 order 降序）。 |
+| codegen 处理 | 按 `order` 升序输出三者一致顺序（UI / IR / Push）、Pop 反序；breaking。同一 source 内 `order` 重复 → codegen 报错、不产出。 |
 
 ### `[UgcGenerated]`
 
@@ -96,9 +96,9 @@
 |---|------|------|------|
 | `*Impl` | `class : IFunctionImpl<TOutput>` 或 `IProcedureImpl`（**均 0-arity**） | 纯逻辑容器：按参数/接收者顺序列出 `public` 字段，`Evaluate()` 调目标方法。 | codegen |
 | `*Source` | `sealed class : Function<*Impl, TOutput>` 或 `Procedure<*Impl>`（**均 0 泛型 arity**） | 编辑期可见节点源：有 `[UgcSource(menuPath, typeof(*Source.Node))]` + N 个 `[UgcSourceProperty(name, order)] public Expression 槽位` 字段。 | codegen |
-| `*Source.Node` | `sealed class : Block<*Source>`，嵌套在 `*Source` 内 | 运行期手动 Pop 接线，**严格遵循父合约 §4 的 5 步协议**：`EvaluateChildren()` override 触发所有子节点 `_field.Evaluate()`（按 `[UgcSourceProperty.order]` 升序、每项内部 Push 出栈值）；`InitializeProperties(*Impl impl)` **只做字段拷贝**（按同序 `impl.field = Blockly.Pop<T>();`），**不得**含任何 `_child.Evaluate()` 副作用；`Initialize()` 调 `Blockly.CreateBlock(source.槽)` 创子节点；`CleanProperties` 清 impl 引用、`OnDestroy` 释放子节点。Procedure 形态省 Push（Function 形态由基类 `Function<*Impl,TOutput>` 在第 5 步统一 Push 返回值）。 | codegen |
+| `*Source.Node` | `sealed class : Block<*Source>`，嵌套在 `*Source` 内 | 运行期手动 Pop 接线，**严格遵循父合约 §4 的 5 步协议**：`EvaluateChildren()` override 触发所有子节点 `_field.Evaluate()`（按 `[UgcSourceProperty.order]` **升序**、每项内部 Push 出栈值）；`InitializeProperties(*Impl impl)` **只做字段拷贝**（按 `[UgcSourceProperty.order]` **降序**、栈 LIFO 反向逐项 `impl.field = Blockly.Pop<T>();`），**不得**含任何 `_child.Evaluate()` 副作用；`Initialize()` 调 `Blockly.CreateBlock(source.槽)` 创子节点；`CleanProperties` 清 impl 引用、`OnDestroy` 释放子节点。Procedure 形态省 Push（Function 形态由基类 `Function<*Impl,TOutput>` 在第 5 步统一 Push 返回值）。 | codegen |
 
-> **5 步铁律**（与父合约 §4 对齐）：`EvaluateChildren → Pop → InitializeProperties → Impl.Evaluate → Push`（Procedure 无 Push）。codegen 产出 `*Source.Node` 模板必须按此 5 步切分；`InitializeProperties` 写入 `_field.Evaluate()` = 破坏合约（撞空栈）。执行点 = `Editor/Codegen/UgcCodeWriter.cs` 内 `EmitSourceNode`（或同义产出方法）的 Node body 模板。
+> **5 步铁律**（与父合约 §4 对齐）：`EvaluateChildren → Pop → InitializeProperties → Impl.Evaluate → Push`（Procedure 无 Push）。codegen 产出 `*Source.Node` 模板必须按此 5 步切分；`InitializeProperties` 写入 `_field.Evaluate()` = 破坏合约（撞空栈）。**Push 与 Pop 顺序必须相反**（Push 升序、Pop 降序，栈 LIFO），同序 = 撞类型 / 撞错位、同样是合约违反。执行点 = `Editor/Codegen/UgcCodeWriter.cs` 内 `EmitSourceNode`（或同义产出方法）的 Node body 模板。
 
 ### 产物顶部头部
 
@@ -121,14 +121,16 @@
 
 ### Pop 顺序（§1 `UgcSourceProperty.order` 实例化规则）
 
-- N 个槽位 → N 个 `_field` 节点 → 在 `EvaluateChildren()` 中 **按 order 升序**逐项 `_field.Evaluate()`（每项内部 Push）；`InitializeProperties(impl)` 中按同序 `impl.field = Blockly.Pop<T>();`（**仅字段拷贝，无 Evaluate 副作用**）。
-- order 全项锁住三者一致（§1）：**Pop 顺序 ≡ IR 字段顺序 ≡ UI 顺序**。
+- N 个槽位 → N 个 `_field` 节点 → 在 `EvaluateChildren()` 中 **按 order 升序** 逐项 `_field.Evaluate()`（每项内部 Push 一次值到栈）；`InitializeProperties(impl)` 中 **按 order 降序**（栈 LIFO 反向） `impl.field = Blockly.Pop<T>();`（**仅字段拷贝，无 Evaluate 副作用**）。
+- **栈语义**：`EvaluateChildren()` 按 order 升序 Push（最后入栈的是最高 order 的字段值）；`InitializeProperties` 按 order 降序 Pop（最后 Push 的最先 Pop）。两个方向相反才能让 Pop 出来的值 / 类型对齐字段——Push 与 Pop 同序 = 撞类型 / 撞错位、合约违反。
+- order 全项锁住三者一致（§1）：**Push 顺序 ≡ IR 字段顺序 ≡ UI 顺序**（按 `[UgcSourceProperty.order]` 升序）；**Pop 顺序 = Push 顺序的反序**（栈 LIFO，按 order 降序）。
 - order 重复 / 跨 source 跨序 → codegen 报错、不产出。
 
 ### `isStatic` 分路
 
 - `isStatic=true` → `*Impl` 仅含 N 个参数字段；Source 仅含 N 个 `Expression` 槽；order = 参数顺序。
-- `isStatic=false` → `*Impl` 额外含首字段 `public <SourceType> instance;`；Source 额外含首槽 `[UgcSourceProperty("实例", 1)] public Expression instance;`；用户的参数 order 从 2 起计。Pop 顺序同样按 order 升序：Pop instance 首、参数按名次 Pop。
+- `isStatic=false` → `*Impl` 额外含首字段 `public <SourceType> instance;`；Source 额外含首槽 `[UgcSourceProperty("实例", 1)] public Expression instance;`；用户的参数 order 从 2 起计。
+- **Push / Pop 顺序**：Push 按 order 升序（`EvaluateChildren()` 逐项：instance 首 Push、参数按名次依序 Push）；Pop 按 order **降序**（栈 LIFO 反向：最后 Push 的参数先 Pop、instance 最后 Pop）。`isStatic=false` 下 instance 是最先 Push、最后 Pop。
 
 ### 输出位置与文件划分
 

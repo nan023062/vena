@@ -1,6 +1,6 @@
 # 02 Behavior Runtime
 
-`BehaviorGraph` demo driven by a `MonoBehaviour`. Two parts:
+`BehaviorGraph` demo driven by a `MonoBehaviour`. Six parts:
 
 - **Part A — Sequence + Leaf.** Open the scene, press Play, watch a
   `Sequence ( Hello("Hello"), Hello("World") )` graph tick to completion in the
@@ -8,6 +8,16 @@
 - **Part B — Timeline integration.** Drive a `Timeline` clip whose `time` slot
   is wired to a `LogicGraph`-evaluated float; demonstrates the
   `UClipSource<TestClip>` / `UClip<TestClipSource, TestClip>` triad.
+- **Part C — BranchNode (if-else).** A `BranchNode` whose `condition` is a
+  constant `LogicGraph<bool>` picks between two `Hello` leaves.
+- **Part D — LoopNode.** A `LoopNode` whose `loopCount` is a constant
+  `LogicGraph<int>` runs an inner `Sequence` N times.
+- **Part E — Parallel + multi-tick Running.** A `ParallelNode` runs two
+  `Countdown` leaves with different tick budgets in parallel; demonstrates
+  multi-frame `BehaviorResult.Running` propagation through a composite.
+- **Part F — Timeline ExpressionClip + Signal.** A `Timeline` track with one
+  `ExpressionClip` (onBegin / onFrame / onEnd each driven by a side-effecting
+  `LogicGraph`) plus a `Signal` at a configurable frame.
 
 ## Purpose
 
@@ -112,6 +122,174 @@ Unity), create one manually:
 4. (Part B) Create another empty GameObject, name it `TimelineDemoRunner`,
    `Add Component → Timeline Runtime Demo`.
 5. Save as `Scenes/BehaviorRuntimeDemo.unity`.
+
+## Part C — BranchNode (if-else)
+
+A `BranchNode` whose `condition` is a constant `LogicGraph<bool>` (driven by
+the demo-local `DemoConstBoolSource`) chooses between
+`HelloBehaviorSource { greeting = "alive" }` and
+`HelloBehaviorSource { greeting = "dying" }`.
+
+### Knobs
+
+On the `BehaviorBranchDemo` component:
+
+- **Condition Input** — `bool`; `true` selects the `alive` branch, `false`
+  the `dying` branch. Read at `Awake()` and baked into the source tree.
+- **Tick Count / Fixed Delta Time** — same meaning as Part A.
+
+### Expected Console output (Condition Input = true)
+
+```
+[BranchDemo] graph started, conditionInput=True
+[HelloBehavior] Start: alive
+[HelloBehavior] Tick: alive
+[HelloBehavior] Finish: alive
+[BranchDemo] graph done after 1 ticks
+```
+
+The `dying` branch never logs. Toggle Condition Input to `false` and only the
+`dying` branch will log.
+
+### Reference code
+
+- `Scripts/BehaviorBranchDemo.cs` — `MonoBehaviour` entry point.
+- `Scripts/DemoBehaviorNodes.cs` — `DemoConstBoolImpl` /
+  `DemoConstBoolSource` (the LogicGraph const used as the condition input).
+
+## Part D — LoopNode
+
+A `LoopNode` whose `loopCount` is a constant `LogicGraph<int>` (driven by the
+demo-local `DemoConstIntSource`) runs an inner `Sequence(Hello("iter-A"),
+Hello("iter-B"))` N times.
+
+### Knobs
+
+On the `BehaviorLoopDemo` component:
+
+- **Loop Count Input** — `int` (default 3); read at `Awake()`.
+- **Tick Count / Fixed Delta Time** — same meaning as Part A. Default 20 to
+  give the loop room to finish.
+
+### Expected Console output (Loop Count Input = 3)
+
+`Start/Tick/Finish` of `iter-A` then `iter-B` repeats three times — six
+`[HelloBehavior] Tick:` lines total, alternating greetings — followed by
+`[LoopDemo] graph done after N ticks`.
+
+### Reference code
+
+- `Scripts/BehaviorLoopDemo.cs` — `MonoBehaviour` entry point.
+- `Scripts/DemoBehaviorNodes.cs` — `DemoConstIntImpl` / `DemoConstIntSource`.
+
+## Part E — Parallel + multi-tick Running
+
+A `ParallelNode` runs two `CountdownBehaviorSource` leaves in parallel:
+
+```
+ParallelNode
+  ├─ CountdownBehaviorSource { ticksToRun = aTicksInput, label = "A" }
+  └─ CountdownBehaviorSource { ticksToRun = bTicksInput, label = "B" }
+```
+
+`CountdownBehaviorImpl.Tick` returns `BehaviorResult.Running` until its
+remaining-counter hits zero, then `Done`. This is the first part to actually
+exercise multi-frame `Running` propagation through a composite — the
+`ParallelNode` keeps reporting `Running` until *both* children finish.
+
+### Knobs
+
+- **A Ticks Input** (default 3) and **B Ticks Input** (default 5) — how many
+  `Tick` calls each countdown survives before reporting `Done`.
+- **Tick Count / Fixed Delta Time** — host loop pacing.
+
+### Expected Console output (A=3, B=5)
+
+```
+[ParallelDemo] graph started, A=3 ticks, B=5 ticks
+[Countdown:A] Start, remaining=3
+[Countdown:B] Start, remaining=5
+[Countdown:A] Tick, remaining=2
+[Countdown:B] Tick, remaining=4
+[ParallelDemo] tick 1, playing=True
+[Countdown:A] Tick, remaining=1
+[Countdown:B] Tick, remaining=3
+[ParallelDemo] tick 2, playing=True
+[Countdown:A] Tick, remaining=0
+[Countdown:A] Finish
+[Countdown:B] Tick, remaining=2
+[ParallelDemo] tick 3, playing=True
+[Countdown:B] Tick, remaining=1
+[ParallelDemo] tick 4, playing=True
+[Countdown:B] Tick, remaining=0
+[Countdown:B] Finish
+[ParallelDemo] tick 5, playing=False
+[ParallelDemo] graph done after 5 ticks
+```
+
+A drops out after frame 3; B drops out at frame 5. Engine flush ordering of
+`Finish` vs the `[ParallelDemo] tick N` line may vary slightly.
+
+### Reference code
+
+- `Scripts/BehaviorParallelMultiTickDemo.cs` — `MonoBehaviour` entry point.
+- `Scripts/DemoBehaviorNodes.cs` — `CountdownBehaviorImpl` /
+  `CountdownBehaviorSource` (the multi-tick Running leaf).
+
+## Part F — Timeline ExpressionClip + Signal
+
+A `Timeline` driven through a `BehaviorGraph`, with a track that combines:
+
+- One `ExpressionClip` whose `onBegin`, `onFrame`, `onEnd` are each a
+  `LogicGraph` wrapping a `LogSignalSource` (the demo-local `Procedure<...>`
+  that `Debug.Log`s its `message` field).
+- One `Signal` at a configurable frame, also driven by a `LogSignalSource`.
+
+`ExpressionClip.duration = clipDuration` (default `0.5s` @ `30fps` →
+`15` clip frames). `Timeline.Track` calls `Begin` + `OnFrame` together on
+clip-frame 1, calls `OnFrame` on clip-frames 2..N, and calls `End` when the
+clip's frame counter reaches `frameCount`. The `Signal` fires on its assigned
+frame regardless of clip state.
+
+### Knobs
+
+- **Clip Duration** (default `0.5s`) and **Signal Frame** (default `5`) —
+  drive the timeline shape.
+- **Total Update Ticks** (default `30`) — how many ticks the host pumps before
+  it stops calling `Update`.
+- **Fixed Delta Time** (default `1f/30f`) — one frame at the timeline's frame
+  rate per Unity `Update`.
+
+### Expected Console output (defaults)
+
+```
+[TimelineSignalDemo] graph started, clipDuration=0.5s, signalFrame=5
+[Signal] clip begin                  # timeline frame 1
+[Signal] clip frame                  # timeline frame 1 (clip Begin and OnFrame run together on the clip's first frame)
+[Signal] clip frame                  # timeline frame 2
+[Signal] clip frame                  # timeline frame 3
+[Signal] clip frame                  # timeline frame 4
+[Signal] signal at frame 5           # timeline frame 5 — Track runs signals before clip updates
+[Signal] clip frame                  # timeline frame 5
+[Signal] clip frame                  # timeline frame 6
+... (clip frame ×9 more)
+[Signal] clip frame                  # timeline frame 15
+[Signal] clip end                    # timeline frame 15 — End fires together with the clip's last OnFrame
+[TimelineSignalDemo] graph done after 16 ticks
+```
+
+The exact tick count depends on how the timeline aligns clip-frame 15 (End)
+with the host's tick boundary, but with `fixedDeltaTime = 1/30s` it lands at
+tick 16.
+
+### Reference code
+
+- `Scripts/TimelineSignalDemo.cs` — `MonoBehaviour` entry point. Uses
+  reflection to construct `TimelineSource.TrackSource<,>` because
+  `ExpressionClip.Object` is a `private` nested type (same path as
+  `TimelineRuntimeDemo`).
+- `Scripts/DemoBehaviorNodes.cs` — `LogSignalImpl` / `LogSignalSource`
+  (`Procedure<LogSignalImpl>` whose `Evaluate` `Debug.Log`s the `message`).
 
 ## Next steps
 
