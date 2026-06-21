@@ -53,7 +53,10 @@ namespace Vena.Assets
 
         public static string GameAssetInputPath()
         {
-            string sourceRootPath = AssetBuildSetting.Instance.GetAssetRootPath();
+            var setting = AssetBuildSetting.Instance;
+            if (setting == null) return string.Empty;
+            string sourceRootPath = setting.GetAssetRootPath();
+            if (string.IsNullOrEmpty(sourceRootPath)) return string.Empty;
             return Path.Combine(Application.dataPath, sourceRootPath);
         }
 
@@ -301,6 +304,7 @@ namespace Vena.Assets
 
         public static string UnityRelativePathToAbsolutePath(string relativePath)
         {
+            if (string.IsNullOrEmpty(relativePath)) return string.Empty;
             if (relativePath.StartsWith("{0}/"))
             {
                 return string.Format(relativePath, Application.dataPath);

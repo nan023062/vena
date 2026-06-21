@@ -142,7 +142,7 @@ namespace Vena.Assets
 
             string[] bundleDeps = _manifest.GetDependencies(bundleRef.name);
 
-            if (bundleDeps is { Length: > 0 })
+            if (bundleDeps != null && bundleDeps.Length > 0)
             {
                 foreach (string bundleName in bundleDeps)
                 {

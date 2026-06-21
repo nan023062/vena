@@ -25,17 +25,18 @@ namespace Vena.Assets
         public static BuildTreeNode RefreshAssetBuildTree(bool showProgress = false)
         {
             _buildTreeRoot = null;
-            
+
             _currAssetPackageSetting = AssetBuildSetting.Instance;
-                    
+
             if (_currAssetPackageSetting == null)
             {
-                Debug.LogError("没有发现策略文件！");
+                Debug.LogWarning("[VenaAssets] AssetBuildSetting not found — Asset Builder is idle until you create one (Assets/Create/AssetBuildSetting) and configure 'Raw Asset Path'.");
+                return _buildTreeRoot;
             }
-                    
+
             string gameAssetDirPath = Utility.GameAssetInputPath();
-                    
-            if (!Directory.Exists(gameAssetDirPath)) return _buildTreeRoot;
+
+            if (string.IsNullOrEmpty(gameAssetDirPath) || !Directory.Exists(gameAssetDirPath)) return _buildTreeRoot;
 
             //创建资源树根节点
             var directoryInfo = new DirectoryInfo(gameAssetDirPath);

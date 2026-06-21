@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Vena.Assets.Editor
 {
@@ -21,36 +22,115 @@ namespace Vena.Assets.Editor
     {
         private static AssetToolkitTab _editorTab;
 
-        private readonly List<AssetToolkitTab> _editorTabList;
+        private List<AssetToolkitTab> _editorTabList;
+        private bool _activated;
 
         [SettingsProvider]
-        private static SettingsProvider GetSettingsProvider()
+        public static SettingsProvider GetSettingsProvider()
         {
-            return new AssetToolkitSettingsProvider(
-                $"Vena/Asset Toolkit-[{Utility.GetPlatformName()}]",
-                SettingsScope.Project);
+            try
+            {
+                return new AssetToolkitSettingsProvider(
+                    "Project/Vena Assets",
+                    SettingsScope.Project);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[VenaAssets] Failed to create SettingsProvider: {ex}");
+                return null;
+            }
         }
 
         private AssetToolkitSettingsProvider(string path, SettingsScope scope) : base(path, scope)
         {
-            Type[] types = typeof(AssetToolkitSettingsProvider).Assembly.GetTypes();
+            // Ctor must do no work that touches project resources — Unity constructs every
+            // SettingsProvider just to populate the Project Settings sidebar list, long before
+            // the user actually clicks Vena Assets. Anything that loads ScriptableObjects,
+            // walks AssetDatabase, or scans disk happens in OnActivate.
+            keywords = new[] { "Vena", "Assets", "AssetBundle", "OSS", "Builder", "Profiler", "Pipeline" };
+        }
 
+        public override void OnActivate(string searchContext, VisualElement rootElement)
+        {
+            base.OnActivate(searchContext, rootElement);
+
+            if (_activated) return;
+            _activated = true;
+
+            try
+            {
+                DiscoverTabs();
+
+                if (_editorTabList != null && _editorTabList.Count > 0)
+                {
+                    SwitchSubTab(_editorTabList[0]);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[VenaAssets] OnActivate failed: {ex}");
+            }
+        }
+
+        public override void OnDeactivate()
+        {
+            base.OnDeactivate();
+
+            if (null != _editorTab)
+            {
+                try { _editorTab.ExitDraw(); }
+                catch (Exception ex) { Debug.LogWarning($"[VenaAssets] ExitDraw threw: {ex.Message}"); }
+                _editorTab = null;
+            }
+        }
+
+        private void DiscoverTabs()
+        {
             _editorTabList = new List<AssetToolkitTab>();
 
-            foreach (var type in types.Where(t => t.IsSubclassOf(typeof(AssetToolkitTab))))
+            Type[] types;
+            try
             {
-                _editorTabList.Add(ScriptableObject.CreateInstance(type) as AssetToolkitTab);
+                types = typeof(AssetToolkitSettingsProvider).Assembly.GetTypes();
+            }
+            catch (System.Reflection.ReflectionTypeLoadException ex)
+            {
+                Debug.LogWarning($"[VenaAssets] ReflectionTypeLoadException while enumerating tabs: {ex.Message}");
+                types = ex.Types.Where(t => t != null).ToArray();
             }
 
-            if (_editorTabList.Count > 0)
+            foreach (var type in types.Where(t => t != null && t.IsSubclassOf(typeof(AssetToolkitTab)) && !t.IsAbstract))
             {
-                SwitchSubTab(_editorTabList[0]);
+                try
+                {
+                    _editorTabList.Add(ScriptableObject.CreateInstance(type) as AssetToolkitTab);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[VenaAssets] Failed to instantiate tab '{type.FullName}': {ex.Message}");
+                }
             }
         }
 
         public override void OnGUI(string searchContext)
         {
             base.OnGUI(searchContext);
+
+            // Defensive: OnGUI may fire before OnActivate in degenerate cases; lazy-init then.
+            if (!_activated)
+            {
+                try
+                {
+                    DiscoverTabs();
+                    if (_editorTabList != null && _editorTabList.Count > 0)
+                        SwitchSubTab(_editorTabList[0]);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[VenaAssets] Lazy init from OnGUI failed: {ex}");
+                }
+                _activated = true;
+            }
 
             if (!AssetToolkitProvider.HasCustomFactory)
             {
@@ -61,10 +141,30 @@ namespace Vena.Assets.Editor
                     MessageType.Warning);
             }
 
+            if (AssetBuildSetting.Instance == null ||
+                string.IsNullOrEmpty(AssetBuildSetting.Instance.assetRootPath))
+            {
+                EditorGUILayout.HelpBox(
+                    "AssetBuildSetting is not configured. Create one via 'Assets > Create > AssetBuildSetting' " +
+                    "and set 'Raw Asset Path' on the Asset Builder tab before building bundles.",
+                    MessageType.Info);
+            }
+
+            if (_editorTabList == null || _editorTabList.Count == 0)
+            {
+                EditorGUILayout.HelpBox(
+                    "No AssetToolkitTab implementations were discovered in this assembly. " +
+                    "Verify Vena.Assets.Editor compiled successfully (check the Console for errors).",
+                    MessageType.Info);
+                return;
+            }
+
             EditorGUILayout.BeginHorizontal();
 
             foreach (var editorTab in _editorTabList)
             {
+                if (editorTab == null) continue;
+
                 if (GUILayout.Toggle(editorTab == _editorTab, editorTab.TabName, EditorStyles.toolbarButton))
                 {
                     SwitchSubTab(editorTab);
@@ -75,7 +175,15 @@ namespace Vena.Assets.Editor
 
             if (null != _editorTab)
             {
-                _editorTab.DrawGUI();
+                try
+                {
+                    _editorTab.DrawGUI();
+                }
+                catch (Exception ex)
+                {
+                    EditorGUILayout.HelpBox($"Tab '{_editorTab.TabName}' threw: {ex.Message}", MessageType.Error);
+                    Debug.LogException(ex);
+                }
             }
         }
 
@@ -83,11 +191,22 @@ namespace Vena.Assets.Editor
         {
             if (editorTab != _editorTab)
             {
-                if (null != _editorTab) _editorTab.ExitDraw();
+                if (null != _editorTab)
+                {
+                    try { _editorTab.ExitDraw(); }
+                    catch (Exception ex) { Debug.LogWarning($"[VenaAssets] ExitDraw threw: {ex.Message}"); }
+                }
 
                 _editorTab = editorTab;
 
-                if (null != _editorTab) _editorTab.EnterDraw();
+                if (null != _editorTab)
+                {
+                    try { _editorTab.EnterDraw(); }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"[VenaAssets] EnterDraw on '{_editorTab.TabName}' threw: {ex}");
+                    }
+                }
             }
         }
     }

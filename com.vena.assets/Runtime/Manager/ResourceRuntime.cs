@@ -19,10 +19,10 @@ namespace Vena.Assets
 
         private static int _assignStringHashCode;
         private static short _assignPackageId;
-        private static readonly Dictionary<string, int> StringHashCodes = new ();
-        private static readonly Dictionary<string, short> PackageNameIds = new ();
-        private static readonly Dictionary<int, Package> Packages = new ();
-        private static readonly Dictionary<IResLoader, HashSet<Handle>> Loaders = new ();
+        private static readonly Dictionary<string, int> StringHashCodes = new Dictionary<string, int>();
+        private static readonly Dictionary<string, short> PackageNameIds = new Dictionary<string, short>();
+        private static readonly Dictionary<int, Package> Packages = new Dictionary<int, Package>();
+        private static readonly Dictionary<IResLoader, HashSet<Handle>> Loaders = new Dictionary<IResLoader, HashSet<Handle>>();
         
         static ResourceRuntime()
         {

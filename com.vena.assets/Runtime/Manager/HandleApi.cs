@@ -245,7 +245,14 @@ namespace Vena.Assets
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(package, type, token);
+            unchecked
+            {
+                int hash = 17;
+                hash = hash * 31 + package.GetHashCode();
+                hash = hash * 31 + type.GetHashCode();
+                hash = hash * 31 + token.GetHashCode();
+                return hash;
+            }
         }
 
         bool IEnumerator.MoveNext() => !this.IsLoaded();
