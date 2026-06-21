@@ -1,0 +1,22 @@
+{
+  "name": "com.vena.assets",
+  "version": "1.0.0",
+  "displayName": "Vena Assets",
+  "description": "Unity asset pipeline toolkit: AssetBundle build/load, version control, compression (Zip/GZip/Tar/BZip2/Lzw), remote object-storage sync (IOssClient abstraction with pluggable implementations), asset profiler and pipeline checks.",
+  "unity": "2021.3",
+  "license": "MulanPSL-2.0",
+  "keywords": [
+    "asset-bundle", "version-control", "compression",
+    "oss", "object-storage", "profiler", "asset-pipeline", "vena"
+  ],
+  "author": {
+    "name": "nan023062",
+    "url": "https://github.com/nan023062"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nan023062/vena.git",
+    "directory": "com.vena.assets"
+  },
+  "dependencies": {}
+}

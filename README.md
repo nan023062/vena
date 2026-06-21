@@ -16,6 +16,7 @@ vena/
 ├── com.vena.math        Math package. Vectors, matrices, quaternion, ray, rectangle, transform helpers.
 ├── com.vena.world       World package. World, actor/component/system, controller, lifecycle primitives.
 ├── com.vena.framework   Framework package. GameWorld, state/module/service/command, character, scene, GUI.
+├── com.vena.assets      Assets package. AssetBundle build/load, version control, compression, IOssClient OSS abstraction.
 └── unity-project        Development and verification Unity project for the packages in this repo.
 ```
 
@@ -28,6 +29,7 @@ com.vena.world          no package dependency
 com.vena.framework      depends on com.vena.core
                         depends on com.vena.world
                         depends on com.unity.ugui
+com.vena.assets         no package dependency
 ```
 
 `com.vena.core`、`com.vena.math` 和 `com.vena.world` 可以单独使用。
@@ -78,6 +80,16 @@ com.vena.framework      depends on com.vena.core
     "com.vena.core": "https://github.com/nan023062/vena.git?path=/com.vena.core#main",
     "com.vena.world": "https://github.com/nan023062/vena.git?path=/com.vena.world#main",
     "com.vena.framework": "https://github.com/nan023062/vena.git?path=/com.vena.framework#main"
+  }
+}
+```
+
+只使用 Assets：
+
+```json
+{
+  "dependencies": {
+    "com.vena.assets": "https://github.com/nan023062/vena.git?path=/com.vena.assets#main"
   }
 }
 ```

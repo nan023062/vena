@@ -89,6 +89,12 @@
         "com.unity.modules.imgui": "1.0.0"
       }
     },
+    "com.vena.assets": {
+      "version": "file:../../com.vena.assets",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
     "com.vena.blockly": {
       "version": "file:../../com.vena.blockly",
       "depth": 0,
