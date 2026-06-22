@@ -65,14 +65,14 @@ namespace Vena.Blockly.Editor
                             var slots = CollectBehaviorSlots(type);
                             if (slots.Count == 0) continue;
                             var menuPath = ComputeDefaultMenuPath(type);
-                            var scanned = new ScannedSource(type, classDisplayName: null, members: Array.Empty<ScannedMember>())
+                            var behaviorScanned = new ScannedSource(type, classDisplayName: null, members: Array.Empty<ScannedMember>())
                             {
                                 Kind = ScannedSourceKind.Behavior,
                                 BehaviorSlots = slots,
                                 BehaviorMenuPath = menuPath,
                                 SourceDirectory = ResolveSourceDirectory(type),
                             };
-                            results.Add(scanned);
+                            results.Add(behaviorScanned);
                             continue;
                         }
                         continue;
