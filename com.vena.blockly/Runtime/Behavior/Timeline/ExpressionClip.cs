@@ -15,15 +15,15 @@ namespace Vena.Blockly
     public sealed class ExpressionClip : UClipSource
     {
         [ExpressionSignature]
-        [BlocklySourceProperty("开始时", 1)]
+        [BlocklySourceSlot("开始时", 1)]
         public LogicGraph onBegin;
 
         [ExpressionSignature(typeof(void), typeof(UFrameInfo))]
-        [BlocklySourceProperty("每帧", 2)]
+        [BlocklySourceSlot("每帧", 2)]
         public LogicGraph onFrame;
 
         [ExpressionSignature(typeof(void), typeof(UFrameInfo))]
-        [BlocklySourceProperty("结束时", 3)]
+        [BlocklySourceSlot("结束时", 3)]
         public LogicGraph onEnd;
 
         /// <summary>

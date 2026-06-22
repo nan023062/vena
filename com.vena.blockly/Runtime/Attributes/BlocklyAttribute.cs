@@ -12,7 +12,7 @@ namespace Vena.Blockly
     /// <summary>
     /// 标注玩法代码作为 Blockly codegen 输入：可贴在宿主类 / 方法 / 属性 / 字段上，
     /// 由 Editor codegen 工具扫描并生成对应的节点源（Source）三件套。
-    /// 与运行期 Source 族（<see cref="BlocklySourceAttribute"/> / <see cref="BlocklySourcePropertyAttribute"/>）
+    /// 与运行期 Source 族（<see cref="BlocklySourceAttribute"/> / <see cref="BlocklySourceSlotAttribute"/>）
     /// 互斥：同一类上不允许同存（scanner 硬约束，详见 Editor 合约 §2）。
     /// </summary>
     [AttributeUsage(

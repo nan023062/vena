@@ -24,11 +24,11 @@ namespace Vena.Blockly.Tests.LogicRuntime
     [BlocklySource("smoke/5参函数/求和", typeof(Sum5IntsSource.Node))]
     public sealed class Sum5IntsSource : Function<Sum5IntsImpl, int, int, int, int, int, int>
     {
-        [BlocklySourceProperty("a", 1)] public Expression a;
-        [BlocklySourceProperty("b", 2)] public Expression b;
-        [BlocklySourceProperty("c", 3)] public Expression c;
-        [BlocklySourceProperty("d", 4)] public Expression d;
-        [BlocklySourceProperty("e", 5)] public Expression e;
+        [BlocklySourceSlot("a", 1)] public Expression a;
+        [BlocklySourceSlot("b", 2)] public Expression b;
+        [BlocklySourceSlot("c", 3)] public Expression c;
+        [BlocklySourceSlot("d", 4)] public Expression d;
+        [BlocklySourceSlot("e", 5)] public Expression e;
 
         sealed class Node : Block<Sum5IntsSource>
         {
@@ -91,11 +91,11 @@ namespace Vena.Blockly.Tests.LogicRuntime
     [BlocklySource("smoke/5参过程/累加到容器", typeof(AccumulateInto5Source.Node))]
     public sealed class AccumulateInto5Source : Procedure<AccumulateInto5Impl, Accumulator, int, int, int, int>
     {
-        [BlocklySourceProperty("sink", 1)] public Expression sink;
-        [BlocklySourceProperty("a", 2)] public Expression a;
-        [BlocklySourceProperty("b", 3)] public Expression b;
-        [BlocklySourceProperty("c", 4)] public Expression c;
-        [BlocklySourceProperty("d", 5)] public Expression d;
+        [BlocklySourceSlot("sink", 1)] public Expression sink;
+        [BlocklySourceSlot("a", 2)] public Expression a;
+        [BlocklySourceSlot("b", 3)] public Expression b;
+        [BlocklySourceSlot("c", 4)] public Expression c;
+        [BlocklySourceSlot("d", 5)] public Expression d;
 
         sealed class Node : Block<AccumulateInto5Source>
         {

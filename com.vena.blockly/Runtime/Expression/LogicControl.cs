@@ -15,7 +15,7 @@ namespace Vena.Blockly
     [BlocklySource("程序节点/控制/顺序执行", typeof(LogicSequence.Node))]
     public sealed class LogicSequence : Expression
     {
-        [BlocklySourceProperty("语句列表", 1)]
+        [BlocklySourceSlot("语句列表", 1)]
         public LogicGraph[] statements;
 
         internal sealed class Node : ILogicNode
@@ -82,13 +82,13 @@ namespace Vena.Blockly
     public sealed class LogicBranch : Expression
     {
         [ExpressionSignature(typeof(bool))]
-        [BlocklySourceProperty("条件", 1)]
+        [BlocklySourceSlot("条件", 1)]
         public LogicGraph condition;
 
-        [BlocklySourceProperty("为真时", 2)]
+        [BlocklySourceSlot("为真时", 2)]
         public LogicGraph trueBranch;
 
-        [BlocklySourceProperty("为假时", 3)]
+        [BlocklySourceSlot("为假时", 3)]
         public LogicGraph falseBranch;
 
         internal sealed class Node : ILogicNode
@@ -150,13 +150,13 @@ namespace Vena.Blockly
     public sealed class LogicWhile : Expression
     {
         [ExpressionSignature(typeof(bool))]
-        [BlocklySourceProperty("条件", 1)]
+        [BlocklySourceSlot("条件", 1)]
         public LogicGraph condition;
 
-        [BlocklySourceProperty("循环体", 2)]
+        [BlocklySourceSlot("循环体", 2)]
         public LogicGraph body;
 
-        [BlocklySourceProperty("最大迭代次数", 3)]
+        [BlocklySourceSlot("最大迭代次数", 3)]
         public int maxIterations = 10000;
 
         internal sealed class Node : ILogicNode
@@ -216,7 +216,7 @@ namespace Vena.Blockly
 
     public abstract class LogicGetVariable<T> : Expression
     {
-        [BlocklySourceProperty("变量名", 1)]
+        [BlocklySourceSlot("变量名", 1)]
         public string variableName;
 
         protected internal sealed class Node : ILogicNode
@@ -262,10 +262,10 @@ namespace Vena.Blockly
 
     public abstract class LogicSetVariable<T> : Expression
     {
-        [BlocklySourceProperty("变量名", 1)]
+        [BlocklySourceSlot("变量名", 1)]
         public string variableName;
 
-        [BlocklySourceProperty("值", 2)]
+        [BlocklySourceSlot("值", 2)]
         public LogicGraph value;
 
         protected internal sealed class Node : ILogicNode

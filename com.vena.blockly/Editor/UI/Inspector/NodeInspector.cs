@@ -16,7 +16,7 @@ namespace Vena.Blockly.Editor.UI
     /// 节点属性面板。
     ///
     /// 数据源 = NodeIR.Properties（kv 直绑）；编辑回写 IR、不直接持有运行期实例。
-    /// 字段顺序按 IR 列表顺序（即 [BlocklySourceProperty.order] 升序，UI / IR / Pop 三者一致）。
+    /// 字段顺序按 IR 列表顺序（即 [BlocklySourceSlot.order] 升序，UI / IR / Pop 三者一致）。
     /// 当 DebugChannel 触发 OnValueProduced 时叠加 value 预览。
     /// </summary>
     public sealed class NodeInspector : VisualElement

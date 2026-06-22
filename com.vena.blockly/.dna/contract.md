@@ -98,7 +98,7 @@
 ### 非冻结声明
 
 1. 反射识别规则。
-2. `BlocklySourceAttribute / BlocklySourcePropertyAttribute / BlocklyAttribute / ExpressionSignatureAttribute` 元数据语义。
+2. `BlocklySourceAttribute / BlocklySourceSlotAttribute / BlocklyAttribute / ExpressionSignatureAttribute` 元数据语义。
 3. codegen 输出格式与目标产物。
 4. 节点注册表数据结构。
 5. 行为/逻辑节点的具体子类清单。

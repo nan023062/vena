@@ -13,7 +13,7 @@ namespace Vena.Blockly
 
     /// <summary>
     /// 节点元数据 —— Editor 扫描期收集、运行期通过 <c>INodeMetadataProvider</c> 查询。
-    /// 字段值由 <c>[BlocklySource]</c> / <c>[BlocklySourceProperty]</c> 注解原值透传。
+    /// 字段值由 <c>[BlocklySource]</c> / <c>[BlocklySourceSlot]</c> 注解原值透传。
     /// </summary>
     public sealed class NodeMetadata
     {
@@ -38,7 +38,7 @@ namespace Vena.Blockly
         }
     }
 
-    /// <summary>NodeMetadata 子条目：源类上一个 [BlocklySourceProperty] 字段/属性的固化形态。</summary>
+    /// <summary>NodeMetadata 子条目：源类上一个 [BlocklySourceSlot] 字段/属性的固化形态。</summary>
     public sealed class NodePropertyMetadata
     {
         /// <summary>UI 显示名（原值透传）。</summary>

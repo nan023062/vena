@@ -329,7 +329,7 @@ namespace Vena.Blockly.Editor
 
             foreach (var slot in slots)
             {
-                sb.Append(indent).Append("    [BlocklySourceProperty(\"").Append(EscapeStringLiteral(slot.DisplayName))
+                sb.Append(indent).Append("    [BlocklySourceSlot(\"").Append(EscapeStringLiteral(slot.DisplayName))
                     .Append("\", ").Append(slot.Order).Append(")]").Append(NL);
                 sb.Append(indent).Append("    public ").Append(slot.SlotType).Append(' ').Append(slot.FieldName).Append(";").Append(NL);
                 sb.Append(NL);

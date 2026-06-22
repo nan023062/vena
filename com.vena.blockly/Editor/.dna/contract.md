@@ -19,9 +19,9 @@
 | sealed | 是 |
 | 字段语义 | `MenuPath:string` = 编辑器调色板菜单路径，允许含 `/` 分层（如 `"测试对象/加法"`），也允许不含 `/` 作为顶层 displayName（如 `"表达式图"`）；**原值透传**至 NodeMetadata，UI 端自行切分。`NodeType:Type` = 该 source 对应的 `ILogicNode` / `IBehaviorNode` 实现类（通常是 source 类嵌套的 `Node`/`Block` 子类，可能是 codegen 产出产物）。 |
 | codegen 处理 | 识别为 Blockly 源项、入扫描集；如该类需 codegen 产出三件套（§2），nodeType 填入生成产物的 `Node` 型。 |
-| 提醒 | 字段名与 Runtime 源码 `BlocklySourceAttribute.MenuPath / NodeType` 对齐；Runtime 定义不动、合约措辞向源码看齐。 |
+| 提醒 | 字段名与 Runtime 源码 `BlocklySourceAttribute.MenuPath / NodeType` 对齐；Runtime 定义不动、契约措辞向源码看齐。 |
 
-### `[BlocklySourceProperty(displayName, order:int)]`
+### `[BlocklySourceSlot(displayName, order:int)]`
 
 | 属性 | 值 |
 |------|------|
@@ -31,8 +31,6 @@
 | sealed | 是 |
 | 字段语义 | `displayName` = UI 字段名；`order:int` = **全项顺序、三者一致、不允许任何脱钩**——同时锁住（·order 升序·轴）：（1）参数 Push 顺序（`EvaluateChildren()` 逐项 `_field.Evaluate()` 依序 Push）、（2）IR 序列化字段顺序（存图字段排列）、（3）编辑器 UI 显示顺序（面板字段从上到下）。**Pop 顺序 ≠ 以上三者**：运行期 Pop = Push 顺序的反序（栈 LIFO，按 order 降序）。 |
 | codegen 处理 | 按 `order` 升序输出三者一致顺序（UI / IR / Push）、Pop 反序；breaking。同一 source 内 `order` 重复 → codegen 报错、不产出。 |
-
-名称重命名说明：原 `[BlocklySourceSlot]` 重命名为 `[BlocklySourceProperty]`（`*Attribute.cs` 文件 git mv、`.meta` GUID `e1803382e0101ac44967d269ac0df051` 沿用，保 Unity 现有引用不断）。语义、字段、AttributeUsage 均不变；仅名称与 XmlDoc summary 向「property」词面靠拢。
 
 ### `[Blockly(displayName)]` / `[Blockly(displayName, isStatic, params parameterNames)]`
 
@@ -76,7 +74,6 @@
 | 上轮 ContextPack 中的 `[BlocklyMethod]` | `[Blockly]`（Method target）——同上 |
 | 上轮 ContextPack 中的 `[BlocklyProperty]` | `[Blockly]`（Property / Field target）——同上 |
 | `[BlocklyGenerated]` | 无取代。产物身份走**命名空间隔离**（`<SourceNs>.Generated`，§2）、不再使用 attribute marker。 |
-| `[BlocklySourceSlot]` | `[BlocklySourceProperty]`（重命名；`.meta` GUID 沿用） |
 
 ## §2 codegen 输出格式契约
 
@@ -102,8 +99,8 @@
 | 件 | 类型 | 职责 | 生成 |
 |---|------|------|------|
 | `*Impl` | `class : IFunctionImpl<TOutput>` 或 `IProcedureImpl`（**均 0-arity**） | 纯逻辑容器：按参数/接收者顺序列出 `public` 字段，`Evaluate()` 调目标方法。 | codegen |
-| `*Source` | `sealed class : Function<*Impl, TOutput>` 或 `Procedure<*Impl>`（**均 0 泛型 arity**） | 编辑期可见节点源：有 `[BlocklySource(menuPath, typeof(*Source.Node))]` + N 个 `[BlocklySourceProperty(name, order)] public Expression 槽位` 字段。 | codegen |
-| `*Source.Node` | `sealed class : Block<*Source>`，嵌套在 `*Source` 内 | 运行期手动 Pop 接线，**严格遵循父合约 §4 的 5 步协议**：`EvaluateChildren()` override 触发所有子节点 `_field.Evaluate()`（按 `[BlocklySourceProperty.order]` **升序**、每项内部 Push 出栈值）；`InitializeProperties(*Impl impl)` **只做字段拷贝**（按 `[BlocklySourceProperty.order]` **降序**、栈 LIFO 反向逐项 `impl.field = Blockly.Pop<T>();`），**不得**含任何 `_child.Evaluate()` 副作用；`Initialize()` 调 `Blockly.CreateBlock(source.槽)` 创子节点；`CleanProperties` 清 impl 引用、`OnDestroy` 释放子节点。Procedure 形态省 Push（Function 形态由基类 `Function<*Impl,TOutput>` 在第 5 步统一 Push 返回值）。 | codegen |
+| `*Source` | `sealed class : Function<*Impl, TOutput>` 或 `Procedure<*Impl>`（**均 0 泛型 arity**） | 编辑期可见节点源：有 `[BlocklySource(menuPath, typeof(*Source.Node))]` + N 个 `[BlocklySourceSlot(name, order)] public Expression 槽位` 字段。 | codegen |
+| `*Source.Node` | `sealed class : Block<*Source>`，嵌套在 `*Source` 内 | 运行期手动 Pop 接线，**严格遵循父合约 §4 的 5 步协议**：`EvaluateChildren()` override 触发所有子节点 `_field.Evaluate()`（按 `[BlocklySourceSlot.order]` **升序**、每项内部 Push 出栈值）；`InitializeProperties(*Impl impl)` **只做字段拷贝**（按 `[BlocklySourceSlot.order]` **降序**、栈 LIFO 反向逐项 `impl.field = Blockly.Pop<T>();`），**不得**含任何 `_child.Evaluate()` 副作用；`Initialize()` 调 `Blockly.CreateBlock(source.槽)` 创子节点；`CleanProperties` 清 impl 引用、`OnDestroy` 释放子节点。Procedure 形态省 Push（Function 形态由基类 `Function<*Impl,TOutput>` 在第 5 步统一 Push 返回值）。 | codegen |
 
 > **5 步铁律**（与父合约 §4 对齐）：`EvaluateChildren → Pop → InitializeProperties → Impl.Evaluate → Push`（Procedure 无 Push）。codegen 产出 `*Source.Node` 模板必须按此 5 步切分；`InitializeProperties` 写入 `_field.Evaluate()` = 破坏合约（撞空栈）。**Push 与 Pop 顺序必须相反**（Push 升序、Pop 降序，栈 LIFO），同序 = 撞类型 / 撞错位、同样是合约违反。执行点 = `Editor/Codegen/CodeWriter.cs` 内 `EmitSourceNode`（或同义产出方法）的 Node body 模板。
 
@@ -134,17 +131,17 @@
 - **命名冲突**：同一程序集已有同名类型 → codegen **报错、不产出**；不静默追加后缀 / 不重命名。跨源类的同名类型由「命名空间隔离」（`<SourceNs>.Generated`）自动消解、不触发 codegen 报错。
 - 用户在 `[Blockly("...")]` 给出的 `displayName` **不参与类型名**；仅用于 UI 显示与 `menuPath` 拼接。
 
-### Pop 顺序（§1 `BlocklySourceProperty.order` 实例化规则）
+### Pop 顺序（§1 `BlocklySourceSlot.order` 实例化规则）
 
 - N 个槽位 → N 个 `_field` 节点 → 在 `EvaluateChildren()` 中 **按 order 升序** 逐项 `_field.Evaluate()`（每项内部 Push 一次值到栈）；`InitializeProperties(impl)` 中 **按 order 降序**（栈 LIFO 反向） `impl.field = Blockly.Pop<T>();`（**仅字段拷贝、无 Evaluate 副作用**）。
 - **栈语义**：`EvaluateChildren()` 按 order 升序 Push（最后入栈的是最高 order 的字段值）；`InitializeProperties` 按 order 降序 Pop（最后 Push 的最先 Pop）。两个方向相反才能让 Pop 出来的值 / 类型对齐字段——Push 与 Pop 同序 = 撞类型 / 撞错位、合约违反。
-- order 全项锁住三者一致（§1）：**Push 顺序 ≡ IR 字段顺序 ≡ UI 顺序**（按 `[BlocklySourceProperty.order]` 升序）；**Pop 顺序 = Push 顺序的反序**（栈 LIFO，按 order 降序）。
+- order 全项锁住三者一致（§1）：**Push 顺序 ≡ IR 字段顺序 ≡ UI 顺序**（按 `[BlocklySourceSlot.order]` 升序）；**Pop 顺序 = Push 顺序的反序**（栈 LIFO，按 order 降序）。
 - order 重复 / 跨 source 跨序 → codegen 报错、不产出。
 
 ### `isStatic` 分路（仅 [Blockly] Method target）
 
 - `isStatic=true` → `*Impl` 仅含 N 个参数字段；Source 仅含 N 个 `Expression` 槽；order = 参数顺序。
-- `isStatic=false` → `*Impl` 额外含首字段 `public <SourceType> instance;`；Source 额外含首槽 `[BlocklySourceProperty("实例", 1)] public Expression instance;`；用户的参数 order 从 2 起计。
+- `isStatic=false` → `*Impl` 额外含首字段 `public <SourceType> instance;`；Source 额外含首槽 `[BlocklySourceSlot("实例", 1)] public Expression instance;`；用户的参数 order 从 2 起计。
 - **Push / Pop 顺序**：Push 按 order 升序（`EvaluateChildren()` 逐项：instance 首 Push、参数按名次依序 Push）；Pop 按 order **降序**（栈 LIFO 反向：最后 Push 的参数先 Pop、instance 最后 Pop）。`isStatic=false` 下 instance 是最先 Push、最后 Pop。
 
 ### 输出位置与文件划分
@@ -226,7 +223,7 @@ JSON 顶层对象固定 5 字段（顺序无关、键名图定）：
 |------|------|------|
 | `guid` | `Guid` (string) | 节点稳定身份；新建时分配、跨 round-trip 保留（§4.5）。 |
 | `sourceType` | `string` (AQN) | 节点 Source 类的程序集限定名（`Type.AssemblyQualifiedName` 的稳定子集：`Namespace.TypeName, AssemblyName`，不含版本/文化/公钥）。 |
-| `properties` | `KV[]`（`{key:string, value:json}`） | `[BlocklySourceProperty]` 槽位的字面值或子节点引用；顺序按 `[BlocklySourceProperty.order]` 升序、与 §1 / §2 锁的三者一致原则对齐。 |
+| `properties` | `KV[]`（`{key:string, value:json}`） | `[BlocklySourceSlot]` 槽位的字面值或子节点引用；顺序按 `[BlocklySourceSlot.order]` 升序、与 §1 / §2 锁的三者一致原则对齐。 |
 | `position` | `Vector2` (`{x:float, y:float}`) | 编辑器画布坐标；运行期忽略、仅供 Editor.UI 复原布局。 |
 
 `properties[].value` 表达子节点引用时 = `{nodeGuid: Guid}` 单字段对象；表达字面值时 = 原始 JSON 标量 / 对象。
@@ -241,20 +238,20 @@ JSON 顶层对象固定 5 字段（顺序无关、键名图定）：
 | `to` | `PortRef` (`{nodeGuid:Guid, port:string}`) | 入端。 |
 | `wireKind` | `"Control"` \| `"Value"` | **显式无默认**；缺字段 / 其他取值 → 反序列化报错。 |
 
-`port` 字段语义：Control 端口 = 节点声明的具名出/入口（如 `"next"`、`"true"`、`"false"`）；Value 端口 = `[BlocklySourceProperty]` 槽位名（与 §4.3 `properties[].key` 对齐）。
+`port` 字段语义：Control 端口 = 节点声明的具名出/入口（如 `"next"`、`"true"`、`"false"`）；Value 端口 = `[BlocklySourceSlot]` 槽位名（与 §4.3 `properties[].key` 对齐）。
 
 ### §4.5 round-trip 不变量
 
 1. **Guid 保留**：`FromJson(json) → ToJson` 后所有 `NodeIR.guid` 与原 json 完全一致；新建节点时分配的 Guid 不因 round-trip 改变。
 2. **字节级对称**：`ToJson(FromJson(json)) ≡ canonicalize(json)`。canonical 形态 = 顶层与 NodeIR / EdgeIR 字段固定顺序（§4.2 / §4.3 / §4.4 表内顺序）+ 紧凑分隔符 + UTF-8 无 BOM + 无尾随换行。Editor 写盘前调用 canonicalize；非 canonical 输入允许读、写出必为 canonical。
-3. **数组顺序保留**：`nodes[]` / `edges[]` / `properties[]` 顺序 round-trip 等价。`properties[]` 顺序由 `[BlocklySourceProperty.order]` 决定（§4.3）。
+3. **数组顺序保留**：`nodes[]` / `edges[]` / `properties[]` 顺序 round-trip 等价。`properties[]` 顺序由 `[BlocklySourceSlot.order]` 决定（§4.3）。
 4. **未知字段拒绝**：节点 / 边 / 顶层出现表外字段 → 反序列化报错；不静默丢弃。
 
 ### §4.6 AOT 不变量
 
 1. `sourceType` 解析仅限 codegen 产物 `*Source`（携 `[BlocklySource]` 且命名空间末段 ≡ `.Generated`）与手写 Source（携 `[BlocklySource]` 且命名空间末段 ≠ `.Generated`）；不允许运行期反射构造任意 `Type`。原「+ `[BlocklyGenerated]`」词汇废除、产物身份走命名空间隔离（§2）。
-2. `properties[].key` 必须能在 `sourceType` 的 `[BlocklySourceProperty]` 槽位集合内静态匹配；未匹配 → 反序列化报错（不容错回填默认）。
-3. `properties[].value` 字面值类型必须能静态推断（由 `[BlocklySourceProperty]` 字段类型锁定），不允许 `object` / 多态运行期分发。
+2. `properties[].key` 必须能在 `sourceType` 的 `[BlocklySourceSlot]` 槽位集合内静态匹配；未匹配 → 反序列化报错（不容错回填默认）。
+3. `properties[].value` 字面值类型必须能静态推断（由 `[BlocklySourceSlot]` 字段类型锁定），不允许 `object` / 多态运行期分发。
 4. `EdgeIR.wireKind` 与 `from/to.port` 类型在静态期可推断（Control 端口集 / Value 端口集 codegen 期已知），AOT 不引入运行期端口类型字典查找。
 5. 反序列化路径不调 `Activator.CreateInstance(Type)`；走 `IBlocklyNodeFactory.Create<T>(IBlocklySource)` + codegen 产出的具型构造，AOT 平台可静态裁剪。
 

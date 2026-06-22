@@ -24,7 +24,7 @@ namespace Vena.Blockly.Editor
     {
         /// <summary>
         /// 扫描入口。按 <paramref name="config"/> 程序集白名单 + 类型白名单过滤、
-        /// 跳过自身已带 [BlocklySource] 的类、按 [BlocklySourceProperty.Order] 升序固定顺序。
+        /// 跳过自身已带 [BlocklySource] 的类、按 [BlocklySourceSlot.Order] 升序固定顺序。
         /// 硬约束（Q1）：同一类上 [Blockly] 与 [BlocklySource] 不允许同存；[Blockly] 不允许打在 runtime 节点源根类继承链上。
         /// </summary>
         public static IReadOnlyList<ScannedSource> Scan(CodegenConfig config)

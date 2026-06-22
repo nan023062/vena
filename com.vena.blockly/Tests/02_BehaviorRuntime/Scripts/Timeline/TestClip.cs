@@ -35,7 +35,7 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     [BlocklySource( "时间线/测试剪辑源1", typeof( TestClipSource.UClip ) )]
     public class TestClipSource : UClipSource<TestClip>
     {
-        [BlocklySourceProperty("时间", 1)]
+        [BlocklySourceSlot("时间", 1)]
         private LogicGraph _time;
 
         class UClip : UClip<TestClipSource, TestClip>
@@ -89,7 +89,7 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     public class TestClip2Source : UClipSource<TestClip2>
     {
         [ExpressionSignature(typeof(float))]
-        [BlocklySourceProperty("秒数", 1)]
+        [BlocklySourceSlot("秒数", 1)]
         public LogicGraph seconds;
 
         class UClip : UClip<TestClip2Source, TestClip2>

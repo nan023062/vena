@@ -166,7 +166,7 @@ classDiagram
 
 **不做**：命名空间改名、物理搬迁、Wait/Delay 节点、协程 / Task / 异步、反射注册表、注解扫描、codegen。
 
-- **Phase 2** = codegen（扫 `[Blockly]` / `[BlocklySource]` / `[BlocklySourceProperty]` 注解导出 Impl 扩展代码）+ 编辑器配置工具
+- **Phase 2** = codegen（扫 `[Blockly]` / `[BlocklySource]` / `[BlocklySourceSlot]` 注解导出 Impl 扩展代码）+ 编辑器配置工具
 
 ## Phase 2 Ratchet
 
