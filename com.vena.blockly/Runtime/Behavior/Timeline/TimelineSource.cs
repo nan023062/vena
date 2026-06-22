@@ -35,7 +35,7 @@ namespace Vena.Blockly
         /// <summary>
         /// 时间轴轨道配置
         /// </summary>
-        public class TrackSource<TClip, TSource> : ITrackSource where TClip : ITimelineClip where TSource : UClipSource, new()
+        public class TrackSource<TClip, TSource> : ITrackSource where TClip : ITimelineClip where TSource : ClipSource, new()
         {
             public Timeline.ITrack InstantiateTrack(Timeline.Group parent)
             {

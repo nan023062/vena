@@ -129,7 +129,7 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     // -------------------------------------------------------------------------
     // Procedure 副作用源：LogSignal
     //
-    // 用于 TimelineSignalDemo：UClip 的 onBegin/onFrame/onEnd 以及
+    // 用于 TimelineSignalDemo：LogicClip 的 onBegin/onFrame/onEnd 以及
     // Signal.source 都是 LogicGraph（无返回值的 Procedure 形态）。
     // 这个源在 Evaluate 时直接 Debug.Log message，作为可观察的副作用。
     // -------------------------------------------------------------------------

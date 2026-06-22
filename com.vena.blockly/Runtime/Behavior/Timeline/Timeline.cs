@@ -195,7 +195,7 @@ namespace Vena.Blockly
         /// </summary>
         public class Track<TClip, TInput> : ITrack
             where TClip : ITimelineClip
-            where TInput : UClipSource, new()
+            where TInput : ClipSource, new()
         {
             #region Clip
 
@@ -230,12 +230,12 @@ namespace Vena.Blockly
                 {
                     try
                     {
-                        UFrameInfo frameInfo;
+                        FrameInfo frameInfo;
 
                         // do begin
                         if (_currentFrame == 0)
                         {
-                            frameInfo = new UFrameInfo(_currentFrame, TotalFrame, 0, 0);
+                            frameInfo = new FrameInfo(_currentFrame, TotalFrame, 0, 0);
 
                             _output.Begin();
 
@@ -246,7 +246,7 @@ namespace Vena.Blockly
                         {
                             _elapsedTime += deltaTime;
 
-                            frameInfo = new UFrameInfo(_currentFrame, TotalFrame, _elapsedTime, deltaTime);
+                            frameInfo = new FrameInfo(_currentFrame, TotalFrame, _elapsedTime, deltaTime);
 
                             _output.OnFrame(frameInfo);
                         }
@@ -291,7 +291,7 @@ namespace Vena.Blockly
                         {
                             try
                             {
-                                var frameInfo = new UFrameInfo(frame, TotalFrame, elapsed, 0);
+                                var frameInfo = new FrameInfo(frame, TotalFrame, elapsed, 0);
 
                                 _output.End(frameInfo);
                             }

@@ -62,7 +62,7 @@
 
 入口：`BehaviorGraph.Blockly.Start / Update(float) / LateUpdate(float) / Finish / Restart`。
 
-已知节点子类：`BranchNode / SwitchNode / SelectorNode / LoopNode / ParallelNode / SequenceNode / LogicBehavior / Timeline`。**全部基于 `CompositeBehavior<TSource>` 直接实现**——不存在「`BehaviorNode<TSource, TImpl>` 持有 `IBehaviorImpl` 实例并代理 Tick」这条路径。
+已知节点子类：`BranchNode / SwitchNode / SelectorNode / LoopNode / ParallelNode / SequenceNode / LogicBehavior / Timeline`（LogicGraph 默认路径与组合容器都走 `CompositeBehavior<TSource>` 直接实现）；`BehaviorNode<TSource, TImpl>` 模板族作为另一条实现 `IBehaviorNode` 生命周期的业务扩展路径、与组合容器同阶存在。
 
 **分支决策由 LogicGraph 条件表达式完成，Tick 返回值不参与分支。**
 
@@ -72,11 +72,17 @@
 - 典型：`LogicBehavior.onTick: LogicGraph`（`[ExpressionSignature(typeof(bool))]`）——`true → Done`、`false → Running`。
 - **叶子不得通过 Tick 返回值向父/兄弟传递分支 / 成败语义**。
 
-### Behavior 节点执行模型（KD#16 锁）
+### Behavior / Timeline 双路径存在型定法（KD#16 锁双路径）
 
-- **Behavior 节点不持有 C# `TImpl`**：所有「叶子算法」一律通过 `LogicBehavior` + 嵌入 `LogicGraph` 表达；自定义叶子 = 写 `LogicGraph` + 在图里组合 `[Blockly]` codegen 产出的算法节点。**不存在「写一个 `IBehaviorImpl` 子类作为叶子算法」这条路径**。
-- **Behavior 节点扩展点收敛**：组合容器（`Branch / Switch / Selector / Loop / Parallel / Sequence / Timeline`）+ `LogicBehavior` 叶子；二者均直接继承 `CompositeBehavior<TSource>` 或其衍生 `UBehaviorComplexNode<TSource>`。
-- **Timeline Clip 节点不持有 C# `TImpl`**：唯一 Clip 类型 = `UClip`，其 onBegin / onFrame / onEnd 一律为 `LogicGraph` 槽位。**不存在第二种从 `ITimelineClip` 派生的 clip 类型**。
+- **Behavior 侧双路径**：
+  - LogicGraph 默认路径 = `LogicBehavior` + onStart/onTick/onLateTick/onFinish 嵌入 `LogicGraph`。叶子算法需复杂逻辑则在嵌入图里组合 `[Blockly]` codegen 产出的节点。
+  - C# Impl 业务扩展路径 = `BehaviorNode<TSource, TImpl> : IBehaviorNode where TSource : BehaviorNodeSource<TImpl>` + `IBehaviorImpl` 负责 Start/Tick/LateTick/Finish。业务侧可在自己的 asmdef 里直接派生模板、把叶子算法写在 `TImpl` 中、Inspector 直接配置。
+- **Timeline 侧双路径**（与 Behavior 严格对称）：
+  - LogicGraph 默认路径 = `LogicClip : ClipSource, ITimelineClip`（sealed concrete）+ onBegin/onFrame/onEnd 嵌入 `LogicGraph`。与 `LogicBehavior` 同名对称、表明二者都是「LogicGraph 默认叶子」身份。
+  - C# Impl 业务扩展路径 = `Clip<TSource, TImpl> : Clip<TSource> where TSource : ClipSource<TImpl> where TImpl : class, IClip, new()` + `Clip<TSource> : ITimelineClip where TSource : ClipSource` 骨架 + `ClipSource<TImpl> : ClipSource` + `IClip` 接口。业务侧在自己的 asmdef 中以 4 类骨架为基点派生模板。
+- **两条路径在接口处汇合**：Behavior 侧汇于 `IBehaviorNode`；Timeline 侧汇于 `ITimelineClip`。`CompositeBehavior` / `Timeline.Track<TClip, TInput>` 只看接口、不区分下街走哪条。`Track<TClip, TInput>` / `TrackSource<TClip, TSource>` 约束保持：`TClip : ITimelineClip`、`TInput / TSource : ClipSource, new()`。
+- **双路径合约地位等价**：LogicGraph 默认路径与 C# Impl 扩展路径是合约双公民。**上一版 KD#16「不持 TImpl」锁作废**（取代为本条）；上一版「Timeline 唯一 Clip = UClip」作废、改为「Timeline LogicGraph 默认 Clip = `LogicClip`（sealed）+ Impl 模板族 `Clip<TSource,TImpl>` 并存」。
+- **命名发明**：Timeline LogicGraph 默认 clip = `LogicClip`，与另一侧 `LogicBehavior` 完全对称。Timeline Impl 模板族骨架身份与名称：接口 = `IClip`；骨架基类 = `Clip<TSource>` / `Clip<TSource, TImpl>`（无 U 前缀）；泛型 source 基类 = `ClipSource<TImpl>`；非泛型 source 基类 = `ClipSource`；帧信息值类型 = `FrameInfo`。Timeline 命名空间内不再存在 `U` 前缀类型——`UFrameInfo` / `UClipSource` / `UClip` / `IUClip` 全面作废，锁入本轮代码处理。
 
 ## §6 Host 聚合门面
 

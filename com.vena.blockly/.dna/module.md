@@ -156,17 +156,25 @@ classDiagram
     - 替代：runtime 解释 IR + 编辑器期 codegen（KD#11 Layer 2 ① 三件套）。产品路径 = IR JSON 解释执行。
     - 远期开发期可保留「开发者预制图 → `.cs` 编译」作为可选优化通道，但**不进产品路径、不进玩家 build**。任何把 AOT 重新提到产品路径的提案，先回到 KD#2 与 KD#11 检查矛盾。
 
-16. **行为/Timeline 节点 Impl 塌缩到 LogicGraph**（KD#11 三层架构的精化）：
-    - **决议**：Behavior 节点与 Timeline Clip 节点都**不再持有 C# `TImpl` 实现型**——它们的「行为如何执行」一律下沉到嵌入的 `LogicGraph`（求值表达式）。叶子 Behavior = `LogicBehavior`（在 onStart / onTick / onLateTick / onFinish 各挂一条 LogicGraph）；唯一 Clip 类型 = `UClip`（在 onBegin / onFrame / onEnd 各挂一条 LogicGraph）。叶子行为如需 Procedure / Function 算法，由 `[Blockly]` codegen 产出的 `*Impl + *Source + *Source.Node` 三件套登记为 LogicGraph 节点、被嵌入图引用。
-    - **取消的抽象**：删除 `IBehaviorImpl` 接口、`BehaviorNode<TSource, TImpl>` 泛型基类、`BehaviorNodeSource<T>` 泛型基类（Behavior 侧）；删除 `IUClip` 接口、`UClipSource<TImpl>` 泛型基类、`UClip<TSource>` 与 `UClip<TSource, TImpl>` 泛型基类（Timeline 侧）。这些类型在 Runtime 内置代码中 zero use，仅 Tests/02_BehaviorRuntime/ demo subtype 调用——demo 同步删除/改造。
-    - **塌缩后 Behavior 唯一外部扩展点** = 组合节点（`CompositeBehavior<TSource>` 直接继承）+ `LogicBehavior` 嵌图。自定义叶子 = 写 `LogicGraph` + 在图里组合 `[Blockly]` 产出的算法节点。**不再有「写一个 IBehaviorImpl 子类作为叶子算法」这条路径**。
-    - **塌缩后 Timeline 唯一 Clip 类型** = `UClip`（`sealed class UClip : UClipSource, ITimelineClip`——单类直接实现 `ITimelineClip` 接口，**不再有 `UClip<TSource>` 骨架抽象基类**，亦不存在第二个 `ITimelineClip` 派生类）。
-    - **理由**：所有「Behavior/Timeline 叶子算法 = C# 写死」的诉求都可由「LogicGraph 嵌入 + Logic 端 codegen 三件套」表达；保留两条接口族 = 重复职责（KD#5 单变更原因）、加剧 KD#11 Layer 1 维护成本（多一条手写族）。
-17. **KD#11 Layer 1 范围精化**：在 KD#16 塌缩前提下，「Layer 1 人手写维护」对 Behavior/Timeline 两侧的具体内容收敛为：
-    - **Behavior 侧 Layer 1** = 组合子（`BranchNode` / `SwitchNode` / `SelectorNode` / `LoopNode` / `ParallelNode` / `SequenceNode` / `Timeline` 调度容器）+ `LogicBehavior` 叶子嵌图接线。**不再包含**「IBehaviorImpl 子类」。
-    - **Timeline 侧 Layer 1** = `UClip` 嵌图接线 + `Signal` 嵌图接线。**不再包含**「IUClip 子类」「UClip 外的第二种 `ITimelineClip` 实现」。
+16. **行为/Timeline 双路径并存**（KD#11 三层架构的精化，**取代上一版「全塌缩」立场**）：
+    - **决议**：Behavior 与 Timeline 两侧均保留**两条对等扩展路径**——
+      - **LogicGraph 默认路径**（叶子节点把执行逻辑下沉到嵌入的 `LogicGraph`）：Behavior 侧 = `LogicBehavior`（onStart / onTick / onLateTick / onFinish 各挂一条 `LogicGraph`）；Timeline 侧 = `LogicClip`（onBegin / onFrame / onEnd 各挂一条 `LogicGraph`，sealed concrete）。叶子如需复杂算法，由 `[Blockly]` codegen 产出 `*Impl + *Source + *Source.Node` 三件套登记为 LogicGraph 节点、被嵌入图引用。
+      - **C# Impl 业务扩展路径**（业务方在自己的 asmdef 里直接派生模板基类、把行为写在 `TImpl` 里、Inspector 直接配置）：Behavior 侧 = `BehaviorNode<TSource, TImpl>` + `BehaviorNodeSource<TImpl>` + `IBehaviorImpl`（已存在、不动）；Timeline 侧 = `Clip<TSource, TImpl>` + `Clip<TSource>` 骨架 + `ClipSource<TImpl>` + `IClip`（**本轮恢复**——cbcb41b 阶段 1 误删，按原签名在 `Runtime/Behavior/Timeline/Clip.cs` 重写回，全部用无 U 前缀的新名）。
+    - **两条路径在 `IBehaviorNode` / `ITimelineClip` 接口处汇合**，调度容器（`CompositeBehavior` / `Timeline.Track`）只看接口、不知道叶子走哪条路径。约束放宽：Behavior 侧 `CompositeBehavior<TSource>` `where TSource : class, IBlocklySource`（已是这样）；Timeline 侧 `Track<TClip, TInput>` / `TrackSource<TClip, TSource>` 约束保持 `TClip : ITimelineClip` + `TInput / TSource : ClipSource, new()`（cbcb41b 已放宽过、本轮维持），两条路径都满足。
+    - **取消上一版「Impl 全塌缩」语义**：上一版 KD#16 写「Behavior 节点与 Timeline Clip 节点都不再持有 C# `TImpl`」**作废**；C# Impl 是和 LogicGraph 等量的合法扩展路径，不存在贬抑或废弃。两条路径分工：
+      - LogicGraph 默认路径 = 玩家 UGC / 策划配图 / AI 生成（Layer 3 多产生者）的主入口；
+      - C# Impl 业务扩展路径 = 业务程序员高频改写、希望走 C# 编辑器调试器 / 断点 / 重构工具的叶子算法。
+    - **保留 Timeline 侧的 cbcb41b 命名收益**：原 `ExpressionClip` 已重命名为 `LogicClip`（**本轮新名**——把 Impl 模板族泛型基类的名字让给无 U 前缀的 `Clip<TSource>` / `Clip<TSource,TImpl>`、为「LogicGraph 默认 Clip」起一个与 `LogicBehavior` 对称的、独立于泛型族的专用名）。架构对称：`LogicBehavior` ↔ `LogicClip`（两侧 LogicGraph 默认叶子）、`BehaviorNode<TSource,TImpl>` ↔ `Clip<TSource,TImpl>`（两侧 C# Impl 业务扩展）。
+    - **U 前缀全面清退**：Timeline 命名空间内不再存在 `U` 前缀类型——`UFrameInfo` → `FrameInfo`、`UClipSource` → `ClipSource`、`IUClip` → `IClip`；旧 sealed `UClip` 名让位、改名 `LogicClip`，泛型 Impl 族重新使用 `Clip<TSource>` / `Clip<TSource,TImpl>` 占用此命名空间。Behavior 侧本来无 U 前缀，对称即成。
+    - **理由**：
+      - 「LogicGraph 嵌图」与「C# Impl 直写」**变更原因不同**（KD#5 / C2）：前者面向运行期重配置 / UGC / AI 生成；后者面向开发期 C# 工具链 / 性能敏感算法。两条路径满足不同变更原因 = 单一职责的两个模块，强行塌缩成一条 = 违反 C2。
+      - 业务侧明示需求：「timeline clip、behaveNode、timelinesignal 都可以业务实现 impl 来更好的配置」——Inspector 直接配置 = 走 SO 路径（KD#13）+ C# Impl 模板，二者协作才能落地。
+      - 维护成本：Timeline 侧 Impl 骨架（`IClip` / `ClipSource<TImpl>` / `Clip<TSource>` / `Clip<TSource,TImpl>`）= **4 类一次性写好**，Behavior 侧对应族 `IBehaviorImpl` / `BehaviorNodeSource<T>` / `BehaviorNode<TSource,TImpl>` = 现已存在 3 类，对等代价，不构成 KD#11 Layer 1 维护风险。
+17. **KD#11 Layer 1 范围精化**（按 KD#16 双路径修订）：
+    - **Behavior 侧 Layer 1** = 组合子（`BranchNode` / `SwitchNode` / `SelectorNode` / `LoopNode` / `ParallelNode` / `SequenceNode` / `Timeline` 调度容器）+ `LogicBehavior` 叶子嵌图接线 + `BehaviorNode<TSource,TImpl>` 模板族（4 类骨架）。叶子 Impl 子类**不进** Layer 1（属业务程序员维护、归 Layer 3 业务侧）。
+    - **Timeline 侧 Layer 1** = `LogicClip` 嵌图接线（sealed concrete）+ `Signal` 嵌图接线 + `Clip<TSource,TImpl>` 模板族（4 类骨架：`IClip` / `ClipSource<TImpl>` / `Clip<TSource>` / `Clip<TSource,TImpl>`）+ `FrameInfo` 值类型 + `ClipSource` 非泛型基类。Clip Impl 子类**不进** Layer 1。
     - **Logic 侧 Layer 1** = 不变（`IBlocklySource` / `Expression` / `Block` / 求值器 / IR Loader + `[Blockly]` 标注的核心算法）。
-    - **含义**：Behavior/Timeline 上 Layer 1 收敛到「调度骨架 + LogicGraph 接线」两件；「叶子算法手写」收敛到 Logic 侧的 `[Blockly]` codegen 输入面。
+    - **含义**：Behavior/Timeline 上 Layer 1 = 「调度骨架 + LogicGraph 默认接线 + Impl 模板族骨架」三件；「叶子算法手写」分两条：(a) 走 LogicGraph + Logic 侧 `[Blockly]` codegen 输入面、(b) 走 C# Impl 子类（业务程序员负责，包心不维护具体 Impl 子类）。
 
 ## Phase 1 Ratchet
 
@@ -183,4 +191,3 @@ classDiagram
 ## Phase 2 Ratchet
 
 - Phase 2 第二刀 = IR 序列化（JSON in SO）+ Runtime IR 加载器 + GraphView 双 wire 单画布 + Toolbox + Inspector + 调试通道 v0；不解冻父 §6。
-

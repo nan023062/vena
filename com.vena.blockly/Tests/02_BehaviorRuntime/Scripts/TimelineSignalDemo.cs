@@ -10,8 +10,8 @@ using UnityEngine;
 namespace Vena.Blockly.Tests.BehaviorRuntime
 {
     /// <summary>
-    /// Timeline + UClip + Signal 全套 demo：
-    ///   - 一个 UClip：onBegin / onFrame / onEnd 各挂一条 LogSignalSource
+    /// Timeline + LogicClip + Signal 全套 demo：
+    ///   - 一个 LogicClip：onBegin / onFrame / onEnd 各挂一条 LogSignalSource
     ///   - 一个 Signal：在 frame=5 触发，挂另一条 LogSignalSource
     ///
     /// duration = 0.5s @ 30fps → clipFrameCount = 15。Signal frame=5 落在 clip 跨度内。
@@ -41,8 +41,8 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
         {
             _host = new DemoSampleHost();
 
-            // ----- 构造 UClip：onBegin/onFrame/onEnd 各挂 LogSignalSource -----
-            var clipSource = new UClip
+            // ----- 构造 LogicClip：onBegin/onFrame/onEnd 各挂 LogSignalSource -----
+            var clipSource = new LogicClip
             {
                 duration = clipDuration,
                 onBegin = new LogicGraph
@@ -59,8 +59,8 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
                 },
             };
 
-            // ----- 直接构造 TrackSource<UClip, UClip>（UClip 既是 source 也是 impl）-----
-            var trackSource = new TimelineSource.TrackSource<UClip, UClip>();
+            // ----- 直接构造 TrackSource<LogicClip, LogicClip>（LogicClip 既是 source 也是 impl）-----
+            var trackSource = new TimelineSource.TrackSource<LogicClip, LogicClip>();
             trackSource.AddClip(1, clipSource);
 
             var signalSource = new Signal
