@@ -5,15 +5,13 @@
 // Licensed under the terms defined in the repository LICENSE file.
 // -----------------------------------------------------------------------------
 
-using System;
-using System.Reflection;
 using UnityEngine;
 
 namespace Vena.Blockly.Tests.BehaviorRuntime
 {
     /// <summary>
-    /// Timeline + ExpressionClip + Signal 全套 demo：
-    ///   - 一个 ExpressionClip：onBegin / onFrame / onEnd 各挂一条 LogSignalSource
+    /// Timeline + UClip + Signal 全套 demo：
+    ///   - 一个 UClip：onBegin / onFrame / onEnd 各挂一条 LogSignalSource
     ///   - 一个 Signal：在 frame=5 触发，挂另一条 LogSignalSource
     ///
     /// duration = 0.5s @ 30fps → clipFrameCount = 15。Signal frame=5 落在 clip 跨度内。
@@ -23,9 +21,6 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     ///   [Signal] signal at frame 5
     ///   [Signal] clip frame   ×N    (frame 5..15 的 OnFrame)
     ///   [Signal] clip end
-    ///
-    /// 注：ExpressionClip.Object 是 private nested 类型，TrackSource&lt;TClip,TSource&gt; 的
-    /// 第一个泛型参数必须是它，只能反射构造（同 TimelineRuntimeDemo 套路）。
     /// </summary>
     public sealed class TimelineSignalDemo : MonoBehaviour
     {
@@ -46,8 +41,8 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
         {
             _host = new DemoSampleHost();
 
-            // ----- 构造 ExpressionClip：onBegin/onFrame/onEnd 各挂 LogSignalSource -----
-            var clipSource = new ExpressionClip
+            // ----- 构造 UClip：onBegin/onFrame/onEnd 各挂 LogSignalSource -----
+            var clipSource = new UClip
             {
                 duration = clipDuration,
                 onBegin = new LogicGraph
@@ -64,23 +59,10 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
                 },
             };
 
-            // ----- 反射拿 ExpressionClip.Object 嵌套类型 + 构造 TrackSource<Object, ExpressionClip> -----
-            Type clipObjectType = BlocklySourceAttribute.GetNodeType(typeof(ExpressionClip));
-            if (clipObjectType == null)
-            {
-                Debug.LogError("[TimelineSignalDemo] BlocklySource lookup failed for ExpressionClip.");
-                return;
-            }
-            Type trackSourceType = typeof(TimelineSource.TrackSource<,>)
-                .MakeGenericType(clipObjectType, typeof(ExpressionClip));
-            var trackSource = Activator.CreateInstance(trackSourceType);
+            // ----- 直接构造 TrackSource<UClip, UClip>（UClip 既是 source 也是 impl）-----
+            var trackSource = new TimelineSource.TrackSource<UClip, UClip>();
+            trackSource.AddClip(1, clipSource);
 
-            // 反射调用 AddClip(int, ExpressionClip)
-            MethodInfo addClipMi = trackSourceType.GetMethod(
-                "AddClip", BindingFlags.Public | BindingFlags.Instance);
-            addClipMi.Invoke(trackSource, new object[] { 1, clipSource });
-
-            // 反射调用 Add(int, Signal)
             var signalSource = new Signal
             {
                 source = new LogicGraph
@@ -88,13 +70,11 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
                     root = new LogSignalSource { message = $"signal at frame {signalFrame}" },
                 },
             };
-            MethodInfo addSignalMi = trackSourceType.GetMethod(
-                "Add", new[] { typeof(int), typeof(Signal) });
-            addSignalMi.Invoke(trackSource, new object[] { signalFrame, signalSource });
+            trackSource.Add(signalFrame, signalSource);
 
             // ----- 拼装 GroupSource → TimelineSource -----
             var timelineSrc = new TimelineSource { frameRate = 30 };
-            timelineSrc.group.TrackList.Add((TimelineSource.ISource)trackSource);
+            timelineSrc.group.TrackList.Add(trackSource);
 
             // ----- BehaviorGraph 包装 + 起飞 -----
             var rootSrc = new BehaviorGraph { root = timelineSrc };

@@ -194,7 +194,7 @@ namespace Vena.Blockly
         /// 串行轨道
         /// </summary>
         public class Track<TClip, TInput> : ITrack
-            where TClip : UClip<TInput>
+            where TClip : ITimelineClip
             where TInput : UClipSource, new()
         {
             #region Clip
@@ -654,7 +654,7 @@ namespace Vena.Blockly
         #endregion
     }
 
-    internal interface ITimelineObject
+    public interface ITimelineObject
     {
         Timeline timeline { get; }
 

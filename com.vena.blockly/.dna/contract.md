@@ -62,7 +62,7 @@
 
 入口：`BehaviorGraph.Blockly.Start / Update(float) / LateUpdate(float) / Finish / Restart`。
 
-已知节点子类：`BranchNode / SwitchNode / SelectorNode / LoopNode / ParallelNode / SequenceNode / LogicBehavior / Timeline`。
+已知节点子类：`BranchNode / SwitchNode / SelectorNode / LoopNode / ParallelNode / SequenceNode / LogicBehavior / Timeline`。**全部基于 `CompositeBehavior<TSource>` 直接实现**——不存在「`BehaviorNode<TSource, TImpl>` 持有 `IBehaviorImpl` 实例并代理 Tick」这条路径。
 
 **分支决策由 LogicGraph 条件表达式完成，Tick 返回值不参与分支。**
 
@@ -71,6 +71,12 @@
 - 叶子可通过表达式求值决定自身本次活动周期的 Running 时长（自我门控）。
 - 典型：`LogicBehavior.onTick: LogicGraph`（`[ExpressionSignature(typeof(bool))]`）——`true → Done`、`false → Running`。
 - **叶子不得通过 Tick 返回值向父/兄弟传递分支 / 成败语义**。
+
+### Behavior 节点执行模型（KD#16 锁）
+
+- **Behavior 节点不持有 C# `TImpl`**：所有「叶子算法」一律通过 `LogicBehavior` + 嵌入 `LogicGraph` 表达；自定义叶子 = 写 `LogicGraph` + 在图里组合 `[Blockly]` codegen 产出的算法节点。**不存在「写一个 `IBehaviorImpl` 子类作为叶子算法」这条路径**。
+- **Behavior 节点扩展点收敛**：组合容器（`Branch / Switch / Selector / Loop / Parallel / Sequence / Timeline`）+ `LogicBehavior` 叶子；二者均直接继承 `CompositeBehavior<TSource>` 或其衍生 `UBehaviorComplexNode<TSource>`。
+- **Timeline Clip 节点不持有 C# `TImpl`**：唯一 Clip 类型 = `UClip`，其 onBegin / onFrame / onEnd 一律为 `LogicGraph` 槽位。**不存在第二种从 `ITimelineClip` 派生的 clip 类型**。
 
 ## §6 Host 聚合门面
 
