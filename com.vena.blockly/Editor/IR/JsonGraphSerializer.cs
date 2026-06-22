@@ -28,7 +28,7 @@ namespace Vena.Blockly.Editor
     /// - UTF-8 无 BOM、无尾随换行。字节级稳定。
     /// - 字符串不转 ASCII，保留原 UTF-8 码点；只做 JSON 必要转义（"\\\"\\\\\\b\\f\\n\\r\\t" 与 U+0000..U+001F）。
     /// </summary>
-    public sealed class JsonGraphSerializer : IBlocklyGraphSerializer
+    internal sealed class JsonGraphSerializer : IBlocklyGraphSerializer
     {
         // ---------------------------------------------------------------- ToJson
 

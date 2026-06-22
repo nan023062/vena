@@ -531,16 +531,18 @@ JSON 顶层对象固定 5 字段（顺序无关、键名图定）：
 ### §4.7 接口
 
 ```
-interface IBlocklyGraphSerializer
+internal interface IBlocklyGraphSerializer
 {
     string ToJson(GraphIR ir);
     GraphIR FromJson(string json);
 }
 ```
 
-- 归属：Editor 子模块（`Vena.Blockly.Editor`）、IR 编解码原语；Editor.UI 与 Runtime IR 加载器均消费。
+- **可见性 = `internal`**（PR-δ 锁）：`IBlocklyGraphSerializer` 与其实现 `JsonGraphSerializer` 均 `internal sealed`，可见域 = `Vena.Blockly.Editor` asmdef 内。`Editor/IR/` 与 `Editor/UI/` 同 asmdef、直接消费；其他 asmdef（`Vena.Blockly` / `Vena.Blockly.SO` / 任何 `Vena.Blockly.Tests.*`）**0 跨业务消费**、不依赖该接口。
+- 归属：Editor 子模块（`Vena.Blockly.Editor`）、IR 编解码原语；Editor.UI 同 asmdef 内消费、Runtime IR 加载器**不消费**（Runtime 走 `GraphLoader` 接受已解码 `GraphIR`、不持有 `IBlocklyGraphSerializer`）。
 - **不复用** Runtime `IBlocklySerializer`：`IBlocklySerializer` = 字节流原语（host 通用持久化），`IBlocklyGraphSerializer` = IR 结构化编解码，二者输入域 / 输出域 / 变更原因均不同。
-- **不进父 §6 聚合门面**：`IBlocklyHost` 不持有 `IBlocklyGraphSerializer` 字段；Runtime 加载器从 `GraphAsset._json` 字符串通过本接口反序列化为 `GraphIR`、再交节点工厂构造。
+- **不进父 §6 聚合门面**：`IBlocklyHost` 不持有 `IBlocklyGraphSerializer` 字段；Runtime 加载器从 `GraphAsset._json` 字符串通过本接口反序列化为 `GraphIR`、再交节点工厂构造（解码步骤 in Editor、Runtime 只接受已解码 IR）。
+- **不开 `InternalsVisibleTo`**：本接口可见性收口的代价 = Editor.Tests 若需调用必须独立桥接（当前 0 Tests 引用、无需开口）。未来如需测试访问优先走 Editor 自有桥接 API、不打 `InternalsVisibleTo` 后门。
 - 错误模式：所有 §4.2–§4.6 校验失败抛 `BlocklyIRSchemaException`（Editor 子模块定义）；调用方负责定位与上报，不静默修复。
 
 ## §5 编辑器入口契约

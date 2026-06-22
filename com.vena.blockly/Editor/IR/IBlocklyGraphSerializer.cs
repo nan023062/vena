@@ -14,7 +14,7 @@ namespace Vena.Blockly.Editor
     /// 不复用 Runtime <see cref="IBlocklySerializer"/>（字节流原语，输入域 / 输出域 / 变更原因均不同）。
     /// 不进 IBlocklyHost 聚合门面。
     /// </summary>
-    public interface IBlocklyGraphSerializer
+    internal interface IBlocklyGraphSerializer
     {
         /// <summary>GraphIR → canonical JSON 串。</summary>
         string ToJson(GraphIR ir);
