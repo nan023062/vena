@@ -63,7 +63,7 @@
 | 字段语义 | `displayName` = UI 字段名；`order:int` = **全项顺序、三者一致、不允许任何脱钩**——同时锁住（·order 升序·轴）：（1）参数 Push 顺序（`EvaluateChildren()` 逐项 `_field.Evaluate()` 依序 Push）、（2）IR 序列化字段顺序（存图字段排列）、（3）编辑器 UI 显示顺序（面板字段从上到下）。**Pop 顺序 ≠ 以上三者**：运行期 Pop = Push 顺序的反序（栈 LIFO，按 order 降序）。 |
 | codegen 处理 | 按 `order` 升序输出三者一致顺序（UI / IR / Push）、Pop 反序；breaking。同一 source 内 `order` 重复 → codegen 报错、不产出。 |
 
-### `[BlocklyCodeGenerated]`
+### `[BlocklyGenerated]`
 
 | 属性 | 值 |
 |------|------|
@@ -71,8 +71,8 @@
 | Inherited | `false` |
 | AllowMultiple | `false` |
 | sealed | 是 |
-| 字段语义 | 无参。**标记三件套产物类为 codegen 生成**，不扫含此注解的类为手写可修源。 |
-| codegen 处理 | 三件套（`*Impl` / `*Source` / `*Source.Node`）生成时顶部贴 `[BlocklyCodeGenerated]`；未来重扫时以此为「可覆写」识别依据，人工修改可手工删除该注解以「送出重扫。」 |
+| 字段语义 | 无参。**标记三件套产物类为 codegen 生成**，不扫含此注解的类为手写可修源。属于「输出 marker」族——独占 `BlocklyGenerated` 前缀，与输入族 `BlocklyCodeGen*` / `BlocklySource*` 命名空间剥离；输入族描述「要生成什么」、本注解描述「已生成出什么」。 |
+| codegen 处理 | 三件套（`*Impl` / `*Source` / `*Source.Node`）生成时顶部贴 `[BlocklyGenerated]`；未来重扫时以此为「可覆写」识别依据，人工修改可手工删除该注解以「送出重扫。」 |
 | 所属 | 本子模块 Editor 合约 §1（Editor-only 词汇）；类本身生成在 Runtime/Generated/，运行期不依赖该注解语义 —— 仅 codegen 扫描阶段识别。 |
 
 ### `[ExpressionSignature]` / `[ExpressionSignature(returnType)]` / `[ExpressionSignature(returnType, params Type[])]`
@@ -84,7 +84,7 @@
 | AllowMultiple | `false` |
 | sealed | 是 |
 | 字段语义 | 三重载：（1）无参 = **占位形态**，接受任意签名；（2）`returnType` = 锁返回型、参数任意；（3）`returnType + params Type[]` = 返回型 + 参数型列表全锁。 |
-| codegen 处理 | 无参形态 = 跳过签名校验；有参形态 = 在连接期校验 LogicGraph 返回型 / 形参型，不匹配 → 报错。 |
+| codegen 处理 | 无参形态 = 跳过签名校验；有参形态 = 在连接期校验 LogicGraph 返回型 / 形参型，不匹配 → 报错。
 
 ## §2 codegen 输出格式契约
 
@@ -98,14 +98,14 @@
 | `*Source` | `sealed class : Function<*Impl, TOutput>` 或 `Procedure<*Impl>`（**均 0 泛型 arity**） | 编辑期可见节点源：有 `[BlocklySource(menuPath, typeof(*Source.Node))]` + N 个 `[BlocklySourceSlot(name, order)] public Expression 槽位` 字段。 | codegen |
 | `*Source.Node` | `sealed class : Block<*Source>`，嵌套在 `*Source` 内 | 运行期手动 Pop 接线，**严格遵循父合约 §4 的 5 步协议**：`EvaluateChildren()` override 触发所有子节点 `_field.Evaluate()`（按 `[BlocklySourceSlot.order]` **升序**、每项内部 Push 出栈值）；`InitializeProperties(*Impl impl)` **只做字段拷贝**（按 `[BlocklySourceSlot.order]` **降序**、栈 LIFO 反向逐项 `impl.field = Blockly.Pop<T>();`），**不得**含任何 `_child.Evaluate()` 副作用；`Initialize()` 调 `Blockly.CreateBlock(source.槽)` 创子节点；`CleanProperties` 清 impl 引用、`OnDestroy` 释放子节点。Procedure 形态省 Push（Function 形态由基类 `Function<*Impl,TOutput>` 在第 5 步统一 Push 返回值）。 | codegen |
 
-> **5 步铁律**（与父合约 §4 对齐）：`EvaluateChildren → Pop → InitializeProperties → Impl.Evaluate → Push`（Procedure 无 Push）。codegen 产出 `*Source.Node` 模板必须按此 5 步切分；`InitializeProperties` 写入 `_field.Evaluate()` = 破坏合约（撞空栈）。**Push 与 Pop 顺序必须相反**（Push 升序、Pop 降序，栈 LIFO），同序 = 撞类型 / 撞错位、同样是合约违反。执行点 = `Editor/Codegen/UgcCodeWriter.cs` 内 `EmitSourceNode`（或同义产出方法）的 Node body 模板。
+> **5 步铁律**（与父合约 §4 对齐）：`EvaluateChildren → Pop → InitializeProperties → Impl.Evaluate → Push`（Procedure 无 Push）。codegen 产出 `*Source.Node` 模板必须按此 5 步切分；`InitializeProperties` 写入 `_field.Evaluate()` = 破坏合约（撞空栈）。**Push 与 Pop 顺序必须相反**（Push 升序、Pop 降序，栈 LIFO），同序 = 撞类型 / 撞错位、同样是合约违反。执行点 = `Editor/Codegen/CodeWriter.cs` 内 `EmitSourceNode`（或同义产出方法）的 Node body 模板。
 
 ### 产物顶部头部
 
 > 产物文件头由 §2「输出位置与文件划分」段尾 hard rule 锁定（精确 7 行 prelude + 1 行空行），本节仅约束产物 body 形态。
 
 - `using Vena.Blockly;`、必要的原名名字空间。
-- 包生成于原类同名字空间，**三件均打 `[BlocklyCodeGenerated]`** 须与 Source 类上的 `[BlocklySource]` 并列。
+- 包生成于原类同名字空间，**三件均打 `[BlocklyGenerated]`** 须与 Source 类上的 `[BlocklySource]` 并列。
 
 ### 命名规则
 
@@ -121,7 +121,7 @@
 
 ### Pop 顺序（§1 `BlocklySourceSlot.order` 实例化规则）
 
-- N 个槽位 → N 个 `_field` 节点 → 在 `EvaluateChildren()` 中 **按 order 升序** 逐项 `_field.Evaluate()`（每项内部 Push 一次值到栈）；`InitializeProperties(impl)` 中 **按 order 降序**（栈 LIFO 反向） `impl.field = Blockly.Pop<T>();`（**仅字段拷贝，无 Evaluate 副作用**）。
+- N 个槽位 → N 个 `_field` 节点 → 在 `EvaluateChildren()` 中 **按 order 升序** 逐项 `_field.Evaluate()`（每项内部 Push 一次值到栈）；`InitializeProperties(impl)` 中 **按 order 降序**（栈 LIFO 反向） `impl.field = Blockly.Pop<T>();`（**仅字段拷贝、无 Evaluate 副作用**）。
 - **栈语义**：`EvaluateChildren()` 按 order 升序 Push（最后入栈的是最高 order 的字段值）；`InitializeProperties` 按 order 降序 Pop（最后 Push 的最先 Pop）。两个方向相反才能让 Pop 出来的值 / 类型对齐字段——Push 与 Pop 同序 = 撞类型 / 撞错位、合约违反。
 - order 全项锁住三者一致（§1）：**Push 顺序 ≡ IR 字段顺序 ≡ UI 顺序**（按 `[BlocklySourceSlot.order]` 升序）；**Pop 顺序 = Push 顺序的反序**（栈 LIFO，按 order 降序）。
 - order 重复 / 跨 source 跨序 → codegen 报错、不产出。
@@ -136,10 +136,10 @@
 
 - 落点：`Runtime/Generated/`。
 - 文件划分：**一个被扫源类**（如 `InstanceMethod`）产出**一个 `*.g.cs`**，包含该源类所有成员的三件套。文件名 = `<源类名>.g.cs`（如 `InstanceMethod.g.cs`）。
-- **`UgcCodegenConfig.OutputRoot` 路径语义**：该字段接受带占位符的路径模板，codegen 运行期解析。
-  - 占位符 `${PackagePath}` = **包根绝对路径**（`UgcCodegenConfig.asset` 所在 UPM 包的根目录绝对路径，例如 `Packages/com.vena.blockly` 解析后的绝对路径）。占位符仅限在 `OutputRoot` 字段使用，不进入产物文本。
+- **`CodegenConfig.OutputRoot` 路径语义**：该字段接受带占位符的路径模板，codegen 运行期解析。
+  - 占位符 `${PackagePath}` = **包根绝对路径**（`BlocklyCodegenConfig.asset` 所在 UPM 包的根目录绝对路径，例如 `Packages/com.vena.blockly` 解析后的绝对路径）。占位符仅限在 `OutputRoot` 字段使用，不进入产物文本。
   - 默认语义：未填 `OutputRoot` 或填空 → codegen 落点 `${PackagePath}/Runtime/Generated/`，与本节「落点」一致。
-  - 允许另存：`OutputRoot` 可被包内其他消费者（如 Demo 调试流程）指向 `Tests/<DemoName>/Generated/` 等非默认位置，需以 `${PackagePath}/` 开头以保包内锁定；codegen **拒绝**任何解析后发生包外的路径（包根之外／受控反向上溯）——报错、不产出。
+  - 允许另存：`OutputRoot` 可被包内其他消费者（如 Demo 调试流程）指向 `Tests/<DemoName>/Generated/` 等非默认位置，需以 `${PackagePath}/` 开头以保包内锁定；codegen **拒绝**任何解析后发生包外的路径（包根之外／受控反向上湯）——报错、不产出。
   - 占位符只开一个：不接受 `${ProjectPath}` / `${AssetPath}` / `${UnityDataPath}` 等任何其他变量；如需扩展另升 §2 版本。
 
 **.g.cs 产物文件头**（hard rule）：
@@ -149,17 +149,17 @@
 ```csharp
 // -----------------------------------------------------------------------------
 // <auto-generated>
-//   Generated by the com.vena.blockly UGC codegen pipeline.
+//   Generated by the com.vena.blockly Blockly codegen pipeline.
 //   Do not edit manually. Changes will be overwritten on next codegen run.
 // </auto-generated>
 // -----------------------------------------------------------------------------
 ```
 
-执行点 = `Editor/Codegen/UgcCodeWriter.cs` 内 `EmitSourceFile` / `EmitProviderFile` 等所有产物方法的首行写入器；偏离此格式（缺标签、改字面、改边线长度）= 破坏合约。
+执行点 = `Editor/Codegen/CodeWriter.cs` 内 `EmitSourceFile` / `EmitProviderFile` 等所有产物方法的首行写入器；偏离此格式（缺标签、改字面、改边线长度）= 破坏合约。
 
 理由：
 1. `<auto-generated>` 标签是 .NET / Roslyn 分析器约定，让 IDE 与 CI 静态检查跳过 `.g.cs`，避免假阳性 lint 警告污染开发期反馈。
-2. "com.vena.blockly UGC codegen pipeline" 显式标注产出方，对照 Vena 包心其他 .cs 头风格，业务方 grep 即可定位。
+2. "com.vena.blockly Blockly codegen pipeline" 显式标注产出方（包名 + 工具名），业务方 grep 即可定位。**不提 `UGC`**：`UGC` 在本项目语义中是稳定产品概念（KD#2 runtime UGC 玩家编辑器）、不同时作为 codegen 工具身份字样。
 3. "Do not edit manually" 提醒手改无效（codegen 重跑会覆盖）；与 `WriteIfChanged` 幂等机制配套。
 4. 7 行边线包注释格式与包内 .cs 版权头视觉对齐，不引入第二种风格。
 
@@ -225,7 +225,7 @@ JSON 顶层对象固定 5 字段（顺序无关、键名固定）：
 
 ### §4.6 AOT 不变量
 
-1. `sourceType` 解析仅限 codegen 产物 `*Source`（带 `[BlocklySource]` + `[BlocklyCodeGenerated]`）与手写 Source；不允许运行期反射构造任意 `Type`。
+1. `sourceType` 解析仅限 codegen 产物 `*Source`（带 `[BlocklySource]` + `[BlocklyGenerated]`）与手写 Source；不允许运行期反射构造任意 `Type`。
 2. `properties[].key` 必须能在 `sourceType` 的 `[BlocklySourceSlot]` 槽位集合内静态匹配；未匹配 → 反序列化报错（不容错回填默认）。
 3. `properties[].value` 字面值类型必须能静态推断（由 `[BlocklySourceSlot]` 字段类型锁定），不允许 `object` / 多态运行期分发。
 4. `EdgeIR.wireKind` 与 `from/to.port` 类型在静态期可推断（Control 端口集 / Value 端口集 codegen 期已知），AOT 不引入运行期端口类型字典查找。

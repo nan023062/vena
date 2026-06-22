@@ -2,10 +2,10 @@
 
 ## 测试内容
 
-Editor 期 demo，验证 UGC codegen pipeline 能在 demo 本地 source 类 (`InstanceMethod`) 上产出三件套 (Impl + Source + Source.Node) 到 `Tests/04_Codegen/Generated/`。无 scene、无 MonoBehaviour。
+Editor 期 demo，验证 codegen pipeline 能在 demo 本地 source 类 (`InstanceMethod`) 上产出三件套 (Impl + Source + Source.Node) 到 `Tests/04_Codegen/Generated/`。无 scene、无 MonoBehaviour。
 
 - 菜单 `Setup Demo D Config` — 创建 `Assets/VenaBlocklyDemos/04_Codegen/DemoD_CodegenConfig.asset`，`OutputRoot = Packages/com.vena.blockly/Tests/04_Codegen/Generated`，`AssemblyWhitelist = ["Vena.Blockly.Tests.Codegen"]`
-- 菜单 `Run Demo D Codegen` — 委托 `UgcCodegenMenu.RunCodegen()` 扫白名单 asmdef，预期产出 `InstanceMethodTestMethod.g.cs`、`InstanceMethodPrintMessage.g.cs`、`GeneratedNodeMetadataProvider.g.cs`（命名空间 `Vena.Blockly.Generated`）
+- 菜单 `Run Demo D Codegen` — 委托 `CodegenMenu.RunCodegen()` 扫白名单 asmdef，预期产出 `InstanceMethodTestMethod.g.cs`、`InstanceMethodPrintMessage.g.cs`、`GeneratedNodeMetadataProvider.g.cs`（命名空间 `Vena.Blockly.Generated`）
 
 ## 用法
 

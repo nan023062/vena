@@ -11,11 +11,11 @@ namespace Vena.Blockly.Editor
 {
 
     /// <summary>
-    /// UGC codegen 白名单 + 输出根目录配置。
-    /// 资产路径约定：项目内 `Assets/.../UgcCodegenConfig.asset` 或包内 `Editor/Config/UgcCodegenConfig.asset`。
+    /// Codegen 白名单 + 输出根目录配置。
+    /// 资产路径约定：项目内 `Assets/.../BlocklyCodegenConfig.asset` 或包内 `Editor/Config/BlocklyCodegenConfig.asset`。
     /// </summary>
-    [CreateAssetMenu(fileName = "UgcCodegenConfig", menuName = "Vena/Blockly/UGC Codegen Config", order = 0)]
-    public sealed class UgcCodegenConfig : ScriptableObject
+    [CreateAssetMenu(fileName = "BlocklyCodegenConfig", menuName = "Vena/Blockly/Codegen Config", order = 0)]
+    public sealed class CodegenConfig : ScriptableObject
     {
         [Tooltip("被扫描的程序集名清单（asmdef name）。空 = 不扫描。")]
         public string[] AssemblyWhitelist;

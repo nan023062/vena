@@ -16,7 +16,7 @@ namespace Vena.Blockly
     /// 重扫时识别为「可覆写」依据，运行期不依赖该注解语义。
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-    public sealed class BlocklyCodeGeneratedAttribute : Attribute
+    public sealed class BlocklyGeneratedAttribute : Attribute
     {
     }
 }

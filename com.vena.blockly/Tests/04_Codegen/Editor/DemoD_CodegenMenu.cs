@@ -25,7 +25,7 @@ namespace Vena.Blockly.Tests.Codegen
     ///     TypeWhitelist=空（接受白名单 asmdef 内全部 [BlocklySource] 源类）。
     ///
     ///   Step 2：菜单 Tools/Vena/Blockly/Demos/04 Codegen/Run Demo D Codegen
-    ///     调用包心 UgcCodegenMenu.RunCodegen()——它内部 LoadConfig(t:UgcCodegenConfig)
+    ///     调用包心 CodegenMenu.RunCodegen()——它内部 LoadConfig(t:CodegenConfig)
     ///     找到 Demo D config，扫白名单 asmdef、Emit 三件套到 OutputRoot。
     ///     Demo D 的 InstanceMethod.cs（位于 Tests/04_Codegen/Scripts/，已删 #region Impl/#region Source 仅留源类）
     ///     被扫描，产出 InstanceMethod.g.cs + GeneratedNodeMetadataProvider.g.cs 到 Generated/。
@@ -33,7 +33,7 @@ namespace Vena.Blockly.Tests.Codegen
     /// ${PackagePath} 占位符：
     ///   值 = 包根的 Unity 路径（典型 `Packages/com.vena.blockly`）。
     ///   解析在 Setup Step 写盘前完成；写入 .asset 的字符串是已解析的 concrete 路径。
-    ///   理由：UgcCodegenConfig.OutputRoot 是 string 字段，无内置 substitution；这里就地解析。
+    ///   理由：CodegenConfig.OutputRoot 是 string 字段，无内置 substitution；这里就地解析。
     /// </summary>
     public static class DemoD_CodegenMenu
     {
@@ -57,8 +57,8 @@ namespace Vena.Blockly.Tests.Codegen
             string configPath = DemoConfigDir + "/" + DemoConfigAssetName;
             EnsureFolder(DemoConfigDir);
 
-            var existing = AssetDatabase.LoadAssetAtPath<UgcCodegenConfig>(configPath);
-            UgcCodegenConfig config = existing != null ? existing : ScriptableObject.CreateInstance<UgcCodegenConfig>();
+            var existing = AssetDatabase.LoadAssetAtPath<CodegenConfig>(configPath);
+            CodegenConfig config = existing != null ? existing : ScriptableObject.CreateInstance<CodegenConfig>();
 
             string resolvedOutputRoot = ResolveOutputRoot(OutputRootPlaceholder);
             config.OutputRoot = resolvedOutputRoot;
@@ -89,7 +89,7 @@ namespace Vena.Blockly.Tests.Codegen
         public static void RunCodegen()
         {
             string configPath = DemoConfigDir + "/" + DemoConfigAssetName;
-            var config = AssetDatabase.LoadAssetAtPath<UgcCodegenConfig>(configPath);
+            var config = AssetDatabase.LoadAssetAtPath<CodegenConfig>(configPath);
             if (config == null)
             {
                 Debug.LogError(
@@ -98,9 +98,9 @@ namespace Vena.Blockly.Tests.Codegen
                 return;
             }
 
-            // 委托给包心 UgcCodegenMenu.RunCodegen()。它的 LoadConfig 是 t:UgcCodegenConfig
-            // 取首个；只要项目内此前没有别的 UgcCodegenConfig，就会命中 Demo D 的。
-            UgcCodegenMenu.RunCodegen();
+            // 委托给包心 CodegenMenu.RunCodegen()。它的 LoadConfig 是 t:CodegenConfig
+            // 取首个；只要项目内此前没有别的 CodegenConfig，就会命中 Demo D 的。
+            CodegenMenu.RunCodegen();
         }
 
         // ------- 占位符解析 -------

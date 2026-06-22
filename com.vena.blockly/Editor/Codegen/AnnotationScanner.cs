@@ -14,17 +14,17 @@ namespace Vena.Blockly.Editor
 {
 
     /// <summary>
-    /// 程序集级 UGC 注解扫描器。识别带 [BlocklyCodeGen] 的源类、收集其内部 [BlocklyCodeGenMethod]/[BlocklyCodeGenMember] 成员，
+    /// 程序集级注解扫描器。识别带 [BlocklyCodeGen] 的源类、收集其内部 [BlocklyCodeGenMethod]/[BlocklyCodeGenMember] 成员，
     /// 计算并返回每个成员对应的 codegen 输入项 <see cref="ScannedMember"/>。
     /// 不发射代码、不写盘 —— 仅产出可被 emitter 消费的 POCO 集合。
     /// </summary>
-    internal static class UgcAnnotationScanner
+    internal static class AnnotationScanner
     {
         /// <summary>
         /// 扫描入口。按 <paramref name="config"/> 程序集白名单 + 类型白名单过滤、
-        /// 跳过自身已带 [BlocklySource] 或 [BlocklyCodeGenerated] 的类、按 [BlocklySourceSlot.Order] 升序固定顺序。
+        /// 跳过自身已带 [BlocklySource] 或 [BlocklyGenerated] 的类、按 [BlocklySourceSlot.Order] 升序固定顺序。
         /// </summary>
-        public static IReadOnlyList<ScannedSource> Scan(UgcCodegenConfig config)
+        public static IReadOnlyList<ScannedSource> Scan(CodegenConfig config)
         {
             if (config == null) throw new ArgumentNullException(nameof(config));
 
@@ -52,7 +52,7 @@ namespace Vena.Blockly.Editor
 
                     // 跳过自身就是 Source / Generated
                     if (type.GetCustomAttribute<BlocklySourceAttribute>() != null) continue;
-                    if (type.GetCustomAttribute<BlocklyCodeGeneratedAttribute>() != null) continue;
+                    if (type.GetCustomAttribute<BlocklyGeneratedAttribute>() != null) continue;
 
                     var classAttr = type.GetCustomAttribute<BlocklyCodeGenAttribute>();
                     if (classAttr == null) continue;
