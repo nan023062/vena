@@ -6,6 +6,7 @@
 // -----------------------------------------------------------------------------
 
 using UnityEngine;
+using Vena.Blockly.Tests.BehaviorRuntime.Generated;
 
 namespace Vena.Blockly.Tests.BehaviorRuntime
 {
@@ -37,8 +38,14 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
                 {
                     sources = new BehaviorNodeSource[]
                     {
-                        new HelloBehaviorSource { greeting = "Hello" },
-                        new HelloBehaviorSource { greeting = "World" },
+                        new HelloBehaviorSource
+                        {
+                            greeting = new LogicGraph { root = new DemoConstStringSource { value = "Hello" } },
+                        },
+                        new HelloBehaviorSource
+                        {
+                            greeting = new LogicGraph { root = new DemoConstStringSource { value = "World" } },
+                        },
                     },
                 },
             };

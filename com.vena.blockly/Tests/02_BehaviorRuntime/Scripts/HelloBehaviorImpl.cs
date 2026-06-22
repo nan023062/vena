@@ -12,9 +12,12 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     /// <summary>
     /// 最小叶子 IBehaviorImpl：Start / Tick / Finish 各打一行带 greeting 的日志，
     /// Tick 当帧返回 Done（一帧式叶子），LateTick 留空。
+    /// `*Source` + `Node` 由 Path B codegen 产出于 Generated/HelloBehaviorImpl.g.cs（Scenario Y：
+    /// `greeting` 在 Source 端为 LogicGraph 槽，Init 时 Call&lt;string&gt;() 求值后赋回本 Impl 字段）。
     /// </summary>
     public sealed class HelloBehaviorImpl : IBehaviorImpl
     {
+        [BlocklySourceSlot("问候语", 1)]
         public string greeting;
 
         public void Start(BehaviorGraph.Blockly graph)
@@ -35,32 +38,6 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
         public void Finish(BehaviorGraph.Blockly graph)
         {
             Debug.Log($"[HelloBehavior] Finish: {greeting}");
-        }
-    }
-
-    /// <summary>
-    /// HelloBehaviorImpl 的 source + Node 装配。结构对照同目录 TestBehaviorImpl.cs（迁入 demo 后的 SampleBehaviorImpl1Source 形态）。
-    /// </summary>
-    [BlocklySource("示例行为/Hello", typeof(HelloBehaviorSource.Node))]
-    public sealed class HelloBehaviorSource : BehaviorNodeSource<HelloBehaviorImpl>
-    {
-        public string greeting;
-
-        sealed class Node : BehaviorNode<HelloBehaviorSource, HelloBehaviorImpl>
-        {
-            protected override void Initialize() { }
-
-            protected override void InitializeProperties(HelloBehaviorImpl impl)
-            {
-                impl.greeting = source.greeting;
-            }
-
-            protected override void CleanProperties(HelloBehaviorImpl impl)
-            {
-                impl.greeting = null;
-            }
-
-            protected override void OnBeforeDestroy() { }
         }
     }
 }

@@ -66,6 +66,35 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     }
 
     // -------------------------------------------------------------------------
+    // Demo-local LogicGraph const string source
+    //
+    // 用于 Path B 产物喂 HelloBehaviorSource.greeting（LogicGraph）：
+    // codegen 在 Node.InitializeProperties 调 _greeting.Call<string>()，
+    // 该常量节点 Evaluate 时 Push 自身 value，让 Hello impl 拿到 greeting 字面值。
+    // -------------------------------------------------------------------------
+
+    public sealed class DemoConstStringImpl : IFunctionImpl<string>
+    {
+        public string value;
+
+        public string Evaluate() => value;
+    }
+
+    [BlocklySource("Demo常量/String", typeof(DemoConstStringSource.Node))]
+    public sealed class DemoConstStringSource : Function<DemoConstStringImpl, string>
+    {
+        [BlocklySourceSlot("常量", 1)]
+        public string value;
+
+        sealed class Node : Block<DemoConstStringSource>
+        {
+            protected override void Initialize() { }
+            protected override void InitializeProperties(DemoConstStringImpl impl) { impl.value = source.value; }
+            protected override void CleanProperties(DemoConstStringImpl impl) { impl.value = null; }
+        }
+    }
+
+    // -------------------------------------------------------------------------
     // 多帧 Running 叶子：CountdownBehavior
     //
     // Start 时 _remaining = ticksToRun；Tick 每帧 _remaining--；

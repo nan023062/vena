@@ -57,7 +57,26 @@ namespace Vena.Blockly.Editor
                     if (type.GetCustomAttribute<BlocklySourceAttribute>() != null) continue;
 
                     var classAttr = type.GetCustomAttribute<BlocklyAttribute>();
-                    if (classAttr == null) continue;
+                    if (classAttr == null)
+                    {
+                        // Path B：IBehaviorImpl 反射判定（不依赖 [Blockly] attribute）。
+                        if (typeof(IBehaviorImpl).IsAssignableFrom(type))
+                        {
+                            var slots = CollectBehaviorSlots(type);
+                            if (slots.Count == 0) continue;
+                            var menuPath = ComputeDefaultMenuPath(type);
+                            var scanned = new ScannedSource(type, classDisplayName: null, members: Array.Empty<ScannedMember>())
+                            {
+                                Kind = ScannedSourceKind.Behavior,
+                                BehaviorSlots = slots,
+                                BehaviorMenuPath = menuPath,
+                                SourceDirectory = ResolveSourceDirectory(type),
+                            };
+                            results.Add(scanned);
+                            continue;
+                        }
+                        continue;
+                    }
 
                     // Q1 硬约束 #1：[Blockly] 不允许与 [BlocklySource] 同存。
                     // （上一行 skip 已覆盖大多数情况，这里保留显式判断作为防御性兜底——上游若改 skip 逻辑，
@@ -226,6 +245,68 @@ namespace Vena.Blockly.Editor
             }
         }
 
+        /// <summary>
+        /// Path B：扫 Impl 类（实现 <see cref="IBehaviorImpl"/>）上贴 [BlocklySourceSlot] 的 public 实例字段。
+        /// 仅 Public | Instance | DeclaredOnly。字段类型 hard fail：禁 <see cref="LogicGraph"/> / <see cref="Expression"/>。
+        /// </summary>
+        private static IReadOnlyList<BehaviorSlotInfo> CollectBehaviorSlots(Type type)
+        {
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+            var list = new List<BehaviorSlotInfo>();
+
+            foreach (var field in type.GetFields(flags))
+            {
+                var slotAttr = field.GetCustomAttribute<BlocklySourceSlotAttribute>();
+                if (slotAttr == null) continue;
+
+                if (field.FieldType == typeof(LogicGraph))
+                {
+                    throw new InvalidOperationException(
+                        $"[Vena.Blockly] {type.FullName}.{field.Name}: Impl 字段不允许声明 LogicGraph 类型；" +
+                        "请声明实际值类型（codegen 自动生成 LogicGraph 槽位、Init 时 Call<T>() 求值）。");
+                }
+                if (typeof(Expression).IsAssignableFrom(field.FieldType))
+                {
+                    throw new InvalidOperationException(
+                        $"[Vena.Blockly] {type.FullName}.{field.Name}: Impl 字段不允许声明 Expression 类型" +
+                        "（Behavior 侧无 LogicGraph 5 步协议栈，依赖其求值会撞空栈）。");
+                }
+
+                list.Add(new BehaviorSlotInfo(
+                    fieldName: field.Name,
+                    displayName: slotAttr.DisplayName,
+                    order: slotAttr.Order,
+                    fieldValueType: field.FieldType));
+            }
+            return list;
+        }
+
+        /// <summary>
+        /// Path B / Path C 默认 menuPath 推导。算法：去 Impl 后缀 → 剥 Vena.Blockly. 前缀 → ns 用 / 折叠 + 简名。
+        /// </summary>
+        internal static string ComputeDefaultMenuPath(Type type)
+        {
+            var simpleName = type.Name;
+            var tickIdx = simpleName.IndexOf('`');
+            if (tickIdx >= 0) simpleName = simpleName.Substring(0, tickIdx);
+            if (simpleName.EndsWith("Impl", StringComparison.Ordinal))
+            {
+                simpleName = simpleName.Substring(0, simpleName.Length - "Impl".Length);
+            }
+
+            var ns = type.Namespace ?? string.Empty;
+            if (ns.StartsWith("Vena.Blockly.", StringComparison.Ordinal))
+            {
+                ns = ns.Substring("Vena.Blockly.".Length);
+            }
+            else if (ns == "Vena.Blockly")
+            {
+                ns = string.Empty;
+            }
+
+            return ns.Length == 0 ? simpleName : ns.Replace('.', '/') + "/" + simpleName;
+        }
+
         private static bool IsRuntimeNodeRootType(Type t)
         {
             if (t == typeof(Expression)) return true;
@@ -245,7 +326,33 @@ namespace Vena.Blockly.Editor
         }
     }
 
-    /// <summary>扫描结果：一个 [Blockly] 源类 + 其下所有 codegen 成员。</summary>
+    /// <summary>扫描入参分支：Path A = Logic（[Blockly] 三件套）；Path B = Behavior（IBehaviorImpl 二件套）；Path C = Timeline（IClip，PR-3 补）。</summary>
+    internal enum ScannedSourceKind
+    {
+        Logic,
+        Behavior,
+        Timeline,
+    }
+
+    /// <summary>Path B / Path C 单 slot 镜像信息：Impl 类上贴 [BlocklySourceSlot] 字段的元数据。</summary>
+    internal sealed class BehaviorSlotInfo
+    {
+        public string FieldName { get; }
+        public string DisplayName { get; }
+        public int Order { get; }
+        /// <summary>Impl 字段类型（codegen 生成 Call&lt;T&gt;() 用；亦决定 CleanProperties 是否输出 null 置位）。</summary>
+        public Type FieldValueType { get; }
+
+        public BehaviorSlotInfo(string fieldName, string displayName, int order, Type fieldValueType)
+        {
+            FieldName = fieldName;
+            DisplayName = displayName;
+            Order = order;
+            FieldValueType = fieldValueType;
+        }
+    }
+
+    /// <summary>扫描结果：一个 [Blockly] 源类 + 其下所有 codegen 成员；或一个 IBehaviorImpl 源类 + 其 slot 镜像。</summary>
     internal sealed class ScannedSource
     {
         public Type SourceType { get; }
@@ -253,6 +360,15 @@ namespace Vena.Blockly.Editor
         public IReadOnlyList<ScannedMember> Members { get; }
         /// <summary>源类物理目录（其 .cs 所在目录绝对路径）。emitter 用以将三件套产物落到 `<SourceDirectory>/Generated/`。</summary>
         public string SourceDirectory { get; set; }
+
+        /// <summary>来源分支。默认 Logic（Path A 原路径）。</summary>
+        public ScannedSourceKind Kind { get; set; } = ScannedSourceKind.Logic;
+
+        /// <summary>Path B / Path C 专用：Impl 类上 [BlocklySourceSlot] 字段镜像列表（按声明序，emitter 内部按 Order 升序输出）。</summary>
+        public IReadOnlyList<BehaviorSlotInfo> BehaviorSlots { get; set; }
+
+        /// <summary>Path B / Path C 专用：由 <see cref="AnnotationScanner.ComputeDefaultMenuPath"/> 推出的默认菜单路径。</summary>
+        public string BehaviorMenuPath { get; set; }
 
         public ScannedSource(Type sourceType, string classDisplayName, IReadOnlyList<ScannedMember> members)
         {

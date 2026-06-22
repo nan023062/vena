@@ -191,3 +191,22 @@ classDiagram
 ## Phase 2 Ratchet
 
 - Phase 2 第二刀 = IR 序列化（JSON in SO）+ Runtime IR 加载器 + GraphView 双 wire 单画布 + Toolbox + Inspector + 调试通道 v0；不解冻父 §6。
+
+### codegen 三路径范围
+
+父层只锁「哪些路径属于 codegen」，每条路径的扫描契约 / 产物模板 / 命名规则由 Editor 子模块 `module.md` KD#7 / KD#8 + `contract.md` §2 锁。
+
+| 路径 | scanner 识别 | 产物形态 | PR | 状态 |
+|---|---|---|---|---|
+| **Path A — Logic** | `[Blockly]` Class target（成员级 Method / Property / Field） | 三件套：`*Impl` + `*Source : Function/Procedure<*Impl,...>` + `*Source.Node : Block<*Source>` | PR-1（已落 a128b7e） | done |
+| **Path B — Behavior C# Impl** | `IBehaviorImpl` 接口实现类（**反射判定，不依赖 attribute**） | 二件套：`*Source : BehaviorNodeSource<*Impl>` + 嵌套 `Node : BehaviorNode<*Source, *Impl>` | PR-2 | **本轮** |
+| **Path C — Timeline Clip C# Impl** | `IClip` 接口实现类（反射判定，对称 Path B） | 二件套：`*Source : ClipSource<*Impl>` + 嵌套 `Node : Clip<*Source, *Impl>` | PR-3 | 待补 |
+
+**三路径正交不重叠**：
+
+- Path A 输入面 = 业务方手写的算法承载类（method / property / field），叶子算法走 LogicGraph 内组合；
+- Path B / Path C 输入面 = 业务方手写的 `IBehaviorImpl` / `IClip` 实现类，叶子算法走 C# Impl 业务扩展路径（KD#16 第二条路径）；
+- 三路径 scanner 分支互斥（同一类型不可能同时命中 Path A 与 Path B：Path A 强制贴 `[Blockly]` + 不允许打在 runtime 节点根类上；Path B 强制实现 `IBehaviorImpl` 接口）。
+
+**Q1 互斥校验 + lifecycle 禁列收口**：Path B / Path C 上 Impl 类与 runtime 节点根类（`BehaviorNode<,>` / `Clip<,>` 等）派生的双向矛盾检测，连同 lifecycle 方法（`Start` / `Tick` / `LateTick` / `Finish`）上 `[Blockly]` 的硬 fail 规则，留给 PR-γ 收口；PR-2 / PR-3 采用 silent ignore 兜底（lifecycle 上的 `[Blockly]` 不报错、被 scanner 跳过）。
+
