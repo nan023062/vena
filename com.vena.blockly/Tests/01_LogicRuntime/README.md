@@ -1,226 +1,213 @@
 # 01 Logic Runtime
 
-Live `LogicGraph` demo. Tweak Inspector inputs, watch per-frame
-`Add(int, int)` and `Const(float)` results update via
-`Function<TImpl, T1, T2, TOutput>` + the underlying `BoxedValue` Push/Pop
-stack frame.
+`LogicGraph` 的实时演示。在 Inspector 里调整输入，观察每帧
+`Add(int, int)` 和 `Const(float)` 的求值结果——底层走的是
+`Function<TImpl, T1, T2, TOutput>` 加 `BoxedValue` Push/Pop 的栈帧机制。
 
-Now bundles **four** entry points — the original frame-by-frame smoke
-(`LogicRuntimeDemo`), a one-shot deep-nesting expression run
-(`NestedExpressionDemo`), a control-flow + shared-variable run
-(`ControlFlowDemo`), and a `LogicWhile` accumulator
-(`WhileLoopDemo`). The latter two share state across `LogicSequence`
-statements via an explicit host-side variable pre-declaration — see
-*Shared variables across `LogicSequence` statements* below for the
-mechanism and its known limitation.
+现在打包了 **四个** 入口——原始的逐帧冒烟示例
+(`LogicRuntimeDemo`)、一个一次性的深层嵌套表达式
+(`NestedExpressionDemo`)、一个控制流 + 共享变量的示例
+(`ControlFlowDemo`)，以及一个 `LogicWhile` 累加器
+(`WhileLoopDemo`)。后两个示例通过一段显式的宿主侧变量预声明，
+在 `LogicSequence` 的兄弟语句之间共享状态——具体机制和已知限制见下文
+*Shared variables across `LogicSequence` statements* 一节。
 
-## Purpose
+## 用途
 
-- Show the smallest viable wiring of `LogicGraph.Blockly` (host → source tree
-  → `Set` / `SetSource` / `Call<TResult>` / `Destroy`).
-- Demonstrate writing a 0-arity function (`ConstIntSource` / `ConstFloatSource`)
-  and a 2-arity function (`AddIntSource`) using the `Function<TImpl, ...>`
-  base classes — including how nested `Expression` slots compose into a single
-  evaluable graph.
-- Demonstrate deeper composition: multi-level `Function` nesting plus a 5-arity
-  function (`Sum5IntsSource`) feeding a single `Call<int>()`
-  (`NestedExpressionDemo`).
-- Demonstrate control-flow primitives (`LogicSequence` + `LogicBranch` +
-  `LogicSetVariable<int>` / `LogicGetVariable<int>`) sharing one variable
-  across sibling statements (`ControlFlowDemo`).
-- Demonstrate `LogicWhile` accumulating across iterations using the same
-  shared-variable pattern (`WhileLoopDemo`).
+- 展示 `LogicGraph.Blockly` 的最小可用接线方式（host → source tree
+  → `Set` / `SetSource` / `Call<TResult>` / `Destroy`）。
+- 演示如何基于 `Function<TImpl, ...>` 基类编写一个 0 参函数
+  (`ConstIntSource` / `ConstFloatSource`) 和一个 2 参函数
+  (`AddIntSource`)——包括嵌套的 `Expression` 槽如何组合成一个可求值的整图。
+- 演示更深的组合：多层 `Function` 嵌套加上一个 5 参函数
+  (`Sum5IntsSource`)，统一通过一次 `Call<int>()` 求值
+  (`NestedExpressionDemo`)。
+- 演示控制流原语（`LogicSequence` + `LogicBranch` +
+  `LogicSetVariable<int>` / `LogicGetVariable<int>`）在兄弟语句之间共享
+  同一个变量 (`ControlFlowDemo`)。
+- 演示 `LogicWhile` 用同样的共享变量模式在多次迭代之间累加
+  (`WhileLoopDemo`)。
 
-## How to open
+## 如何打开
 
-1. Open the bundled scene from a test project that mounts
-   `Tests/01_LogicRuntime` directly, or copy this directory into the
-   project's `Assets/` folder.
-2. Open `Scenes/LogicRuntimeDemo.unity` (or follow the manual scene step
-   below if Unity has not regenerated the scene yet — see *Scene*).
-3. Press Play.
+1. 从一个直接挂载了 `Tests/01_LogicRuntime` 的测试工程打开自带场景，
+   或者把这个目录复制到工程的 `Assets/` 下。
+2. 打开 `Scenes/LogicRuntimeDemo.unity`（如果 Unity 还没有重新生成场景，
+   按下文 *Scene* 一节手动创建）。
+3. 点 Play。
 
-## Expected behaviour
+## 预期行为
 
-### `LogicRuntimeDemo` (frame-by-frame smoke)
+### `LogicRuntimeDemo`（逐帧冒烟）
 
-With the default values (`operandA = 3`, `operandB = 4`, `floatOperand = 1.5`),
-on the first frame:
+使用默认值（`operandA = 3`，`operandB = 4`，`floatOperand = 1.5`），
+第一帧上：
 
-- `Last Int Sum` should read `7`
-- `Last Float Value` should read `1.5`
-- `Evaluation Count` increments by 1 every frame
+- `Last Int Sum` 显示 `7`
+- `Last Float Value` 显示 `1.5`
+- `Evaluation Count` 每帧加 1
 
-While in Play mode, edit `Operand A` to `10` — within the next frame
-`Last Int Sum` becomes `14`. Same for `Operand B` and `Float Operand`.
+在 Play 模式下把 `Operand A` 改成 `10`——下一帧 `Last Int Sum` 变为
+`14`。`Operand B` 和 `Float Operand` 同理。
 
-### `NestedExpressionDemo` (one-shot deep nesting)
+### `NestedExpressionDemo`（一次性深层嵌套）
 
-On `Start()`:
+在 `Start()` 时：
 
-- `Last Result` should read `43`
-- Console prints
+- `Last Result` 显示 `43`
+- Console 打印
   `[NestedExpressionDemo] ((3+4)*(10-6)) + Sum5(1..5) = 43 (expected 43)`
 
-### `ControlFlowDemo` (one-shot Sequence + Branch)
+### `ControlFlowDemo`（一次性 Sequence + Branch）
 
-On `Start()`:
+在 `Start()` 时：
 
-- `Last Result` should read `20`
-- Console prints
+- `Last Result` 显示 `20`
+- Console 打印
   `[ControlFlowDemo] if (x>5) result = x*2 else result = x;  result = 20 (expected 20)`
 
-The graph evaluates `int x = 10; int result; if (x > 5) result = x * 2;
-else result = x;` — i.e. `result == 20`.
+该图求值的是 `int x = 10; int result; if (x > 5) result = x * 2;
+else result = x;`——即 `result == 20`。
 
-### `WhileLoopDemo` (one-shot While accumulator)
+### `WhileLoopDemo`（一次性 While 累加器）
 
-On `Start()`:
+在 `Start()` 时：
 
-- `Last Sum` should read `55`
-- Console prints
+- `Last Sum` 显示 `55`
+- Console 打印
   `[WhileLoopDemo] sum 1..10 = 55 (expected 55)`
 
-The graph evaluates `int sum = 0; int i = 1; int n = 10; while (i <= n)
-{ sum = sum + i; i = i + 1; }` — i.e. `sum == 1 + 2 + ... + 10 == 55`.
+该图求值的是 `int sum = 0; int i = 1; int n = 10; while (i <= n)
+{ sum = sum + i; i = i + 1; }`——即 `sum == 1 + 2 + ... + 10 == 55`。
 
-## Knobs
+## 可调参数
 
-On the `LogicRuntimeDemo` component:
+在 `LogicRuntimeDemo` 组件上：
 
-- **Operand A / Operand B** — inputs to the `AddInt` graph.
-- **Float Operand** — input to the standalone `ConstFloat` graph.
+- **Operand A / Operand B** —— `AddInt` 图的输入。
+- **Float Operand** —— 独立 `ConstFloat` 图的输入。
 
-The three read-only fields **Last Int Sum**, **Last Float Value**, and
-**Evaluation Count** mirror live evaluation results to the Inspector.
+三个只读字段 **Last Int Sum**、**Last Float Value** 和
+**Evaluation Count** 把实时求值结果同步显示到 Inspector。
 
-## Reference code
+## 参考代码
 
-- `Scripts/LogicRuntimeDemo.cs` — `MonoBehaviour` entry point: holds the
-  host, rebuilds and evaluates one int graph + one float graph per frame.
-- `Scripts/NestedExpressionDemo.cs` — one-shot `Start()` demo evaluating
-  `((3 + 4) * (10 - 6)) + Sum5(1, 2, 3, 4, 5) = 43` to validate
-  multi-level `Function` nesting + 5-arity through a single `Call<int>()`.
-- `Scripts/ControlFlowDemo.cs` — one-shot `Start()` demo combining
-  `LogicSequence`, `LogicBranch`, `LogicSetVariableInt` /
-  `LogicGetVariableInt` to evaluate `if (x > 5) result = x * 2; else
-  result = x;` with `x = 10`. Uses host-side variable pre-declaration
-  (see below) to share `x` / `result` across the two sibling statements.
-- `Scripts/WhileLoopDemo.cs` — one-shot `Start()` demo using `LogicWhile`
-  + `LogicSequence` body to accumulate `sum = 1 + 2 + ... + 10 = 55`.
-  Same host-side pre-declaration pattern as `ControlFlowDemo` for the
-  loop counter `i`, bound `n`, and accumulator `sum`.
-- `Scripts/DemoExprNodes.cs` — node families used by the demos:
+- `Scripts/LogicRuntimeDemo.cs` —— `MonoBehaviour` 入口：持有 host，
+  每帧重建并求值一个 int 图和一个 float 图。
+- `Scripts/NestedExpressionDemo.cs` —— 一次性的 `Start()` 示例，
+  求值 `((3 + 4) * (10 - 6)) + Sum5(1, 2, 3, 4, 5) = 43`，用来验证
+  多层 `Function` 嵌套加 5 参函数走一次 `Call<int>()`。
+- `Scripts/ControlFlowDemo.cs` —— 一次性 `Start()` 示例，把
+  `LogicSequence`、`LogicBranch`、`LogicSetVariableInt` /
+  `LogicGetVariableInt` 组合起来求值 `if (x > 5) result = x * 2; else
+  result = x;`，其中 `x = 10`。通过宿主侧变量预声明（见下文）
+  在两个兄弟语句之间共享 `x` / `result`。
+- `Scripts/WhileLoopDemo.cs` —— 一次性 `Start()` 示例，用 `LogicWhile`
+  加上 `LogicSequence` body 累加 `sum = 1 + 2 + ... + 10 = 55`。
+  循环计数器 `i`、上界 `n` 和累加器 `sum` 走的是和 `ControlFlowDemo`
+  一样的宿主侧预声明模式。
+- `Scripts/DemoExprNodes.cs` —— 演示用到的节点族：
   - `ConstIntImpl` + `ConstIntSource : Function<ConstIntImpl, int>`
   - `ConstFloatImpl` + `ConstFloatSource : Function<ConstFloatImpl, float>`
   - `AddIntImpl` + `AddIntSource : Function<AddIntImpl, int, int, int>`
-  - `SubtractIntImpl` + `SubtractIntSource` (int×int→int)
-  - `MultiplyIntImpl` + `MultiplyIntSource` (int×int→int)
-  - `GreaterThanIntImpl` + `GreaterThanIntSource` (int×int→bool)
-  - `LessThanOrEqualIntImpl` + `LessThanOrEqualIntSource` (int×int→bool)
+  - `SubtractIntImpl` + `SubtractIntSource`（int×int→int）
+  - `MultiplyIntImpl` + `MultiplyIntSource`（int×int→int）
+  - `GreaterThanIntImpl` + `GreaterThanIntSource`（int×int→bool）
+  - `LessThanOrEqualIntImpl` + `LessThanOrEqualIntSource`（int×int→bool）
 
-  The four new arithmetic / comparison sources mirror `AddIntSource`'s
-  5-step protocol layout (`Initialize` → `EvaluateChildren` → `InitializeProperties`
-  → `_impl.Evaluate(...)` → `Push(result)` driven by the `Function<TImpl, T1, T2, TOutput>`
-  base). The `bool`-returning sources rely solely on `TOutput = bool` of the
-  `Function` base — no extra signature attribute is required, since
-  `[ExpressionSignature(typeof(bool))]` only applies to `LogicGraph` *slot*
-  fields (e.g. `LogicBranch.condition`) and is checked editor-side.
-- `Scripts/Arity5Smoke.cs` — `Sum5IntsSource` reused by `NestedExpressionDemo`.
-- `Scripts/DemoSampleHost.cs` — `BlocklyHostBase` subclass overriding
-  `NodeFactory` with a `ReflectionNodeFactory` so demo-defined sources resolve
-  without depending on a generated `INodeMetadataProvider`.
+  新增的四个算术/比较 source 与 `AddIntSource` 的 5 步协议布局一致
+  （`Initialize` → `EvaluateChildren` → `InitializeProperties`
+  → `_impl.Evaluate(...)` → `Push(result)`，由
+  `Function<TImpl, T1, T2, TOutput>` 基类驱动）。返回 `bool` 的 source
+  完全靠 `Function` 基类的 `TOutput = bool`——不需要额外的签名 attribute，
+  因为 `[ExpressionSignature(typeof(bool))]` 只作用于 `LogicGraph`
+  的 *槽* 字段（例如 `LogicBranch.condition`），并在 Editor 侧检查。
+- `Scripts/Arity5Smoke.cs` —— `NestedExpressionDemo` 复用的 `Sum5IntsSource`。
+- `Scripts/DemoSampleHost.cs` —— `BlocklyHostBase` 子类，重写
+  `NodeFactory` 改用 `ReflectionNodeFactory`，让演示里自定义的 source
+  无需依赖生成的 `INodeMetadataProvider` 就能解析到。
 
-## Scene
+## 场景
 
-The demo expects a `LogicDemoRunner` GameObject with the
-`LogicRuntimeDemo` component attached. If the provided scene is missing
-(e.g. `.meta` not yet regenerated by Unity), create one manually:
+该示例需要一个挂了 `LogicRuntimeDemo` 组件的 `LogicDemoRunner`
+GameObject。如果自带场景不存在（例如 Unity 还没重新生成 `.meta`），
+手动创建一个：
 
-1. `File → New Scene` (Basic 2D / 3D — either works).
-2. Create an empty GameObject, name it `LogicDemoRunner`.
-3. `Add Component → Logic Runtime Demo`.
-4. Save as `Scenes/LogicRuntimeDemo.unity`.
+1. `File → New Scene`（Basic 2D / 3D 都行）。
+2. 创建一个空 GameObject，命名为 `LogicDemoRunner`。
+3. `Add Component → Logic Runtime Demo`。
+4. 保存为 `Scenes/LogicRuntimeDemo.unity`。
 
-To also exercise `NestedExpressionDemo`:
+要同时跑 `NestedExpressionDemo`：
 
-1. Add a second empty GameObject, name it `NestedExpressionRunner`.
-2. `Add Component → Nested Expression Demo`.
-3. Press Play — the result is logged once on `Start()` to the Console:
-   `[NestedExpressionDemo] ((3+4)*(10-6)) + Sum5(1..5) = 43 (expected 43)`.
-   The component also surfaces `lastResult` on the Inspector.
+1. 再加一个空 GameObject，命名为 `NestedExpressionRunner`。
+2. `Add Component → Nested Expression Demo`。
+3. 点 Play —— 结果会在 `Start()` 时打印一次到 Console：
+   `[NestedExpressionDemo] ((3+4)*(10-6)) + Sum5(1..5) = 43 (expected 43)`。
+   组件本身也把 `lastResult` 显示到 Inspector。
 
-To also exercise `ControlFlowDemo`:
+要同时跑 `ControlFlowDemo`：
 
-1. Add an empty GameObject, name it `ControlFlowRunner`.
-2. `Add Component → Control Flow Demo`.
-3. Press Play — Console:
-   `[ControlFlowDemo] if (x>5) result = x*2 else result = x;  result = 20 (expected 20)`.
-   The component surfaces `lastResult` on the Inspector.
+1. 加一个空 GameObject，命名为 `ControlFlowRunner`。
+2. `Add Component → Control Flow Demo`。
+3. 点 Play —— Console：
+   `[ControlFlowDemo] if (x>5) result = x*2 else result = x;  result = 20 (expected 20)`。
+   组件把 `lastResult` 显示到 Inspector。
 
-To also exercise `WhileLoopDemo`:
+要同时跑 `WhileLoopDemo`：
 
-1. Add an empty GameObject, name it `WhileLoopRunner`.
-2. `Add Component → While Loop Demo`.
-3. Press Play — Console:
-   `[WhileLoopDemo] sum 1..10 = 55 (expected 55)`.
-   The component surfaces `lastSum` on the Inspector.
+1. 加一个空 GameObject，命名为 `WhileLoopRunner`。
+2. `Add Component → While Loop Demo`。
+3. 点 Play —— Console：
+   `[WhileLoopDemo] sum 1..10 = 55 (expected 55)`。
+   组件把 `lastSum` 显示到 Inspector。
 
-## Note on per-frame rebuild
+## 关于每帧重建
 
-For demonstration clarity this sample rebuilds the source tree and the
-`LogicGraph.Blockly` instance every frame, then `Destroy`s them. Production
-use cases should reuse a single `LogicGraph.Blockly` and only feed new inputs
-through variables / parameters — see the package core's `LogicSetVariable<T>`
-/ `LogicGetVariable<T>` for the variable-channel pattern.
+为了示例的清晰，这里每帧都会重建 source tree 和 `LogicGraph.Blockly`
+实例，然后 `Destroy`。生产环境应当复用同一个 `LogicGraph.Blockly`，
+只通过变量 / 参数喂入新的输入——具体的变量通道模式见 package core 的
+`LogicSetVariable<T>` / `LogicGetVariable<T>`。
 
-## Next steps
+## 后续
 
-- Compose a deeper expression: `Add ( Add(a, b), c )` by nesting two
-  `AddIntSource` instances.
-- Replace `ConstIntSource` with `LogicGetVariableInt` (defined in
-  `Vena.Blockly`) and feed values through `Variables` instead of fields.
-- See sibling sample `02 Behavior Runtime` for the time-stepped side of the
-  same engine.
+- 组合一个更深的表达式：`Add ( Add(a, b), c )`，即嵌套两个
+  `AddIntSource` 实例。
+- 把 `ConstIntSource` 换成 `LogicGetVariableInt`（定义在
+  `Vena.Blockly`），通过 `Variables` 而不是字段喂入数值。
+- 同引擎的时间步进侧请见同级示例 `02 Behavior Runtime`。
 
 ## Shared variables across `LogicSequence` statements
 
-`ControlFlowDemo` and `WhileLoopDemo` both rely on multiple sibling
-statements reading and writing the same variables (e.g. `x`, `result`,
-`sum`, `i`, `n`). The way they share state is worth calling out
-because it is a **deliberate workaround**, not the long-term shape of
-the API.
+`ControlFlowDemo` 和 `WhileLoopDemo` 都依赖多条兄弟语句读写同一组
+变量（例如 `x`、`result`、`sum`、`i`、`n`）。它们共享状态的方式
+值得单独说明，因为这是一个 **刻意为之的 workaround**，并不是该 API
+的长期形态。
 
-**Mechanism (option A — host pre-declaration).** After `SetSource(...)`
-and before `Invoke()`, the demo host calls
-`graph.SetVariable<int>(name, initialValue)` on the **root**
-`LogicGraph.Blockly` for every variable that sibling statements need
-to share. Those entries land in the root `ScopeChain.Variables`.
-At runtime, sibling statements live in **child** Blockly scopes; their
-`LogicSetVariable<T>` invokes `ScopeChain.ResolveWriteTarget`, which
-walks the parent chain and finds the pre-declared name in the root
-scope — so the write **passes through** to the root. Subsequent reads
-from sibling scopes likewise resolve via the parent chain to the same
-root entry. Result: all sibling statements observe one shared value
-per name.
+**机制（option A —— 宿主预声明）。** 在 `SetSource(...)` 之后、
+`Invoke()` 之前，demo host 会针对每一个兄弟语句需要共享的变量，在
+**根** `LogicGraph.Blockly` 上调用
+`graph.SetVariable<int>(name, initialValue)`。这些条目落在根
+`ScopeChain.Variables` 里。运行时，兄弟语句生活在 **子** Blockly
+scope 中；它们的 `LogicSetVariable<T>` 会调用
+`ScopeChain.ResolveWriteTarget`，沿父链向上找，在根 scope 找到这个
+预先声明好的名字——于是写入 **穿透** 到根。兄弟 scope 后续的读取
+同样沿父链解析到同一个根条目。结果就是：所有兄弟语句对同一个名字
+看到的是同一份共享值。
 
-**Why this is a workaround.** As implemented in
-`Runtime/Expression/LogicControl.cs`, `LogicSequence.Node` constructs a
-*child* `LogicGraph.Blockly` per statement (via
-`Blockly.CreateBlockly(...)`). Sibling Blocklies are not on each
-other's parent chain, so state declared inside one statement is not
-visible to its siblings. Without the host-side pre-declaration, the
-lookup falls through to `default(T)` and the demos would silently
-return `0` instead of `20` / `55`.
+**为什么这是 workaround。** `Runtime/Expression/LogicControl.cs` 的
+当前实现里，`LogicSequence.Node` 会为每条语句构造一个 *子*
+`LogicGraph.Blockly`（走 `Blockly.CreateBlockly(...)`）。兄弟 Blockly
+互相不在对方的父链上，所以在某条语句内部声明的状态对其它兄弟语句
+是不可见的。如果不做宿主侧预声明，lookup 会一路掉到 `default(T)`，
+示例就会安静地返回 `0` 而不是 `20` / `55`。
 
-**Limitation.** This pattern requires C# host code to know every shared
-variable name up front. A pure UGC graph authored at runtime by a
-player has no such hook — there is no "host" beyond the graph itself.
-Closing that gap requires changing `LogicSequence` so its statements
-share one host scope rather than each owning a private child Blockly
-(equivalently, `LogicSetVariable<T>` declaring at the host scope rather
-than the local statement scope). That is a runtime architectural
-change tracked as **task #19 (LogicSequence shared host scope)** in the
-project backlog and is intentionally **out of scope** for these demos —
-the demos exist to exercise `LogicGraph` control-flow primitives with
-the runtime as it stands today.
+**限制。** 这个模式要求 C# 宿主代码提前知道所有共享变量的名字。
+玩家在运行时编写的纯 UGC 图没有这种钩子——除了图本身之外没有所谓
+的"host"。要补上这个缺口，得改 `LogicSequence`，让它的各条语句
+共享同一个宿主 scope，而不是各自拥有一个私有的子 Blockly（等价地，
+让 `LogicSetVariable<T>` 声明到宿主 scope 而不是局部语句 scope）。
+这是一个 runtime 架构改动，作为 **task #19（LogicSequence shared
+host scope）** 记录在项目 backlog 里，对这些示例而言 **明确属于
+out-of-scope**——这些示例存在的目的就是用当下的 runtime 形态去
+跑通 `LogicGraph` 的控制流原语。

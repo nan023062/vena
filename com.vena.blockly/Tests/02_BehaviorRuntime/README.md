@@ -1,46 +1,44 @@
 # 02 Behavior Runtime
 
-`BehaviorGraph` demo driven by a `MonoBehaviour`. Six parts:
+由 `MonoBehaviour` 驱动的 `BehaviorGraph` 演示。共六个部分：
 
-- **Part A — Sequence + Leaf.** Open the scene, press Play, watch a
-  `Sequence ( Hello("Hello"), Hello("World") )` graph tick to completion in the
-  Console.
-- **Part B — Timeline integration.** Drive a `Timeline` clip whose `time` slot
-  is wired to a `LogicGraph`-evaluated float; demonstrates the
-  `UClipSource<TestClip>` / `UClip<TestClipSource, TestClip>` triad.
-- **Part C — BranchNode (if-else).** A `BranchNode` whose `condition` is a
-  constant `LogicGraph<bool>` picks between two `Hello` leaves.
-- **Part D — LoopNode.** A `LoopNode` whose `loopCount` is a constant
-  `LogicGraph<int>` runs an inner `Sequence` N times.
-- **Part E — Parallel + multi-tick Running.** A `ParallelNode` runs two
-  `Countdown` leaves with different tick budgets in parallel; demonstrates
-  multi-frame `BehaviorResult.Running` propagation through a composite.
-- **Part F — Timeline ExpressionClip + Signal.** A `Timeline` track with one
-  `ExpressionClip` (onBegin / onFrame / onEnd each driven by a side-effecting
-  `LogicGraph`) plus a `Signal` at a configurable frame.
+- **Part A —— Sequence + Leaf。** 打开场景，点 Play，在 Console 里观察
+  `Sequence ( Hello("Hello"), Hello("World") )` 图 tick 到完成。
+- **Part B —— Timeline 集成。** 驱动一条 `Timeline` clip，它的 `time`
+  槽由一个 `LogicGraph` 求值出的 float 提供；演示
+  `UClipSource<TestClip>` / `UClip<TestClipSource, TestClip>` 三件套。
+- **Part C —— BranchNode（if-else）。** 一个 `BranchNode`，其
+  `condition` 是常量 `LogicGraph<bool>`，在两个 `Hello` 叶子之间二选一。
+- **Part D —— LoopNode。** 一个 `LoopNode`，其 `loopCount` 是常量
+  `LogicGraph<int>`，把内部的 `Sequence` 跑 N 次。
+- **Part E —— Parallel + 多帧 Running。** 一个 `ParallelNode` 并行运行
+  两个 tick 预算不同的 `Countdown` 叶子；演示 `BehaviorResult.Running`
+  跨多帧穿过 composite 的传播。
+- **Part F —— Timeline ExpressionClip + Signal。** 一条 `Timeline`
+  轨道，包含一个 `ExpressionClip`（onBegin / onFrame / onEnd 每个都由
+  带副作用的 `LogicGraph` 驱动）加一个可配置帧数的 `Signal`。
 
-## Purpose
+## 用途
 
-- Show the smallest viable wiring of `BehaviorGraph.Blockly` (host → source tree
-  → `Set` / `SetSource` / `Start` / `Update` / `Destroy`).
-- Demonstrate composing one composite (`SequenceNode`) and one custom leaf
-  (`HelloBehaviorSource` / `HelloBehaviorImpl`) without touching anything inside
-  the package core.
-- Show how a `Timeline` clip type (`TestClip` / `TestClipSource`) plugs into the
-  same host as a behavior graph.
+- 展示 `BehaviorGraph.Blockly` 的最小可用接线方式（host → source tree
+  → `Set` / `SetSource` / `Start` / `Update` / `Destroy`）。
+- 演示如何组合一个 composite (`SequenceNode`) 加一个自定义 leaf
+  (`HelloBehaviorSource` / `HelloBehaviorImpl`)，且不必动 package core
+  里的任何东西。
+- 展示一种 `Timeline` clip 类型 (`TestClip` / `TestClipSource`) 如何
+  作为行为图接入同一个 host。
 
-## How to open
+## 如何打开
 
-1. Open the bundled scene from a test project that mounts
-   `Tests/02_BehaviorRuntime` directly, or copy this directory into the
-   project's `Assets/` folder.
-2. Open `Scenes/BehaviorRuntimeDemo.unity` (or follow the manual scene step
-   below if Unity has not regenerated the scene yet — see *Scene*).
-3. Press Play.
+1. 从一个直接挂载了 `Tests/02_BehaviorRuntime` 的测试工程打开自带场景，
+   或者把这个目录复制到工程的 `Assets/` 下。
+2. 打开 `Scenes/BehaviorRuntimeDemo.unity`（如果 Unity 还没有重新生成
+   场景，按下文 *Scene* 一节手动创建）。
+3. 点 Play。
 
-## Part A — Sequence + Leaf
+## Part A —— Sequence + Leaf
 
-### Expected Console output
+### 预期 Console 输出
 
 ```
 [BehaviorDemo] graph started
@@ -55,90 +53,91 @@
 [BehaviorDemo] graph done
 ```
 
-(Exact ordering of `[HelloBehavior]` lines vs `[BehaviorDemo] tick N` may vary
-slightly depending on engine flush, but every Start / Tick / Finish pair will
-appear in greeting order: `Hello` then `World`.)
+（`[HelloBehavior]` 各行相对 `[BehaviorDemo] tick N` 的精确顺序
+可能因引擎 flush 时机略有差异，但每一组 Start / Tick / Finish
+都会按 greeting 顺序出现：先 `Hello` 后 `World`。）
 
-### Knobs
+### 可调参数
 
-On the `BehaviorRuntimeDemo` component:
+在 `BehaviorRuntimeDemo` 组件上：
 
-- **Tick Count** — how many `Update` ticks to send before the demo stops
-  driving the graph (default 5; the Sequence finishes within 2 ticks).
-- **Fixed Delta Time** — the `deltaTime` value passed to `_graph.Update(...)`
-  (default `0.016f`, i.e. one ~60Hz frame).
+- **Tick Count** —— 在示例停止驱动 graph 之前发送多少次 `Update`
+  tick（默认 5；Sequence 在 2 个 tick 内就跑完）。
+- **Fixed Delta Time** —— 传给 `_graph.Update(...)` 的 `deltaTime`
+  值（默认 `0.016f`，约一帧 60Hz）。
 
-The two read-only fields **Is Playing** and **Ticked Frames** mirror live
-graph state to the Inspector for at-a-glance debugging.
+两个只读字段 **Is Playing** 和 **Ticked Frames** 把实时的 graph
+状态同步到 Inspector，便于一眼调试。
 
-### Reference code
+### 参考代码
 
-- `Scripts/BehaviorRuntimeDemo.cs` — `MonoBehaviour` entry point: builds the
-  source tree, owns the `BehaviorGraph.Blockly` instance, drives `Update`.
-- `Scripts/HelloBehaviorImpl.cs` — `IBehaviorImpl` leaf with a `greeting`
-  field; pair `HelloBehaviorSource : BehaviorNodeSource<HelloBehaviorImpl>` is
-  the source-side wrapper that forwards the field through `InitializeProperties`.
-- `Scripts/DemoSampleHost.cs` — `BlocklyHostBase` subclass overriding
-  `NodeFactory` with a `ReflectionNodeFactory` so demo-defined sources resolve
-  without depending on a generated `INodeMetadataProvider`.
+- `Scripts/BehaviorRuntimeDemo.cs` —— `MonoBehaviour` 入口：构造
+  source tree，持有 `BehaviorGraph.Blockly` 实例，驱动 `Update`。
+- `Scripts/HelloBehaviorImpl.cs` —— 带 `greeting` 字段的 `IBehaviorImpl`
+  叶子；配套的 `HelloBehaviorSource : BehaviorNodeSource<HelloBehaviorImpl>`
+  是 source 侧包装，通过 `InitializeProperties` 把字段转发过去。
+- `Scripts/DemoSampleHost.cs` —— `BlocklyHostBase` 子类，重写
+  `NodeFactory` 改用 `ReflectionNodeFactory`，让演示里自定义的 source
+  无需依赖生成的 `INodeMetadataProvider` 就能解析到。
 
-## Part B — Timeline TestClip
+## Part B —— Timeline TestClip
 
-A `Timeline`-side cousin of Part A's behavior graph. The clip class
-`TestClip : IUClip` exposes a `time` field that is fed at clip-init time from a
-`LogicGraph`-evaluated float through `UClip<TestClipSource, TestClip>`.
+Part A 行为图在 `Timeline` 侧的表亲。clip 类
+`TestClip : IUClip` 暴露一个 `time` 字段，clip 初始化时由
+`LogicGraph` 求值出的 float 通过 `UClip<TestClipSource, TestClip>`
+喂入。
 
-### Expected behaviour
+### 预期行为
 
-The bundled scene wires a `TimelineRuntimeDemo` GameObject that constructs a
-`TestClipSource` with a constant `LogicGraph` source, runs `Begin` / `OnFrame`
-/ `End` once, and logs the `time` value the clip receives. Out of the box the
-log line is:
+自带场景里串了一个 `TimelineRuntimeDemo` GameObject，它构造一个
+带常量 `LogicGraph` source 的 `TestClipSource`，跑一次 `Begin` /
+`OnFrame` / `End`，并把 clip 收到的 `time` 值打到 log 里。默认情况下
+log 行是：
 
 ```
 [TimelineDemo] TestClip.time after Begin = <value-from-LogicGraph>
 ```
 
-### Reference code
+### 参考代码
 
-- `Scripts/TimelineRuntimeDemo.cs` — `MonoBehaviour` entry point: builds a
-  `TestClipSource` source tree, wires it through a host, exercises one
-  `Begin` / `OnFrame` / `End` cycle.
-- `Scripts/Timeline/TestClip.cs` — the `IUClip` impl + `TestClipSource :
-  UClipSource<TestClip>` source/Node triad. (Migrated from the package-internal
-  `Samples/Timeline/TestClip.cs`; namespace flattened into the demo namespace.)
+- `Scripts/TimelineRuntimeDemo.cs` —— `MonoBehaviour` 入口：构造一棵
+  `TestClipSource` source tree，经由 host 串起来，跑一轮
+  `Begin` / `OnFrame` / `End`。
+- `Scripts/Timeline/TestClip.cs` —— `IUClip` 实现加上 `TestClipSource :
+  UClipSource<TestClip>` 的 source/Node 三件套。（从 package 内部的
+  `Samples/Timeline/TestClip.cs` 迁移过来；命名空间扁平化到 demo
+  命名空间。）
 
-## Scene
+## 场景
 
-The demo expects a `BehaviorDemoRunner` GameObject with the
-`BehaviorRuntimeDemo` component attached, plus a `Main Camera`, plus
-optionally a `TimelineDemoRunner` GameObject with `TimelineRuntimeDemo` for
-Part B. If the provided scene is missing (e.g. `.meta` not yet regenerated by
-Unity), create one manually:
+该示例需要一个挂了 `BehaviorRuntimeDemo` 组件的 `BehaviorDemoRunner`
+GameObject，加一个 `Main Camera`，可选再加一个挂
+`TimelineRuntimeDemo` 的 `TimelineDemoRunner` GameObject 用于 Part B。
+如果自带场景不存在（例如 Unity 还没重新生成 `.meta`），手动创建一个：
 
-1. `File → New Scene` (Basic 2D / 3D — either works).
-2. Create an empty GameObject, name it `BehaviorDemoRunner`.
-3. `Add Component → Behavior Runtime Demo`.
-4. (Part B) Create another empty GameObject, name it `TimelineDemoRunner`,
-   `Add Component → Timeline Runtime Demo`.
-5. Save as `Scenes/BehaviorRuntimeDemo.unity`.
+1. `File → New Scene`（Basic 2D / 3D 都行）。
+2. 创建一个空 GameObject，命名为 `BehaviorDemoRunner`。
+3. `Add Component → Behavior Runtime Demo`。
+4. （Part B）再加一个空 GameObject，命名为 `TimelineDemoRunner`，
+   `Add Component → Timeline Runtime Demo`。
+5. 保存为 `Scenes/BehaviorRuntimeDemo.unity`。
 
-## Part C — BranchNode (if-else)
+## Part C —— BranchNode（if-else）
 
-A `BranchNode` whose `condition` is a constant `LogicGraph<bool>` (driven by
-the demo-local `DemoConstBoolSource`) chooses between
-`HelloBehaviorSource { greeting = "alive" }` and
-`HelloBehaviorSource { greeting = "dying" }`.
+一个 `BranchNode`，其 `condition` 是常量 `LogicGraph<bool>`
+（由 demo 本地的 `DemoConstBoolSource` 驱动），在
+`HelloBehaviorSource { greeting = "alive" }` 与
+`HelloBehaviorSource { greeting = "dying" }` 之间二选一。
 
-### Knobs
+### 可调参数
 
-On the `BehaviorBranchDemo` component:
+在 `BehaviorBranchDemo` 组件上：
 
-- **Condition Input** — `bool`; `true` selects the `alive` branch, `false`
-  the `dying` branch. Read at `Awake()` and baked into the source tree.
-- **Tick Count / Fixed Delta Time** — same meaning as Part A.
+- **Condition Input** —— `bool`；`true` 选 `alive` 分支，`false`
+  选 `dying` 分支。在 `Awake()` 读取并烘进 source tree。
+- **Tick Count / Fixed Delta Time** —— 含义同 Part A。
 
-### Expected Console output (Condition Input = true)
+### 预期 Console 输出（Condition Input = true）
 
 ```
 [BranchDemo] graph started, conditionInput=True
@@ -148,43 +147,43 @@ On the `BehaviorBranchDemo` component:
 [BranchDemo] graph done after 1 ticks
 ```
 
-The `dying` branch never logs. Toggle Condition Input to `false` and only the
-`dying` branch will log.
+`dying` 分支不会打印任何东西。把 Condition Input 切到 `false`，
+就只有 `dying` 分支会打印。
 
-### Reference code
+### 参考代码
 
-- `Scripts/BehaviorBranchDemo.cs` — `MonoBehaviour` entry point.
-- `Scripts/DemoBehaviorNodes.cs` — `DemoConstBoolImpl` /
-  `DemoConstBoolSource` (the LogicGraph const used as the condition input).
+- `Scripts/BehaviorBranchDemo.cs` —— `MonoBehaviour` 入口。
+- `Scripts/DemoBehaviorNodes.cs` —— `DemoConstBoolImpl` /
+  `DemoConstBoolSource`（作为 condition 输入的 LogicGraph 常量）。
 
-## Part D — LoopNode
+## Part D —— LoopNode
 
-A `LoopNode` whose `loopCount` is a constant `LogicGraph<int>` (driven by the
-demo-local `DemoConstIntSource`) runs an inner `Sequence(Hello("iter-A"),
-Hello("iter-B"))` N times.
+一个 `LoopNode`，其 `loopCount` 是常量 `LogicGraph<int>`（由 demo
+本地的 `DemoConstIntSource` 驱动），把内部的
+`Sequence(Hello("iter-A"), Hello("iter-B"))` 跑 N 次。
 
-### Knobs
+### 可调参数
 
-On the `BehaviorLoopDemo` component:
+在 `BehaviorLoopDemo` 组件上：
 
-- **Loop Count Input** — `int` (default 3); read at `Awake()`.
-- **Tick Count / Fixed Delta Time** — same meaning as Part A. Default 20 to
-  give the loop room to finish.
+- **Loop Count Input** —— `int`（默认 3）；在 `Awake()` 读取。
+- **Tick Count / Fixed Delta Time** —— 含义同 Part A。默认 20，
+  给循环足够的时间跑完。
 
-### Expected Console output (Loop Count Input = 3)
+### 预期 Console 输出（Loop Count Input = 3）
 
-`Start/Tick/Finish` of `iter-A` then `iter-B` repeats three times — six
-`[HelloBehavior] Tick:` lines total, alternating greetings — followed by
-`[LoopDemo] graph done after N ticks`.
+`iter-A` 和 `iter-B` 的 `Start/Tick/Finish` 交替出现，重复三次——
+总共六行 `[HelloBehavior] Tick:`，问候语交替——之后是
+`[LoopDemo] graph done after N ticks`。
 
-### Reference code
+### 参考代码
 
-- `Scripts/BehaviorLoopDemo.cs` — `MonoBehaviour` entry point.
-- `Scripts/DemoBehaviorNodes.cs` — `DemoConstIntImpl` / `DemoConstIntSource`.
+- `Scripts/BehaviorLoopDemo.cs` —— `MonoBehaviour` 入口。
+- `Scripts/DemoBehaviorNodes.cs` —— `DemoConstIntImpl` / `DemoConstIntSource`。
 
-## Part E — Parallel + multi-tick Running
+## Part E —— Parallel + 多帧 Running
 
-A `ParallelNode` runs two `CountdownBehaviorSource` leaves in parallel:
+一个 `ParallelNode` 并行运行两个 `CountdownBehaviorSource` 叶子：
 
 ```
 ParallelNode
@@ -192,18 +191,18 @@ ParallelNode
   └─ CountdownBehaviorSource { ticksToRun = bTicksInput, label = "B" }
 ```
 
-`CountdownBehaviorImpl.Tick` returns `BehaviorResult.Running` until its
-remaining-counter hits zero, then `Done`. This is the first part to actually
-exercise multi-frame `Running` propagation through a composite — the
-`ParallelNode` keeps reporting `Running` until *both* children finish.
+`CountdownBehaviorImpl.Tick` 在剩余计数归零前返回
+`BehaviorResult.Running`，归零后返回 `Done`。这是第一个真正
+触发 `Running` 跨多帧穿过 composite 传播的部分——`ParallelNode`
+会一直报 `Running`，直到 *两个* 子节点都完成。
 
-### Knobs
+### 可调参数
 
-- **A Ticks Input** (default 3) and **B Ticks Input** (default 5) — how many
-  `Tick` calls each countdown survives before reporting `Done`.
-- **Tick Count / Fixed Delta Time** — host loop pacing.
+- **A Ticks Input**（默认 3）和 **B Ticks Input**（默认 5）——
+  每个倒计时在报 `Done` 之前能撑过多少次 `Tick` 调用。
+- **Tick Count / Fixed Delta Time** —— host 循环的节奏。
 
-### Expected Console output (A=3, B=5)
+### 预期 Console 输出（A=3, B=5）
 
 ```
 [ParallelDemo] graph started, A=3 ticks, B=5 ticks
@@ -227,40 +226,40 @@ exercise multi-frame `Running` propagation through a composite — the
 [ParallelDemo] graph done after 5 ticks
 ```
 
-A drops out after frame 3; B drops out at frame 5. Engine flush ordering of
-`Finish` vs the `[ParallelDemo] tick N` line may vary slightly.
+A 在第 3 帧之后退出；B 在第 5 帧退出。`Finish` 相对
+`[ParallelDemo] tick N` 行的引擎 flush 顺序可能略有差异。
 
-### Reference code
+### 参考代码
 
-- `Scripts/BehaviorParallelMultiTickDemo.cs` — `MonoBehaviour` entry point.
-- `Scripts/DemoBehaviorNodes.cs` — `CountdownBehaviorImpl` /
-  `CountdownBehaviorSource` (the multi-tick Running leaf).
+- `Scripts/BehaviorParallelMultiTickDemo.cs` —— `MonoBehaviour` 入口。
+- `Scripts/DemoBehaviorNodes.cs` —— `CountdownBehaviorImpl` /
+  `CountdownBehaviorSource`（多帧 Running 的叶子节点）。
 
-## Part F — Timeline ExpressionClip + Signal
+## Part F —— Timeline ExpressionClip + Signal
 
-A `Timeline` driven through a `BehaviorGraph`, with a track that combines:
+一条由 `BehaviorGraph` 驱动的 `Timeline`，其轨道组合了：
 
-- One `ExpressionClip` whose `onBegin`, `onFrame`, `onEnd` are each a
-  `LogicGraph` wrapping a `LogSignalSource` (the demo-local `Procedure<...>`
-  that `Debug.Log`s its `message` field).
-- One `Signal` at a configurable frame, also driven by a `LogSignalSource`.
+- 一个 `ExpressionClip`，其 `onBegin`、`onFrame`、`onEnd` 各自是一个
+  包了 `LogSignalSource`（demo 本地的 `Procedure<...>`，
+  `Debug.Log` 它的 `message` 字段）的 `LogicGraph`。
+- 一个 `Signal`，位于可配置的帧数上，同样由 `LogSignalSource` 驱动。
 
-`ExpressionClip.duration = clipDuration` (default `0.5s` @ `30fps` →
-`15` clip frames). `Timeline.Track` calls `Begin` + `OnFrame` together on
-clip-frame 1, calls `OnFrame` on clip-frames 2..N, and calls `End` when the
-clip's frame counter reaches `frameCount`. The `Signal` fires on its assigned
-frame regardless of clip state.
+`ExpressionClip.duration = clipDuration`（默认 `0.5s` @ `30fps` →
+`15` 个 clip 帧）。`Timeline.Track` 在 clip 帧 1 上同时调用 `Begin`
+和 `OnFrame`，在 clip 帧 2..N 上调用 `OnFrame`，并在 clip 的帧计数
+到 `frameCount` 时调用 `End`。`Signal` 在指定帧上触发，
+与 clip 状态无关。
 
-### Knobs
+### 可调参数
 
-- **Clip Duration** (default `0.5s`) and **Signal Frame** (default `5`) —
-  drive the timeline shape.
-- **Total Update Ticks** (default `30`) — how many ticks the host pumps before
-  it stops calling `Update`.
-- **Fixed Delta Time** (default `1f/30f`) — one frame at the timeline's frame
-  rate per Unity `Update`.
+- **Clip Duration**（默认 `0.5s`）和 **Signal Frame**（默认 `5`）——
+  决定 timeline 的形状。
+- **Total Update Ticks**（默认 `30`）—— host 在停止调用 `Update`
+  之前要泵多少次 tick。
+- **Fixed Delta Time**（默认 `1f/30f`）—— 每次 Unity `Update` 对应
+  timeline 帧率下的一帧。
 
-### Expected Console output (defaults)
+### 预期 Console 输出（默认值）
 
 ```
 [TimelineSignalDemo] graph started, clipDuration=0.5s, signalFrame=5
@@ -278,25 +277,22 @@ frame regardless of clip state.
 [TimelineSignalDemo] graph done after 16 ticks
 ```
 
-The exact tick count depends on how the timeline aligns clip-frame 15 (End)
-with the host's tick boundary, but with `fixedDeltaTime = 1/30s` it lands at
-tick 16.
+具体 tick 数取决于 timeline 怎么把 clip 帧 15 (End) 对齐到 host
+的 tick 边界，不过在 `fixedDeltaTime = 1/30s` 下落在 tick 16。
 
-### Reference code
+### 参考代码
 
-- `Scripts/TimelineSignalDemo.cs` — `MonoBehaviour` entry point. Uses
-  reflection to construct `TimelineSource.TrackSource<,>` because
-  `ExpressionClip.Object` is a `private` nested type (same path as
-  `TimelineRuntimeDemo`).
-- `Scripts/DemoBehaviorNodes.cs` — `LogSignalImpl` / `LogSignalSource`
-  (`Procedure<LogSignalImpl>` whose `Evaluate` `Debug.Log`s the `message`).
+- `Scripts/TimelineSignalDemo.cs` —— `MonoBehaviour` 入口。用反射构造
+  `TimelineSource.TrackSource<,>`，因为 `ExpressionClip.Object` 是
+  `private` 的嵌套类型（路径同 `TimelineRuntimeDemo`）。
+- `Scripts/DemoBehaviorNodes.cs` —— `LogSignalImpl` / `LogSignalSource`
+  （`Procedure<LogSignalImpl>`，`Evaluate` 时 `Debug.Log` `message`）。
 
-## Next steps
+## 后续
 
-- Swap `SequenceNode` for `ParallelNode` (defined in `Vena.Blockly`) and watch
-  both leaves Start in the same frame.
-- Replace `HelloBehaviorImpl.Tick` so it returns
-  `BehaviorResult.Running` while `frame < N`, and `BehaviorResult.Done`
-  afterwards — this turns the leaf into a multi-tick activity.
-- See sibling sample `01 Logic Runtime` for the value-evaluation side of
-  the same engine.
+- 把 `SequenceNode` 换成 `ParallelNode`（定义在 `Vena.Blockly` 里），
+  看两个叶子在同一帧 Start。
+- 改写 `HelloBehaviorImpl.Tick`，让它在 `frame < N` 时返回
+  `BehaviorResult.Running`，之后返回 `BehaviorResult.Done` ——
+  这就把叶子变成一个多帧的活动。
+- 同引擎的值求值侧请见同级示例 `01 Logic Runtime`。
