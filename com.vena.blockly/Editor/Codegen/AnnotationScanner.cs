@@ -62,17 +62,33 @@ namespace Vena.Blockly.Editor
                         // Path B：IBehaviorImpl 反射判定（不依赖 [Blockly] attribute）。
                         if (typeof(IBehaviorImpl).IsAssignableFrom(type))
                         {
-                            var slots = CollectBehaviorSlots(type);
+                            var slots = CollectImplSlots(type);
                             if (slots.Count == 0) continue;
                             var menuPath = ComputeDefaultMenuPath(type);
                             var behaviorScanned = new ScannedSource(type, classDisplayName: null, members: Array.Empty<ScannedMember>())
                             {
                                 Kind = ScannedSourceKind.Behavior,
-                                BehaviorSlots = slots,
-                                BehaviorMenuPath = menuPath,
+                                ImplSlots = slots,
+                                MenuPath = menuPath,
                                 SourceDirectory = ResolveSourceDirectory(type),
                             };
                             results.Add(behaviorScanned);
+                            continue;
+                        }
+                        // Path C：IClip 反射判定（对称 Path B，Timeline Clip C# Impl 业务扩展路径）。
+                        if (typeof(IClip).IsAssignableFrom(type))
+                        {
+                            var slots = CollectImplSlots(type);
+                            if (slots.Count == 0) continue;
+                            var menuPath = ComputeDefaultMenuPath(type);
+                            var clipScanned = new ScannedSource(type, classDisplayName: null, members: Array.Empty<ScannedMember>())
+                            {
+                                Kind = ScannedSourceKind.Timeline,
+                                ImplSlots = slots,
+                                MenuPath = menuPath,
+                                SourceDirectory = ResolveSourceDirectory(type),
+                            };
+                            results.Add(clipScanned);
                             continue;
                         }
                         continue;
@@ -249,10 +265,10 @@ namespace Vena.Blockly.Editor
         /// Path B：扫 Impl 类（实现 <see cref="IBehaviorImpl"/>）上贴 [BlocklySourceSlot] 的 public 实例字段。
         /// 仅 Public | Instance | DeclaredOnly。字段类型 hard fail：禁 <see cref="LogicGraph"/> / <see cref="Expression"/>。
         /// </summary>
-        private static IReadOnlyList<BehaviorSlotInfo> CollectBehaviorSlots(Type type)
+        private static IReadOnlyList<ImplSlotInfo> CollectImplSlots(Type type)
         {
             const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly;
-            var list = new List<BehaviorSlotInfo>();
+            var list = new List<ImplSlotInfo>();
 
             foreach (var field in type.GetFields(flags))
             {
@@ -272,7 +288,7 @@ namespace Vena.Blockly.Editor
                         "（Behavior 侧无 LogicGraph 5 步协议栈，依赖其求值会撞空栈）。");
                 }
 
-                list.Add(new BehaviorSlotInfo(
+                list.Add(new ImplSlotInfo(
                     fieldName: field.Name,
                     displayName: slotAttr.DisplayName,
                     order: slotAttr.Order,
@@ -335,7 +351,7 @@ namespace Vena.Blockly.Editor
     }
 
     /// <summary>Path B / Path C 单 slot 镜像信息：Impl 类上贴 [BlocklySourceSlot] 字段的元数据。</summary>
-    internal sealed class BehaviorSlotInfo
+    internal sealed class ImplSlotInfo
     {
         public string FieldName { get; }
         public string DisplayName { get; }
@@ -343,7 +359,7 @@ namespace Vena.Blockly.Editor
         /// <summary>Impl 字段类型（codegen 生成 Call&lt;T&gt;() 用；亦决定 CleanProperties 是否输出 null 置位）。</summary>
         public Type FieldValueType { get; }
 
-        public BehaviorSlotInfo(string fieldName, string displayName, int order, Type fieldValueType)
+        public ImplSlotInfo(string fieldName, string displayName, int order, Type fieldValueType)
         {
             FieldName = fieldName;
             DisplayName = displayName;
@@ -365,10 +381,10 @@ namespace Vena.Blockly.Editor
         public ScannedSourceKind Kind { get; set; } = ScannedSourceKind.Logic;
 
         /// <summary>Path B / Path C 专用：Impl 类上 [BlocklySourceSlot] 字段镜像列表（按声明序，emitter 内部按 Order 升序输出）。</summary>
-        public IReadOnlyList<BehaviorSlotInfo> BehaviorSlots { get; set; }
+        public IReadOnlyList<ImplSlotInfo> ImplSlots { get; set; }
 
         /// <summary>Path B / Path C 专用：由 <see cref="AnnotationScanner.ComputeDefaultMenuPath"/> 推出的默认菜单路径。</summary>
-        public string BehaviorMenuPath { get; set; }
+        public string MenuPath { get; set; }
 
         public ScannedSource(Type sourceType, string classDisplayName, IReadOnlyList<ScannedMember> members)
         {

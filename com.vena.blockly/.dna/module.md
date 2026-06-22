@@ -199,14 +199,22 @@ classDiagram
 | 路径 | scanner 识别 | 产物形态 | PR | 状态 |
 |---|---|---|---|---|
 | **Path A — Logic** | `[Blockly]` Class target（成员级 Method / Property / Field） | 三件套：`*Impl` + `*Source : Function/Procedure<*Impl,...>` + `*Source.Node : Block<*Source>` | PR-1（已落 a128b7e） | done |
-| **Path B — Behavior C# Impl** | `IBehaviorImpl` 接口实现类（**反射判定，不依赖 attribute**） | 二件套：`*Source : BehaviorNodeSource<*Impl>` + 嵌套 `Node : BehaviorNode<*Source, *Impl>` | PR-2 | **本轮** |
-| **Path C — Timeline Clip C# Impl** | `IClip` 接口实现类（反射判定，对称 Path B） | 二件套：`*Source : ClipSource<*Impl>` + 嵌套 `Node : Clip<*Source, *Impl>` | PR-3 | 待补 |
+| **Path B — Behavior C# Impl** | `IBehaviorImpl` 接口实现类（**反射判定，不依赖 attribute**） | 二件套：`*Source : BehaviorNodeSource<*Impl>` + 嵌套 `Node : BehaviorNode<*Source, *Impl>` | PR-2（已落 fa6e29f / 3f24b89） | done |
+| **Path C — Timeline Clip C# Impl** | `IClip` 接口实现类（反射判定，对称 Path B） | 二件套：`*Source : ClipSource<*Impl>` + 嵌套 `Node : Clip<*Source, *Impl>` | PR-3 | **本轮** |
 
 **三路径正交不重叠**：
 
 - Path A 输入面 = 业务方手写的算法承载类（method / property / field），叶子算法走 LogicGraph 内组合；
 - Path B / Path C 输入面 = 业务方手写的 `IBehaviorImpl` / `IClip` 实现类，叶子算法走 C# Impl 业务扩展路径（KD#16 第二条路径）；
-- 三路径 scanner 分支互斥（同一类型不可能同时命中 Path A 与 Path B：Path A 强制贴 `[Blockly]` + 不允许打在 runtime 节点根类上；Path B 强制实现 `IBehaviorImpl` 接口）。
+- 三路径 scanner 分支互斥（同一类型不可能同时命中 Path A 与 Path B / Path C：Path A 强制贴 `[Blockly]` + 不允许打在 runtime 节点根类上；Path B 强制实现 `IBehaviorImpl` 接口；Path C 强制实现 `IClip` 接口；`IBehaviorImpl` 与 `IClip` 是两个独立接口、互不继承）。
 
-**Q1 互斥校验 + lifecycle 禁列收口**：Path B / Path C 上 Impl 类与 runtime 节点根类（`BehaviorNode<,>` / `Clip<,>` 等）派生的双向矛盾检测，连同 lifecycle 方法（`Start` / `Tick` / `LateTick` / `Finish`）上 `[Blockly]` 的硬 fail 规则，留给 PR-γ 收口；PR-2 / PR-3 采用 silent ignore 兜底（lifecycle 上的 `[Blockly]` 不报错、被 scanner 跳过）。
+**Path B / Path C 镜像对称（PR-3 共享镜像 POCO + 共享 scanner 收集方法）**：
+
+- 共享 `ScannedSource.ImplSlots / MenuPath` 字段（PR-2 落地时叫 `BehaviorSlots / BehaviorMenuPath`，PR-3 rename 为通用名以服 Path C 同结构）。
+- 共享 `AnnotationScanner.CollectImplSlots(Type)` 私有静态方法（PR-2 叫 `CollectBehaviorSlots`，PR-3 rename）：字段类型校验（禁 LogicGraph / 禁 Expression）、`[BlocklySourceSlot]` 读取、order 升序输出，三件 Path B / Path C 共享一致。
+- 共享 `ComputeDefaultMenuPath(Type)`（PR-2 已就位）。
+- 共享 `ImplSlotInfo` 镜像 POCO（PR-2 叫 `BehaviorSlotInfo`，PR-3 rename）：`FieldName / DisplayName / Order / FieldValueType` 四字段不变。
+- 两路径 emitter 字面**不同**：Path B 产 `BehaviorNodeSource<TImpl>` + `BehaviorNode<TSource, TImpl>`、Init 用 `blockly` 字段；Path C 产 `ClipSource<TImpl>` + `Clip<TSource, TImpl>`、Init 用 `timeline.blockly` 走 timeline 属性 hop。
+
+**Q1 互斥校验 + lifecycle 禁列收口**：Path B / Path C 上 Impl 类与 runtime 节点根类（`BehaviorNode<,>` / `Clip<,>` 等）派生的双向矛盾检测，连同 lifecycle 方法（Behavior 侧 `Start` / `Tick` / `LateTick` / `Finish`；Timeline 侧 `Begin` / `OnFrame` / `End`）上 `[Blockly]` 的硬 fail 规则，留给 PR-γ 收口；PR-2 / PR-3 采用 silent ignore 兜底。
 

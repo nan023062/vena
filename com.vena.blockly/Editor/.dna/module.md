@@ -107,7 +107,7 @@ classDiagram
 7. **注解名锁（2 族 + 1 编辑器校验族；共 4 件）**：
    - **Source 族（手写 runtime 节点源 + 槽位）**：
      - `[BlocklySource(menuPath, nodeType)]`——`AttributeTargets.Class`，贴在手写的 runtime 节点源类（Expression / BehaviorNodeSource 子类）上、为节点注册托底。
-     - `[BlocklySourceSlot(displayName, order)]`——`AttributeTargets.Field | AttributeTargets.Property`，贴在手写 Source 类**或 IBehaviorImpl / IClip 实现类**的字段/属性上，描述槽位与 `order` 锁。**Path B (本 PR-2) / Path C 补充**：在 IBehaviorImpl / IClip 实现类上使用，由 scanner Path B/C 分支读取、镜像到产物 `*Source` 上。
+     - `[BlocklySourceSlot(displayName, order)]`——`AttributeTargets.Field | AttributeTargets.Property`，贴在手写 Source 类**或 IBehaviorImpl / IClip 实现类**的字段/属性上，描述槽位与 `order` 锁。**Path B (PR-2) / Path C (PR-3) 补充**：在 IBehaviorImpl / IClip 实现类上使用，由 scanner Path B/C 分支读取、镜像到产物 `*Source` 上。
    - **Codegen 族（玩法代码标，给 codegen 生成胶水）**：
      - `[Blockly(displayName)]` / `[Blockly(displayName, isStatic, params parameterNames)]`——**multi-target**：`AttributeTargets.Class | Method | Property | Field`。scanner 用 `MemberInfo.MemberType` 分支处理 Class / Method / Property / Field；其中 `isStatic` / `parameterNames` **仅 Method target 有意义**，其他 target 上由 scanner 忽略。
    - **编辑器校验族（不动）**：`[ExpressionSignature]` / `[ExpressionSignature(returnType)]` / `[ExpressionSignature(returnType, params Type[])]`——`AttributeTargets.Field | Property`，LogicGraph 槽位签名约束，仅供编辑器连接期校验。
@@ -116,8 +116,8 @@ classDiagram
    - **scanner 分支三路径（详见 KD#18）**：
      - **Path A — Logic**：`type.GetCustomAttribute<BlocklyAttribute>() != null` && `IsClass && !IsAbstract` → 三件套产物。
      - **Path B — Behavior C# Impl**：`typeof(IBehaviorImpl).IsAssignableFrom(type)` && `IsClass && !IsAbstract` → 二件套产物（`*Source : BehaviorNodeSource<*Impl>` + 嵌套 `Node : BehaviorNode<*Source, *Impl>`）。**不依赖 `[Blockly]` attribute**：Impl 类上的 `[Blockly]` 被 Path B 分支完全忽略（含 `displayName` 字段），menuPath 走 `ComputeDefaultMenuPath(Type)` 默认规则。
-     - **Path C — Timeline Clip C# Impl**（PR-3 补）：`typeof(IClip).IsAssignableFrom(type)`——对称 Path B、本 PR-2 不动。
-     - **互斥语义**：同一类不可能同时命中 Path A 与 Path B（Path A 要求贴 `[Blockly]` + 不能是 runtime 节点根类；Path B 要求实现 `IBehaviorImpl`、与 Path A 的 runtime 节点根类检查并不冲突但语义不交叠）。Q1.b 互斥硬检验（业务类同时从 runtime 根类派生且实现 `IBehaviorImpl`）留给 PR-γ，本 PR-2 不做。
+     - **Path C — Timeline Clip C# Impl**（PR-3 落地）：`typeof(IClip).IsAssignableFrom(type)` && `IsClass && !IsAbstract` → 二件套产物（`*Source : ClipSource<*Impl>` + 嵌套 `Node : Clip<*Source, *Impl>`）。**不依赖 `[Blockly]` attribute**（对称 Path B），menuPath 走 `ComputeDefaultMenuPath(Type)`。
+     - **互斥语义**：同一类不可能同时命中 Path A 与 Path B / Path C（Path A 要求贴 `[Blockly]` + 不能是 runtime 节点根类；Path B / Path C 要求实现 `IBehaviorImpl` / `IClip`、与 Path A 的 runtime 节点根类检查并不冲突但语义不交叠）。`IBehaviorImpl` 与 `IClip` 互不继承（Runtime/Behavior/BehaviorNode.cs:54 vs Runtime/Behavior/Timeline/Clip.cs:101），同一类不可能同时命中 Path B 与 Path C。Q1.b 互斥硬检验（业务类同时从 runtime 根类派生且实现 `IBehaviorImpl` / `IClip`）留给 PR-γ，本 PR-3 不做。
    - **Q1 硬约束（scanner 层 hard fail，详见合约 §2「scanner 硬约束」）**：
      1. 同一类上 `[Blockly]` 与 `[BlocklySource]` 不允许同存——两族正交、混标语义未定义。
      2. `[Blockly]` 不允许打在「run-time 节点源类」上——即继承自 `Vena.Blockly.Expression` 或 `Vena.Blockly.BehaviorNodeSource` 的类不可携 `[Blockly]`；嵌套 Node 实现类的基类 `Vena.Blockly.Block<TSource>` / `Vena.Blockly.BehaviorNode<TSource, TImpl>` 同列。
@@ -127,11 +127,12 @@ classDiagram
      - `[BlocklyCodeGenMethod]` / `[BlocklyMethod]` → 并入 `[Blockly]`（Method target）。
      - `[BlocklyCodeGenMember]` / `[BlocklyProperty]` → 并入 `[Blockly]`（Property / Field target）。
      - `[BlocklyGenerated]` → 无取代，产物身份走命名空间隔离（KD#12）。
-8. **codegen 产物形态（两路径并存）**：
+8. **codegen 产物形态（三路径并存）**：
    - **Path A 三件套（Logic）**：`*Impl`（0-arity `IFunctionImpl<TOutput>` / `IProcedureImpl`） + `*Source`（0 泛型 arity `Function<*Impl, TOutput>` / `Procedure<*Impl>`） + `*Source.Node`（`Block<*Source>` 子类，手动 Pop）。三件均落 `<SourceNs>.Generated` 命名空间、`<SourceDir>/Generated/<源类名>.g.cs` 文件。Pop 顺序 ≡ IR 顺序 ≡ UI 顺序 ≡ `[BlocklySourceSlot.order]` 升序（Pop = LIFO 反序）。实例方法示例源类落点：`Tests/04_Codegen/Scripts/InstanceMethod.cs`，产物落点：`Tests/04_Codegen/Scripts/Generated/InstanceMethod.g.cs`。
-   - **Path B 二件套（Behavior C# Impl，Scenario Y）**：`*Source : BehaviorNodeSource<*Impl>`（含 slot 镜像字段 **类型统一为 `LogicGraph`** + `[BlocklySource(menuPath, typeof(*Source.Node))]`） + 嵌套 `Node : BehaviorNode<*Source, *Impl>`（持每 slot 一个 `LogicGraph.Blockly` 私有局部；`Initialize / InitializeProperties / CleanProperties / OnBeforeDestroy` 4 个 override：Init 调 `blockly.CreateBlockly(source.field)` / InitProps 调 `_field.Call<TValueType>()` 塞 Impl 字段 / Clean 引用型置 null / OnBeforeDestroy 调 `blockly.DestroyBlockly(_field)` 释放）。**无 `*Impl`产物**——`*Impl` = 业务方手写的 IBehaviorImpl 实现类、codegen 不产。二件均落 `<SourceNs>.Generated` 命名空间、`<SourceDir>/Generated/<源类名>.g.cs` 文件（源类 = Impl 类）。Slot 读取来源 = Impl 类上的 `[BlocklySourceSlot]` 字段。**字段类型双轨锁**：Impl 字段必须实际值类型（值型 / Unity 对象引用 / string 等）、**禁 LogicGraph**、**禁 Expression**；*Source 字段统一 `LogicGraph`。详见 KD#15 + KD#18 + 合约 §2.5。
-   - **同一源类**不可能同时产三件套与二件套（Path A / Path B scanner 分支互斥）。**不同源类**可以一个走 Path A、另一个走 Path B，同一程序集内两种产物并存不冲突。
-   - **场景 ζ（成员级 `[Blockly]` 并存）**：Impl 类内非 lifecycle 方法 / 属性 / 字段标 `[Blockly]` → 同时走 Path A 三件套 emitter、与 Path B 二件套并存于同一 .g.cs。lifecycle 方法（`Start` / `Tick` / `LateTick` / `Finish`）4 名锁，上面打 `[Blockly]` silent ignore（不报错、不产，Q1 hard fail 留给 PR-γ）。
+   - **Path B 二件套（Behavior C# Impl，Scenario Y）**：`*Source : BehaviorNodeSource<*Impl>`（含 slot 镜像字段 **类型统一为 `LogicGraph`** + `[BlocklySource(menuPath, typeof(*Source.Node))]`） + 嵌套 `Node : BehaviorNode<*Source, *Impl>`（持每 slot 一个 `LogicGraph.Blockly` 私有局部；`Initialize / InitializeProperties / CleanProperties / OnBeforeDestroy` 4 个 override：Init 调 `blockly.CreateBlockly(source.field)` / InitProps 调 `_field.Call<TValueType>()` 塞 Impl 字段 / Clean 引用型置 null / OnBeforeDestroy 调 `blockly.DestroyBlockly(_field)` 释放）。**无 `*Impl` 产物**——`*Impl` = 业务方手写的 IBehaviorImpl 实现类、codegen 不产。二件均落 `<SourceNs>.Generated` 命名空间、`<SourceDir>/Generated/<源类名>.g.cs` 文件（源类 = Impl 类）。详见 KD#15 + KD#18 + 合约 §2.5。
+   - **Path C 二件套（Timeline Clip C# Impl，Scenario Y对称）**：`*Source : ClipSource<*Impl>`（含 slot 镜像字段 **类型统一为 `LogicGraph`** + `[BlocklySource(menuPath, typeof(*Source.Node))]`） + 嵌套 `Node : Clip<*Source, *Impl>`（持每 slot 一个 `LogicGraph.Blockly` 私有局部；**4 个 override**：`Initialize / InitializeProperties / CleanProperties / OnBeforeDestroy`）。**与 Path B 字面不同三点**：（1）基类 `ClipSource<TImpl>` / `Clip<TSource, TImpl>` 取代 `BehaviorNodeSource<TImpl>` / `BehaviorNode<TSource, TImpl>`；（2）Init / OnBeforeDestroy 中走 `timeline.blockly` 属性 hop（`timeline.blockly.CreateBlockly(source.field)` / `timeline.blockly.DestroyBlockly(_field)`），因为 `Clip<TSource>` 基类只暴露 `timeline { get; }` 属性、无直接的 `blockly` 字段；（3）生命周期不同：`Clip<TSource, TImpl>` sealed override `OnBegin / OnEnd` 中调 InitProps / CleanProps、`OnFrame` 直接调 `_impl.OnFrame(frameInfo)`、`OnBeforeDestroy` 由 `Clip<TSource>.OnDestroy` 调。**无 `*Impl` 产物**——`*Impl` = 业务方手写的 IClip 实现类。详见 KD#15 + KD#18 + 合约 §2.5。
+   - **同一源类**不可能同时产三件套与二件套（Path A / Path B / Path C scanner 分支互斥）。**不同源类**可以一个走 Path A、另一个走 Path B / C，同一程序集内三种产物并存不冲突。
+   - **场景 ζ（成员级 `[Blockly]` 并存）**：Impl 类内非 lifecycle 方法 / 属性 / 字段标 `[Blockly]` → 同时走 Path A 三件套 emitter、与 Path B/C 二件套并存于同一 .g.cs。lifecycle 方法（Behavior 侧 `Start` / `Tick` / `LateTick` / `Finish`；Timeline 侧 `Begin` / `OnFrame` / `End`）名锁，上面打 `[Blockly]` silent ignore（不报错、不产，Q1 hard fail 留给 PR-γ）。
 9. **发布者身份字样**（`.g.cs` 顶部文件头）：产物文件头身份字样 = `"Generated by the com.vena.blockly Blockly codegen pipeline."`；合约 §2 产物文件头 hard rule 锁定，仅保留 `<auto-generated>` 7 行 prelude、**不再贴任何 `[BlocklyGenerated]` attribute**。**不提 `UGC`**——`UGC` 是产品语义（KD#2 runtime UGC 玩家），不作为工具身份。
 10. **菜单路径**：`Tools/Vena/Blockly/Run Codegen` + `Tools/Vena/Blockly/Locate Codegen Config`；`[CreateAssetMenu] menuName = "Vena/Blockly/Codegen Config"`；资产默认文件名 `BlocklyCodegenConfig.asset`（资产文件名保留 `Blockly` 前缀以避免开发环境项目全局名冲突；类名 `CodegenConfig` 裸命名，由命名空间区分）。
 11. **工具类命名规则**（Editor 内部）：Editor codegen 工具类不携带 `Ugc` 前缀、不携带 `Blockly` 前缀——裸名交给命名空间 `Vena.Blockly.Editor` 去区分。适用于：`AnnotationScanner` / `CodeWriter` / `CodegenMenu` / `CodegenConfig`。
@@ -141,28 +142,37 @@ classDiagram
     - **命名空间规则**：对源类 `T`（`T.Namespace = <SourceNs>`）的所有产物 = `namespace <SourceNs>.Generated { ... }`。例源类 `Vena.Blockly.Tests.Codegen.InstanceMethod` → 产物 `namespace Vena.Blockly.Tests.Codegen.Generated`；产物类全限定名 `Vena.Blockly.Tests.Codegen.Generated.InstanceMethodTestMethod` / `.InstanceMethodTestMethodImpl`。选型理由 = (a) 同名碰撞自动消解（跨业务域 `Order.Process` 不互撞）；(b) IDE 入眼即辨「末段 `.Generated` = 产物」；(c) 与源类同 root 包，`using` 路径连贯。
     - **文件路径规则**：产物文件落 `<SourceDir>/Generated/<源类名>.g.cs`（文件夹 ≡ 命名空间末段，C# 业界惯例）。例：`Tests/04_Codegen/Scripts/InstanceMethod.cs` 源 → `Tests/04_Codegen/Scripts/Generated/InstanceMethod.g.cs` 产物。`<SourceDir>` 由 scanner 从 `Type.Assembly.Location` + asmdef 路径解析出。
     - **Provider 产物例外**：`GeneratedNodeMetadataProvider.g.cs` 跨源类聚合、不属于任一 `<SourceNs>`；落点 = `CodegenConfig.OutputRoot`（默认 `${PackagePath}/Runtime/Generated/`）；命名空间 = `Vena.Blockly.Generated`（固定根、作为 Provider 只点身份区分）。仅 Provider 一个产物使用该根 ns，三件套 / 二件套不走这里。
-    - **scanner 过滤契约**：**Path A** = 「`type.GetCustomAttribute<BlocklyAttribute>() != null && memberType == Class`」；**Path B** = 「`typeof(IBehaviorImpl).IsAssignableFrom(type)`」；不加 belt-and-suspenders。产物 `*Source` / `*Impl`（Path A） / `*Source.Node` / Provider 均不贴 `[Blockly]` 且不实现 `IBehaviorImpl` → 天然不命中过滤、不发生递归 codegen。「防递归生成」是伪需求。**保留**：`[BlocklySource]` 跳过（`AnnotationScanner.cs` 现第 54 行），语义为「手写运行期节点源不是 codegen 输入」的正交过滤、非防递归防御。
+    - **scanner 过滤契约**：**Path A** = 「`type.GetCustomAttribute<BlocklyAttribute>() != null && memberType == Class`」；**Path B** = 「`typeof(IBehaviorImpl).IsAssignableFrom(type)`」；**Path C** = 「`typeof(IClip).IsAssignableFrom(type)`」；不加 belt-and-suspenders。产物 `*Source` / `*Impl`（Path A） / `*Source.Node` / Provider 均不贴 `[Blockly]` 且不实现 `IBehaviorImpl` / `IClip` → 天然不命中过滤、不发生递归 codegen。**保留**：`[BlocklySource]` 跳过（`AnnotationScanner.cs` 现第 57 行），语义为「手写运行期节点源不是 codegen 输入」的正交过滤、非防递归防御。
     - **AOT 不变量契约**（锁合约 §4.6 第 1 条修订）：`sourceType` 解析限于「携 `[BlocklySource]` 且命名空间末段为 `.Generated` 」的产物 `*Source` 与手写 Source；原「+ `[BlocklyGenerated]`」词汇废。
-13. **Path B / Path C 位置判据（补 PR-γ 位送）**：Path B 位置走「接口实现」反射检查、不走准入 attribute。原因是 Behavior / Timeline 侧业务方希望「只写 Impl 类、不必填任何 attribute」的门槛低于 Path A（后者要求业务方主动标 `[Blockly]` 以表达「这个 method/property/field 是节点」的意图）。Path B 门槛以「是否实现 `IBehaviorImpl`」作为唯一判据；Impl 类上的 `[Blockly]` 被 Path B 完全忽略（含 `displayName` 字段）。
+13. **Path B / Path C 位置判据（补 PR-γ 位送）**：Path B / Path C 位置走「接口实现」反射检查、不走准入 attribute。原因是 Behavior / Timeline 侧业务方希望「只写 Impl 类、不必填任何 attribute」的门槛低于 Path A（后者要求业务方主动标 `[Blockly]` 以表达「这个 method/property/field 是节点」的意图）。Path B / Path C 门槛以「是否实现 `IBehaviorImpl` / `IClip`」作为唯一判据；Impl 类上的 `[Blockly]` 被 Path B / Path C 完全忽略（含 `displayName` 字段）。
 14. **Path B / Path C menuPath 计算规则（`ComputeDefaultMenuPath(Type)`）**：Path B / Path C 由于不读 `[Blockly]`，menuPath 走**默认命名空间推导**：
     - 算法：取 `Type.FullName` → 剩类名 `Impl` 后缀 → 剥 `Vena.Blockly.` 命名空间前缀（如有） → 命名空间内部 `.` 折叠为 `/`。
-    - 例：`Vena.Blockly.Tests.BehaviorRuntime.HelloBehaviorImpl` → 去后缀 → `Vena.Blockly.Tests.BehaviorRuntime.HelloBehavior` → 去前缀 → `Tests.BehaviorRuntime.HelloBehavior` → `.` → `/` → `Tests.BehaviorRuntime/HelloBehavior`（末段类名作为叶、前面 namespace 作为路径）。
-    - 另一例：`MyGame.Skills.FireballImpl` → `FireballImpl` 去 `Impl` = `Fireball` + ns `MyGame.Skills` → `MyGame/Skills/Fireball`。
-    - **类名末 `Impl` 后缀不是硬性要求**：业务侧 `Foo` 类仅实现 `IBehaviorImpl` 也合法，仅按照完整类名推 menuPath（未去后缀）。“去 Impl”是 best-effort 净化、不强制。
-    - **实现点** = `AnnotationScanner.ComputeDefaultMenuPath(Type type)` 静态方法，仅供 Path B / Path C 调用。
-    - **不允许业务侧覆盖**：本 PR-2 锁「默认 menuPath 由命名空间推」，不提供 attribute / config / hook 覆盖。未来如需覆盖另起 KD，不隐式开口。
+    - 例：`Vena.Blockly.Tests.BehaviorRuntime.HelloBehaviorImpl` → `Tests.BehaviorRuntime/HelloBehavior`；`Vena.Blockly.Tests.BehaviorRuntime.HelloClipImpl` → `Tests.BehaviorRuntime/HelloClip`（Path C 对称）。
+    - **类名末 `Impl` 后缀不是硬性要求**：业务侧 `Foo` 类仅实现 `IBehaviorImpl` / `IClip` 也合法，仅按照完整类名推 menuPath（未去后缀）。“去 Impl”是 best-effort 净化、不强制。
+    - **实现点** = `AnnotationScanner.ComputeDefaultMenuPath(Type type)` 静态方法，供 Path B / Path C 共享调用。
+    - **不允许业务侧覆盖**：锁「默认 menuPath 由命名空间推」，不提供 attribute / config / hook 覆盖。未来如需覆盖另起 KD，不隐式开口。
 15. **Path B / Path C 字段类型双轨锁（Scenario Y）**：
     - **Logic Path A 字段** = `Expression`（走 LogicGraph 5 步协议、Push/Pop）。
-    - **Behavior Path B / Timeline Path C Impl 类字段** = **必须**实际值类型：基元值型（`bool` / `int` / `float` / `string` / `enum` 等）、结构体（`Vector3` / `Quaternion` 等）、或 `UnityEngine.Object` 派生引用（`GameObject` / `Transform` 等）。**禁止 LogicGraph**——Impl 字段是「求值结果」、不是 LogicGraph 引用。**禁止 Expression**——Behavior / Timeline 侧无 5 步协议栈。
+    - **Behavior Path B / Timeline Path C Impl 类字段** = **必须**实际值类型：基元值型（`bool` / `int` / `float` / `string` / `enum` 等）、结构体（`Vector3` / `Quaternion` / `FrameInfo` 等）、或 `UnityEngine.Object` 派生引用（`GameObject` / `Transform` 等）。**禁止 LogicGraph**——Impl 字段是「求值结果」、不是 LogicGraph 引用。**禁止 Expression**——Behavior / Timeline 侧无 5 步协议栈。
     - **Behavior Path B / Timeline Path C Source 类字段（codegen 产物）** = **统一 `LogicGraph` 类型**，无论 Impl 字段是值型还是引用型。无例外、无新约定决定何时转译。
-    - **Init 求值机制**：codegen 在 `Node.Initialize()` 内调 `_<field> = blockly.CreateBlockly(source.<field>)` 创建 LogicGraph.Blockly 实例；在 `Node.InitializeProperties(impl)` 内调 `impl.<field> = _<field>.Call<TFieldValueType>()` 求值后塞回 Impl 字段。
-    - **Clean 释放机制**：`Node.CleanProperties(impl)` 内仅对引用型 Impl 字段（含 `string`、`UnityEngine.Object` 派生、数组、泛型集合等）置 null 释放强根；值型不输出语句。判别依据 = `Type.IsValueType`（false → 引用型 → 置 null）。
-    - **OnBeforeDestroy**：`Node.OnBeforeDestroy()` 内调 `blockly.DestroyBlockly(_<field>); _<field> = null;` 释放 LogicGraph.Blockly 实例。
-    - **scanner 字段类型校验**：Path B 上 `field.FieldType == typeof(LogicGraph)` → 抛 InvalidOperationException 中止；`typeof(Expression).IsAssignableFrom(field.FieldType)` → 抛 InvalidOperationException 中止。详合约 §2.5。
-    - **黄金样本** = `Tests/02_BehaviorRuntime/Scripts/TestBehaviorImpl.cs:94-129`（`SampleBehaviorImpl2Source`）。Impl 字段 `string message`、Source 字段 `LogicGraph message`、Node 字段 `LogicGraph.Blockly _message`。emitter 输出与该样本字面一致即正确。
-    - **Slot 读取点**：Path B 仅读 Impl 类上的「字段」、不读 property（Behavior Impl 类上的 property 走 LogicGraph 的 5 步协议语义未定义；本 PR-2 只处理 field）。
-16. （保留位，未来扩展）。
-17. （保留位，未来扩展）。
+    - **Init 求值机制**：
+      - Path B：`Node.Initialize()` 内调 `_<field> = blockly.CreateBlockly(source.<field>)`；`Node.InitializeProperties(impl)` 内调 `impl.<field> = _<field>.Call<TFieldValueType>()`。
+      - Path C：`Node.Initialize()` 内调 `_<field> = timeline.blockly.CreateBlockly(source.<field>)`；`Node.InitializeProperties(impl)` 内调 `impl.<field> = _<field>.Call<TFieldValueType>()`。区别点 = `timeline.blockly` 属性 hop（`Clip<TSource>` 基类只暴露 `timeline { get; }` 属性、无 `blockly` 字段）。
+    - **Clean 释放机制**：`Node.CleanProperties(impl)` 内仅对引用型 Impl 字段（含 `string`、`UnityEngine.Object` 派生、数组、泛型集合等）输出置 null 语句；值型跳过不输出。判别依据 = `Type.IsValueType`（false → 引用型 → 置 null）。Path B 与 Path C 完全对称。
+    - **OnBeforeDestroy**：
+      - Path B：`Node.OnBeforeDestroy()` 内调 `blockly.DestroyBlockly(_<field>); _<field> = null;`，调用点 = `BehaviorNode<,>.IBehaviorNode.OnDestroy`。
+      - Path C：`Node.OnBeforeDestroy()` 内调 `timeline.blockly.DestroyBlockly(_<field>); _<field> = null;`，调用点 = `Clip<TSource>.ITimelineObject.OnDestroy`（`Runtime/Behavior/Timeline/Clip.cs:159-164`）。
+    - **scanner 字段类型校验**（Path B 与 Path C 共享，同一方法 `AnnotationScanner.CollectImplSlots(Type)`）：`field.FieldType == typeof(LogicGraph)` → 抛 InvalidOperationException 中止；`typeof(Expression).IsAssignableFrom(field.FieldType)` → 抛 InvalidOperationException 中止。详合约 §2.5。
+    - **黄金样本**：Path B 看 `Tests/02_BehaviorRuntime/Scripts/Generated/HelloBehaviorImpl.g.cs`；Path C 看 PR-3 输出的 `Tests/02_BehaviorRuntime/Scripts/Generated/HelloClipImpl.g.cs`。emitter 输出与该样本字面一致即正确。
+    - **Slot 读取点**：Path B / Path C 仅读 Impl 类上的「字段」、不读 property。
+16. **`ScannedSource` 跨 Path B / Path C 镜像字段统一命名**：
+    - PR-3 将 PR-2 落地的 `ScannedSource.BehaviorSlots` rename 为 `ImplSlots`；`ScannedSource.BehaviorMenuPath` rename 为 `MenuPath`。
+    - PR-3 将 `BehaviorSlotInfo` rename 为 `ImplSlotInfo`；其四字段 `FieldName / DisplayName / Order / FieldValueType` 保持不变。
+    - PR-3 将 `AnnotationScanner.CollectBehaviorSlots(Type)` rename 为 `CollectImplSlots(Type)`；其错误信息中「Impl 字段」字样保持不变（语义仍是「Impl 类上的字段」）。
+    - **理由**：Path B / Path C 镜像读取逻辑完全同构（同一字段类型校验、同一 `[BlocklySourceSlot]` 读取、同一 order 升序），不应各拷贝一份（C5 common reuse）。`BehaviorSlots/MenuPath` 字样强绑 Behavior 语义、不适用于 Path C；通用名以一次到位、避免未来为每个 Path 重设一套同构字段。
+    - **影响面**：Path B emitter（PR-2 落地）代码内部对 `BehaviorSlots / BehaviorMenuPath` 的引用随之改名；产物字面**不变**（`HelloBehaviorImpl.g.cs` 默认重跑 codegen 产出完全一致）。
+    - **不影响**：Path A 代码路径 / Logic侧 `ScannedMember` 集 / contract §2 / `BlocklySourceSlotAttribute` 本身。
+17. **Path C `ScannedSourceKind.Timeline` 产物分发**：`CodeWriter.Emit` 主循环中原 `switch (src.Kind)` 补 `case ScannedSourceKind.Timeline: content = EmitTimelineSourceFile(src); break;` 分支；Provider 聚合补 `case Timeline: AppendTimelineNodeMetadataCtor(sb, src, indent); break;`。二者位位对称 Path B 现有分支。
 18. **Path B 二件套产物模板（Scenario Y 锁）**：Path B 产物仅二件套、无 `*Impl`（`*Impl` = Impl 类本身、手写）。
     - **名称规则**：见 KD#13 / §2.5（去 `Impl` 后缀；未以 `Impl` 结尾补 `Source` 后缀）；嵌套 `Node` 名与 Path A 同。
     - **产物主体模板**（与合约 §2.5 字面对齐，programmer 照搬）：
@@ -173,30 +183,30 @@ classDiagram
           [BlocklySourceSlot("<字段显示名>", <order>)]
           public LogicGraph <fieldName>;
           // … 其余 slot 镜像字段，全部 LogicGraph 类型 …
-      
+
           sealed class Node : BehaviorNode<<SourceName>, <ImplName>>
           {
               private LogicGraph.Blockly _<fieldName>;
               // … 每 slot 一个 …
-      
+
               protected override void Initialize()
               {
                   _<fieldName> = blockly.CreateBlockly(source.<fieldName>);
                   // … 逐 slot …
               }
-      
+
               protected override void InitializeProperties(<ImplName> impl)
               {
                   impl.<fieldName> = _<fieldName>.Call<<FieldValueType>>();
                   // … 逐 slot …
               }
-      
+
               protected override void CleanProperties(<ImplName> impl)
               {
                   impl.<fieldName> = null;  // 仅引用型（含 string / UnityEngine.Object 派生 / 数组）
                   // … 值型跳过 …
               }
-      
+
               protected override void OnBeforeDestroy()
               {
                   blockly.DestroyBlockly(_<fieldName>);
@@ -206,9 +216,63 @@ classDiagram
           }
       }
       ```
-    - **Init 求值机制锁**：`CreateBlockly` / `DestroyBlockly` / `Call<T>()` 均是 `BehaviorGraph.Blockly` 自洽 API（参见 `Runtime/Behavior/LogicBehavior.cs:47-50/82-85`、`Runtime/Behavior/ControlNodes.cs:38/87`）。Behavior 侧 Path B 完全不复用 LogicGraph 5 步 Push/Pop 协议。
-    - **黄金样本**：`Tests/02_BehaviorRuntime/Scripts/TestBehaviorImpl.cs:94-129`（`SampleBehaviorImpl2Source`）。emitter 输出与该样本字面一致即正确。
-    - **OnBeforeDestroy** 调用点 = `BehaviorNode<,>.IBehaviorNode.OnDestroy`（`Runtime/Behavior/BehaviorNode.cs:214-217`）；业务侧无需释放资源时空体。本 PR-2 codegen 自动填释放 LogicGraph.Blockly 子实例的代码。
+    - **Init 求值机制锁**：`CreateBlockly` / `DestroyBlockly` / `Call<T>()` 均是 `BehaviorGraph.Blockly` 自洽 API。
+    - **黄金样本**：`Tests/02_BehaviorRuntime/Scripts/Generated/HelloBehaviorImpl.g.cs`。
+    - **OnBeforeDestroy** 调用点 = `BehaviorNode<,>.IBehaviorNode.OnDestroy`。
+19. **Path C 二件套产物模板（Scenario Y 对称，PR-3 锁）**：Path C 产物仅二件套、无 `*Impl`（`*Impl` = IClip 实现类本身、手写）。
+    - **名称规则**：与 Path B 同划（去 `Impl` 后缀；未以 `Impl` 结尾补 `Source` 后缀）。例：`HelloClipImpl` → `HelloClipSource`；`MySkillImpl` → `MySkillSource`；`Foo` → `FooSource`。嵌套 `Node` 名不变。实现点 = `CodeWriter.TimelineSourceName(Type)` 静态方法（与现有 `BehaviorSourceName` 同算法，可双块复用同一函数但 PR-3 独立命名以避免 Path B / Path C 语义混淆）。
+    - **产物主体模板**（与合约 §2.5 字面对齐，programmer 照搬）：
+      ```csharp
+      [BlocklySource("<computed-menuPath>", typeof(<SourceName>.Node))]
+      public sealed class <SourceName> : ClipSource<<ImplName>>
+      {
+          [BlocklySourceSlot("<字段显示名>", <order>)]
+          public LogicGraph <fieldName>;
+          // … 其余 slot 镜像字段，全部 LogicGraph 类型 …
+
+          sealed class Node : Clip<<SourceName>, <ImplName>>
+          {
+              private LogicGraph.Blockly _<fieldName>;
+              // … 每 slot 一个 …
+
+              protected override void Initialize()
+              {
+                  _<fieldName> = timeline.blockly.CreateBlockly(source.<fieldName>);
+                  // … 逐 slot …
+              }
+
+              protected override void InitializeProperties(<ImplName> impl)
+              {
+                  impl.<fieldName> = _<fieldName>.Call<<FieldValueType>>();
+                  // … 逐 slot …
+              }
+
+              protected override void CleanProperties(<ImplName> impl)
+              {
+                  impl.<fieldName> = null;  // 仅引用型（含 string / UnityEngine.Object 派生 / 数组）
+                  // … 值型跳过 …
+              }
+
+              protected override void OnBeforeDestroy()
+              {
+                  timeline.blockly.DestroyBlockly(_<fieldName>);
+                  _<fieldName> = null;
+                  // … 逐 slot …
+              }
+          }
+      }
+      ```
+    - **与 Path B 的字面差异锁**：
+      1. 基类 `*Source : ClipSource<*Impl>`（不是 `BehaviorNodeSource<*Impl>`）。
+      2. 嵌套 `Node : Clip<*Source, *Impl>`（不是 `BehaviorNode<*Source, *Impl>`）。
+      3. Init / OnBeforeDestroy 走 `timeline.blockly` 属性 hop（不是裸 `blockly`）。原因 = `Clip<TSource>` 基类只暴露 `public Timeline timeline { get; private set; }` 属性、无 `blockly` 字段；`Timeline` 本身是 `CompositeBehavior<TimelineSource>` 继承 `BehaviorNode<,>` 设计、`public BehaviorGraph.Blockly blockly { get; }` 属性从该层提供。
+      4. InitializeProperties / CleanProperties 调用点不同：Path B 由 `BehaviorNode<,>.Tick` 生命周期驱动（每调一次 Tick 都重 reinit）；Path C 由 `Clip<TSource, TImpl>` sealed override `OnBegin / OnEnd` 驱动（仅在 Clip Begin 时 reinit 一次、Clip End 时 clean）。产物字面相同、仅调用时机不同。
+      5. OnBeforeDestroy 调用点 = `Clip<TSource>.ITimelineObject.OnDestroy`（`Runtime/Behavior/Timeline/Clip.cs:159-164`）。`Clip<TSource, TImpl>` 未 sealed override 该点、留给派生 Node 填。
+    - **OnFrame 不在产物实现中**：`Clip<TSource, TImpl>` 已 sealed override `OnFrame` 直接调 `_impl.OnFrame(frameInfo)`，Path C 产物 Node 不实现 `OnFrame`。如产物误写 `OnFrame` override 会因「`Clip<,>` 中已 sealed」编译报错。
+    - **InitializeProperties / CleanProperties 签名**：`protected abstract void InitializeProperties(TImpl clipImpl)` / `protected abstract void CleanProperties(TImpl clipImpl)`（`Runtime/Behavior/Timeline/Clip.cs:196-197`）。产物使用 `impl` 形参名以与 Path B 一致、protected override 访问修饰符。
+    - **Init / OnBeforeDestroy 签名**：`protected abstract void Initialize()` / `protected abstract void OnBeforeDestroy()`（`Runtime/Behavior/Timeline/Clip.cs:166/170`）。`OnBegin / OnFrame / OnEnd` 均在 `Clip<TSource, TImpl>` 中 sealed 覆写、产物 Node 不实现。
+    - **Slot 读取点** = Impl 类上的 `[BlocklySourceSlot]` 字段（与 Path B 完全同语义，复用 `CollectImplSlots(Type)`）。
+    - **黄金样本**：`Tests/02_BehaviorRuntime/Scripts/Generated/HelloClipImpl.g.cs`（PR-3 首次产出）。emitter 输出与该样本字面一致即正确。
 
 ## Phase 2 Ratchet
 
