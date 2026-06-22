@@ -10,7 +10,7 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
 
     #region 测试行为1
 
-    public class SampleBehaviorImpl1 : IBehaviorImpl
+    public class SampleBehaviorImpl1 : IBehavior
     {
         public void Start(BehaviorGraph.Blockly graph)
         {
@@ -35,7 +35,7 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     }
 
     /// <summary>
-    /// TODO: 所有IBehaviorImpl 参考此代码  生成BehaviorSource代码的示例
+    /// TODO: 所有 IBehavior 参考此代码  生成BehaviorSource代码的示例
     /// </summary>
     [BlocklySource("测试行为/测试行为1", typeof(SampleBehaviorImpl1Source.Node))]
     public sealed class SampleBehaviorImpl1Source : BehaviorNodeSource<SampleBehaviorImpl1>
@@ -65,7 +65,7 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
 
     #region 测试行为2
 
-    public class SampleBehaviorImpl2 : IBehaviorImpl
+    public class SampleBehaviorImpl2 : IBehavior
     {
         public string message;
 
@@ -92,7 +92,7 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     }
 
     /// <summary>
-    /// TODO: 所有IBehaviorImpl 参考此代码  生成BehaviorSource代码的示例
+    /// TODO: 所有 IBehavior 参考此代码  生成BehaviorSource代码的示例
     /// </summary>
     [BlocklySource("测试行为/测试行为2", typeof(SampleBehaviorImpl2Source.Node))]
     public sealed class SampleBehaviorImpl2Source : BehaviorNodeSource<SampleBehaviorImpl2>

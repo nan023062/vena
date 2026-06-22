@@ -22,6 +22,14 @@ namespace Vena.Blockly.Editor
     /// </summary>
     internal static class AnnotationScanner
     {
+        // PR-γ Q1.c：lifecycle 方法名集合 —— Path B / Path C 实现类上这些方法不允许标 [Blockly]
+        // （由基类直接调度、不进 codegen 产物）。
+        private static readonly HashSet<string> s_BehaviorLifecycleMethodNames =
+            new HashSet<string>(StringComparer.Ordinal) { "Start", "Tick", "LateTick", "Finish" };
+
+        private static readonly HashSet<string> s_ClipLifecycleMethodNames =
+            new HashSet<string>(StringComparer.Ordinal) { "Begin", "OnFrame", "End" };
+
         /// <summary>
         /// 扫描入口。按 <paramref name="config"/> 程序集白名单 + 类型白名单过滤、
         /// 跳过自身已带 [BlocklySource] 的类、按 [BlocklySourceSlot.Order] 升序固定顺序。
@@ -59,9 +67,11 @@ namespace Vena.Blockly.Editor
                     var classAttr = type.GetCustomAttribute<BlocklyAttribute>();
                     if (classAttr == null)
                     {
-                        // Path B：IBehaviorImpl 反射判定（不依赖 [Blockly] attribute）。
-                        if (typeof(IBehaviorImpl).IsAssignableFrom(type))
+                        // Path B：IBehavior 反射判定（不依赖 [Blockly] attribute）。
+                        if (typeof(IBehavior).IsAssignableFrom(type))
                         {
+                            AssertNotRuntimeNodeRoot(type, "Path B", "IBehavior");
+                            AssertNoBlocklyOnLifecycleMethods(type, s_BehaviorLifecycleMethodNames, "IBehavior", "Start / Tick / LateTick / Finish");
                             var slots = CollectImplSlots(type);
                             if (slots.Count == 0) continue;
                             var menuPath = ComputeDefaultMenuPath(type);
@@ -78,6 +88,8 @@ namespace Vena.Blockly.Editor
                         // Path C：IClip 反射判定（对称 Path B，Timeline Clip C# Impl 业务扩展路径）。
                         if (typeof(IClip).IsAssignableFrom(type))
                         {
+                            AssertNotRuntimeNodeRoot(type, "Path C", "IClip");
+                            AssertNoBlocklyOnLifecycleMethods(type, s_ClipLifecycleMethodNames, "IClip", "Begin / OnFrame / End");
                             var slots = CollectImplSlots(type);
                             if (slots.Count == 0) continue;
                             var menuPath = ComputeDefaultMenuPath(type);
@@ -105,7 +117,7 @@ namespace Vena.Blockly.Editor
                     }
 
                     // Q1 硬约束 #2：[Blockly] 不允许打在 runtime 节点源类上（继承自 Expression / BehaviorNodeSource /
-                    // Block<> / BehaviorNode<,>）。
+                    // Block<> / BehaviorNode<,> / ClipSource / ClipSource<> / Clip<> / Clip<,>）。
                     {
                         var cursor = type.BaseType;
                         while (cursor != null && cursor != typeof(object))
@@ -114,7 +126,8 @@ namespace Vena.Blockly.Editor
                             {
                                 throw new InvalidOperationException(
                                     $"[Vena.Blockly] {type.FullName}: [Blockly] 不允许打在 runtime 节点源类上"
-                                    + "（继承自 Expression / BehaviorNodeSource / Block<> / BehaviorNode<,>）。"
+                                    + "（继承自 Expression / BehaviorNodeSource / Block<> / BehaviorNode<,> / "
+                                    + "ClipSource / ClipSource<> / Clip<> / Clip<,>）。"
                                     + "若意图是注册 runtime 节点源，请改用 [BlocklySource]。");
                             }
                             cursor = cursor.BaseType;
@@ -262,7 +275,7 @@ namespace Vena.Blockly.Editor
         }
 
         /// <summary>
-        /// Path B：扫 Impl 类（实现 <see cref="IBehaviorImpl"/>）上贴 [BlocklySourceSlot] 的 public 实例字段。
+        /// Path B：扫 Impl 类（实现 <see cref="IBehavior"/>）上贴 [BlocklySourceSlot] 的 public 实例字段。
         /// 仅 Public | Instance | DeclaredOnly。字段类型 hard fail：禁 <see cref="LogicGraph"/> / <see cref="Expression"/>。
         /// </summary>
         private static IReadOnlyList<ImplSlotInfo> CollectImplSlots(Type type)
@@ -323,8 +336,46 @@ namespace Vena.Blockly.Editor
             return ns.Length == 0 ? simpleName : ns.Replace('.', '/') + "/" + simpleName;
         }
 
+        /// <summary>
+        /// PR-γ Q1.b：派生自 runtime 节点根类（Expression / BehaviorNodeSource / Block&lt;&gt; / BehaviorNode&lt;,&gt; /
+        /// ClipSource / ClipSource&lt;&gt; / Clip&lt;&gt; / Clip&lt;,&gt;）且实现 Impl 接口 → hard fail。
+        /// runtime 节点源类自身已是 codegen 产物 Node 形态，再走 Path B/C 二件套会双重 codegen。
+        /// </summary>
+        private static void AssertNotRuntimeNodeRoot(Type type, string pathTag, string interfaceName)
+        {
+            var cursor = type.BaseType;
+            while (cursor != null && cursor != typeof(object))
+            {
+                if (IsRuntimeNodeRootType(cursor))
+                {
+                    throw new InvalidOperationException(
+                        $"[Vena.Blockly] {type.FullName}: 不允许同时派生自 runtime 节点根类且实现 {interfaceName}"
+                        + $"（两路径冲突：runtime 节点根类自身已是 codegen 产物 Node 形态、再走 {pathTag} 二件套会双重 codegen）。");
+                }
+                cursor = cursor.BaseType;
+            }
+        }
+
+        /// <summary>
+        /// PR-γ Q1.c：Path B / Path C 实现类上、lifecycle 方法标 [Blockly] → hard fail。
+        /// lifecycle 方法由基类直接调度、不进 codegen 产物。
+        /// </summary>
+        private static void AssertNoBlocklyOnLifecycleMethods(Type type, IReadOnlyCollection<string> lifecycleNames, string pathTag, string lifecycleSignature)
+        {
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+            foreach (var method in type.GetMethods(flags))
+            {
+                if (!lifecycleNames.Contains(method.Name)) continue;
+                if (method.GetCustomAttribute<BlocklyAttribute>() == null) continue;
+                throw new InvalidOperationException(
+                    $"[Vena.Blockly] {type.FullName}.{method.Name}: lifecycle 方法不允许标 [Blockly]"
+                    + $"（{lifecycleSignature} 是 {pathTag} 的生命周期方法、由基类直接调度、不进 codegen 产物）。");
+            }
+        }
+
         private static bool IsRuntimeNodeRootType(Type t)
         {
+            // LogicGraph / BehaviorGraph 侧（PR-1 锁，4 类）
             if (t == typeof(Expression)) return true;
             if (t == typeof(BehaviorNodeSource)) return true;
             if (t.IsGenericType)
@@ -332,7 +383,13 @@ namespace Vena.Blockly.Editor
                 var def = t.GetGenericTypeDefinition();
                 if (def.FullName == "Vena.Blockly.Block`1") return true;
                 if (def.FullName == "Vena.Blockly.BehaviorNode`2") return true;
+                // Timeline 侧（PR-γ 锁，4 类）
+                if (def.FullName == "Vena.Blockly.ClipSource`1") return true;
+                if (def.FullName == "Vena.Blockly.Clip`1") return true;
+                if (def.FullName == "Vena.Blockly.Clip`2") return true;
             }
+            // Timeline 侧非泛型 ClipSource（PR-γ 锁）
+            if (t == typeof(ClipSource)) return true;
             return false;
         }
 
@@ -342,7 +399,7 @@ namespace Vena.Blockly.Editor
         }
     }
 
-    /// <summary>扫描入参分支：Path A = Logic（[Blockly] 三件套）；Path B = Behavior（IBehaviorImpl 二件套）；Path C = Timeline（IClip，PR-3 补）。</summary>
+    /// <summary>扫描入参分支：Path A = Logic（[Blockly] 三件套）；Path B = Behavior（IBehavior 二件套）；Path C = Timeline（IClip，PR-3 补）。</summary>
     internal enum ScannedSourceKind
     {
         Logic,
@@ -368,7 +425,7 @@ namespace Vena.Blockly.Editor
         }
     }
 
-    /// <summary>扫描结果：一个 [Blockly] 源类 + 其下所有 codegen 成员；或一个 IBehaviorImpl 源类 + 其 slot 镜像。</summary>
+    /// <summary>扫描结果：一个 [Blockly] 源类 + 其下所有 codegen 成员；或一个 IBehavior 源类 + 其 slot 镜像。</summary>
     internal sealed class ScannedSource
     {
         public Type SourceType { get; }

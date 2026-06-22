@@ -24,7 +24,7 @@ namespace Vena.Blockly
     /// <summary>
     /// 行为源数据基类（带实现类型）
     /// </summary>
-    public abstract class BehaviorNodeSource<T> : BehaviorNodeSource where T : IBehaviorImpl, new()
+    public abstract class BehaviorNodeSource<T> : BehaviorNodeSource where T : IBehavior, new()
     {
     }
 
@@ -49,9 +49,9 @@ namespace Vena.Blockly
     }
 
     /// <summary>
-    /// IBehaviorImpl is an interface that defines the implementation of a behavior.
+    /// IBehavior is an interface that defines the implementation of a behavior.
     /// </summary>
-    public interface IBehaviorImpl
+    public interface IBehavior
     {
         void Start(BehaviorGraph.Blockly blockly);
 
@@ -70,7 +70,7 @@ namespace Vena.Blockly
     /// <summary>
     /// BehaviorNode is an abstract class that represents a node in a graph.
     /// </summary>
-    public abstract class BehaviorNode<TSource, TImpl> : IBehaviorNode where TSource : BehaviorNodeSource<TImpl> where TImpl : IBehaviorImpl, new()
+    public abstract class BehaviorNode<TSource, TImpl> : IBehaviorNode where TSource : BehaviorNodeSource<TImpl> where TImpl : IBehavior, new()
     {
         public BehaviorGraph.Blockly blockly { get; private set; }
 

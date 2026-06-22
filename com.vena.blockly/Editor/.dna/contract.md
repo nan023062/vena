@@ -81,18 +81,78 @@
 
 ### scanner 硬约束（Q1，hard fail）
 
-扫描阶段、在收集到 `[Blockly]` 的类后、`CollectMembers` 之前，`AnnotationScanner` 必须进行以下两项检查，任一命中即抛 `InvalidOperationException` 中止整个 codegen run：
+扫描阶段，`AnnotationScanner` 必须在分支识别期间执行下列三组硬约束，任一命中即抛 `InvalidOperationException` 中止整个 codegen run。**异常类型统一锁 `InvalidOperationException`**；错误信息一律以 `[Vena.Blockly] {type.FullName}:` 开头，便于业务方 grep 定位。
+
+#### Q1.a 双标 + runtime 节点根类检（Path A 入口）
+
+在收集到 `[Blockly]` 的类后、`CollectMembers` 之前：
 
 1. **双标检**：`type.GetCustomAttribute<BlocklySourceAttribute>() != null` → 违例，信息 = `"[Vena.Blockly] {type.FullName}: [Blockly] 不允许与 [BlocklySource] 同存"`。
-2. **runtime 节点源类检**：检查 `type` 的继承链上是否出现以下任一「runtime 节点根类」——命中即违例：
-   - `Vena.Blockly.Expression`（LogicGraph 节点根）
-   - `Vena.Blockly.BehaviorNodeSource`（BehaviorGraph 节点根）
-   - `Vena.Blockly.Block`（嵌套 Node 实现根——注意 `Block<TSource>` 是泛型类，检查时需某 base 是该泛型定义的造型）
-   - `Vena.Blockly.BehaviorNode`（嵌套 BehaviorNode 实现根，同后二同为泛型类）
+2. **runtime 节点源类检**：检查 `type` 的继承链上是否出现以下任一「runtime 节点根类」——命中即违例（**8 类全锁、PR-γ 扩 Timeline 4 类**）：
+   - LogicGraph / BehaviorGraph 侧（4 类，PR-1 锁）：
+     - `Vena.Blockly.Expression`（LogicGraph 节点根，非泛型）
+     - `Vena.Blockly.BehaviorNodeSource`（BehaviorGraph 节点根，非泛型）
+     - `Vena.Blockly.Block<TSource>`（嵌套 Node 实现根，泛型 1 参）
+     - `Vena.Blockly.BehaviorNode<TSource, TImpl>`（嵌套 BehaviorNode 实现根，泛型 2 参）
+   - Timeline 侧（4 类，PR-γ 锁）：
+     - `Vena.Blockly.ClipSource`（ClipSource 节点根，非泛型）
+     - `Vena.Blockly.ClipSource<TImpl>`（ClipSource 节点根，泛型 1 参）
+     - `Vena.Blockly.Clip<TSource>`（嵌套 Clip 实现根，泛型 1 参）
+     - `Vena.Blockly.Clip<TSource, TImpl>`（嵌套 Clip 实现根，泛型 2 参）
 
-   错误信息 = `"[Vena.Blockly] {type.FullName}: [Blockly] 不允许打在 runtime 节点源类上（继承自 Expression / BehaviorNodeSource / Block<> / BehaviorNode<,>）"`。
+   错误信息 = `"[Vena.Blockly] {type.FullName}: [Blockly] 不允许打在 runtime 节点源类上（继承自 Expression / BehaviorNodeSource / Block<> / BehaviorNode<,> / ClipSource / ClipSource<> / Clip<> / Clip<,>）"`。
 
-检查实现点 = `AnnotationScanner.Scan` 主循环内「读取 classAttr 后、调用 CollectMembers 前」那一段（现有代码第 57–60 行区间）；runtime 根类集合走常量 `static readonly Type[] s_RuntimeNodeRootTypes = { typeof(Expression), typeof(BehaviorNodeSource), typeof(Block<>), typeof(BehaviorNode<,>) }`、靠 `while (baseType != null)` 递推比对（泛型造型以 `IsGenericType && GetGenericTypeDefinition()` 比对）。
+实现点 = `AnnotationScanner.Scan` 主循环内「读取 classAttr 后、调用 CollectMembers 前」那一段；runtime 根类集合走常量 `static readonly Type[] s_RuntimeNodeRootTypes`、靠 `while (baseType != null)` 递推比对（泛型造型以 `IsGenericType && GetGenericTypeDefinition()` 比对、非泛型以引用相等比对）。**Q1.a 的 8 类禁列亦是 Q1.b 互斥校验复用判据**。
+
+#### Q1.b Path A vs Path B/C 互斥校验（PR-γ 新增）
+
+在 Path B / Path C 分支命中后、`CollectImplSlots` 之前，检查同一类是否同时满足两条件：
+
+1. **是 runtime 节点根类派生**：`type` 的继承链上出现 Q1.a 禁列 8 类之一（`IsRuntimeNodeRootType(cursor) == true`）。
+2. **且实现了 `IBehavior` 或 `IClip`**：即已命中 Path B 或 Path C 分支判据。
+
+两条件同时成立 → 违例。错误信息：
+
+- Path B 撞 runtime 根类：`"[Vena.Blockly] {type.FullName}: 不允许同时派生自 runtime 节点根类且实现 IBehavior（两路径冲突：runtime 节点根类自身已是 codegen 产物 Node 形态、再走 Path B 二件套会双重 codegen）"`。
+- Path C 撞 runtime 根类：`"[Vena.Blockly] {type.FullName}: 不允许同时派生自 runtime 节点根类且实现 IClip（两路径冲突：runtime 节点根类自身已是 codegen 产物 Node 形态、再走 Path C 二件套会双重 codegen）"`。
+
+**判定语义**：runtime 节点根类（`Block<>` / `BehaviorNode<,>` / `Clip<>` / `Clip<,>` 等）已经是 codegen 产物 Node 形态、由 Path A/B/C 产；business 类如果同时从它们派生**又**实现 `IBehavior` / `IClip` → Path B/C 反射判定会错误地将其当作业务侧 Impl 类、产二件套，与 runtime 节点形态语义冲突。本检既挡 Path B/C 误命中、又挡 Path A 单标 `[Blockly]` 之外的旁路混用。
+
+#### Q1.c lifecycle 方法 `[Blockly]` hard fail（PR-γ 新增）
+
+Path B / Path C 分支命中后，scanner 对已命中的 Impl 类额外扫描其 declared 方法集，只查 lifecycle 名 + `[Blockly]` 组合，命中即违例：
+
+- **Path B (`IBehavior`) lifecycle 名锁**：`Start` / `Tick` / `LateTick` / `Finish`（`Runtime/Behavior/BehaviorNode.cs:54-63`）。名单锁点 = `AnnotationScanner.s_BehaviorLifecycleMethodNames`（`HashSet<string>`，`StringComparer.Ordinal`）。
+- **Path C (`IClip`) lifecycle 名锁**：`Begin` / `OnFrame` / `End`（`Runtime/Behavior/Timeline/Clip.cs:101-106`）。名单锁点 = `AnnotationScanner.s_ClipLifecycleMethodNames`（`HashSet<string>`，`StringComparer.Ordinal`）。
+
+实现 = 仅在 Path B / Path C 分支内对 `type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)` 走一遍，对每个 `method.Name ∈ s_*LifecycleMethodNames` 的方法检 `method.GetCustomAttribute<BlocklyAttribute>() != null` → 抛错。**不需要扫所有方法 / 不需要反射成本扩展到 Path A**——Path A 走 `CollectMembers` 早已扫成员，与本检无关。
+
+错误信息：
+
+- Path B：`"[Vena.Blockly] {type.FullName}.{method.Name}: lifecycle 方法不允许标 [Blockly]（Start / Tick / LateTick / Finish 是 IBehavior 的生命周期方法，由 BehaviorNode<,> 直接调度，不进 codegen 产物）"`。
+- Path C：`"[Vena.Blockly] {type.FullName}.{method.Name}: lifecycle 方法不允许标 [Blockly]（Begin / OnFrame / End 是 IClip 的生命周期方法，由 Clip<,> 直接调度，不进 codegen 产物）"`。
+
+**判定**：本节由 PR-γ 把原「silent ignore」收口为 hard fail。理由 = silent ignore 让业务方误以为「我标了应该出产物」、但实际什么都没发生、行为不可预测；hard fail 直接告诉业务方「这名是 lifecycle 保留名、不能标 `[Blockly]`」。成本 = Path B/C 分支内 O(declared methods) 的一次反射，但只针对名字命中 lifecycle 表的 ≤7 个方法做 attribute 取值——不放大反射开销。
+
+#### Q1 总检查顺序（实现锁）
+
+```text
+for each type:
+  pre-filter (null / not-class / abstract / typeFilter / [BlocklySource])
+  if hasBlockly(type):
+    Q1.a 双标检 + Q1.a runtime 节点根类检 → hard fail
+    CollectMembers (Path A)
+  else if IBehavior.IsAssignableFrom(type):
+    Q1.b Path B 互斥校验（is runtime node root 派生？）→ hard fail
+    Q1.c Path B lifecycle 方法 [Blockly] 检 → hard fail
+    CollectImplSlots（含字段类型双轨锁）
+  else if IClip.IsAssignableFrom(type):
+    Q1.b Path C 互斥校验 → hard fail
+    Q1.c Path C lifecycle 方法 [Blockly] 检 → hard fail
+    CollectImplSlots
+```
+
+所有 Q1 异常类型统一 `InvalidOperationException`，被 `CodegenMenu.RunCodegen` 的 try/catch 冒泡到 Unity Console。
 
 ### 产物三件套（每个 [Blockly] Method / Property getter / Property setter / Field getter/setter 产一套）
 
@@ -192,26 +252,30 @@ codegen 变更（套锁合约调整 / 命名空间调整 / 三件套模板调整
 
 ## §2.5 Path B / Path C 分支产物契约（PR-2 锁 Path B；PR-3 补 Path C）
 
-本节锁 Path B / Path C 二件套产物契约。PR-2 锁 Path B（`IBehaviorImpl`）、PR-3 锁 Path C（`IClip`）。两路径镜像对称，共享 scanner 字段镜像逻辑、`ComputeDefaultMenuPath` 、字段类型双轨锁；emitter 字面独立。
+本节锁 Path B / Path C 二件套产物契约。PR-2 锁 Path B（`IBehavior`）、PR-3 锁 Path C（`IClip`）。两路径镜像对称，共享 scanner 字段镜像逻辑、`ComputeDefaultMenuPath` 、字段类型双轨锁；emitter 字面独立。
 
 ### scanner 分支识别契约
 
-`AnnotationScanner.Scan` 主循环在同一个 `Type` 上按如下顺序交互互斥判断（实现处 = `AnnotationScanner.cs` 主循环内部，Path B 已在 PR-2 落地、Path C 在 PR-3 补）：
+`AnnotationScanner.Scan` 主循环在同一个 `Type` 上按如下顺序交互互斥判断（实现处 = `AnnotationScanner.cs` 主循环内部，Path B 已在 PR-2 落地、Path C 在 PR-3 补、Q1.b / Q1.c 在 PR-γ 补）：
 
 1. **预过滤**：`type == null || !type.IsClass || type.IsAbstract` → 跳过；`typeFilter` 不命中 → 跳过；`type.GetCustomAttribute<BlocklySourceAttribute>() != null` → 跳过。
-2. **Path A 识别**：`type.GetCustomAttribute<BlocklyAttribute>() != null` → 走 Path A 原有分支（Q1 检查 + `CollectMembers` 三件套产出）。未命中 Path A → 继续判 Path B。
-3. **Path B 识别**：`typeof(IBehaviorImpl).IsAssignableFrom(type)` → 走 Path B 分支：调 `CollectImplSlots(type)` 收 Impl 类上的 `[BlocklySourceSlot]` 字段集（含字段类型校验）、调 `ComputeDefaultMenuPath(type)` 推 menuPath、产 `ScannedSource` 二件套输入项（`Kind = Behavior`）。`continue` 本轮 Type。
-4. **Path C 识别**（PR-3）：`typeof(IClip).IsAssignableFrom(type)` → 走 Path C 分支：调 `CollectImplSlots(type)`（与 Path B 共享）收 Impl 类上的 `[BlocklySourceSlot]` 字段集、调 `ComputeDefaultMenuPath(type)` 推 menuPath、产 `ScannedSource` 二件套输入项（`Kind = Timeline`）。`continue` 本轮 Type。
+2. **Path A 识别**：`type.GetCustomAttribute<BlocklyAttribute>() != null` → 走 Path A 原有分支（Q1.a 检查 + `CollectMembers` 三件套产出）。未命中 Path A → 继续判 Path B。
+3. **Path B 识别**：`typeof(IBehavior).IsAssignableFrom(type)` → 走 Path B 分支：先走 Q1.b（Path B 互斥校验、§2 锁）+ Q1.c（Path B lifecycle 检、§2 锁）→ 再调 `CollectImplSlots(type)` 收 Impl 类上的 `[BlocklySourceSlot]` 字段集（含字段类型校验）、调 `ComputeDefaultMenuPath(type)` 推 menuPath、产 `ScannedSource` 二件套输入项（`Kind = Behavior`）。`continue` 本轮 Type。
+4. **Path C 识别**（PR-3）：`typeof(IClip).IsAssignableFrom(type)` → 走 Path C 分支：先走 Q1.b（Path C 互斥校验、§2 锁）+ Q1.c（Path C lifecycle 检、§2 锁）→ 再调 `CollectImplSlots(type)`（与 Path B 共享）、`ComputeDefaultMenuPath(type)` 、产 `ScannedSource` 二件套输入项（`Kind = Timeline`）。`continue` 本轮 Type。
 5. **都未命中** → 该 type 不是 codegen 输入、`continue`。
 
-**互斥语义**：Path A 与 Path B / Path C 同一 type 不可能同时命中——Path A 要求贴 `[Blockly]` Class target 且不是 runtime 节点根类；Path B 要求实现 `IBehaviorImpl`；Path C 要求实现 `IClip`。`IBehaviorImpl` 与 `IClip` 在 `Runtime/Behavior/BehaviorNode.cs:54` 与 `Runtime/Behavior/Timeline/Clip.cs:101` 独立定义、互不继承 → Path B 与 Path C 同一 type 也不可能同时命中。**Path B / Path C 不读 `[Blockly]` attribute**：Impl 类上贴 `[Blockly]` 被分支完全忽略。
+**互斥语义**：Path A 与 Path B / Path C 同一 type 不可能同时命中——Path A 要求贴 `[Blockly]` Class target 且不是 runtime 节点根类（Q1.a 检）；Path B 要求实现 `IBehavior`；Path C 要求实现 `IClip`。`IBehavior` 与 `IClip` 在 `Runtime/Behavior/BehaviorNode.cs:54` 与 `Runtime/Behavior/Timeline/Clip.cs:101` 独立定义、互不继承 → Path B 与 Path C 同一 type 也不可能同时命中。**Path B / Path C 不读 `[Blockly]` attribute**：Impl 类上贴 `[Blockly]`（非 lifecycle 名）被分支完全忽略。
 
-**Q1.b 互斥硬检验位留**：业务类同时从 runtime 根类派生（`BehaviorNode<,>` / `Clip<,>`）且实现 `IBehaviorImpl` / `IClip` 是未定义语义，未来 PR-γ 以 `InvalidOperationException` 收口。本 PR-3 silent ignore。
+**Q1.b 互斥硬检验（PR-γ 落实）**：业务类同时从 runtime 根类派生（`Block<>` / `BehaviorNode<,>` / `Clip<>` / `Clip<,>` / Expression / BehaviorNodeSource / ClipSource / ClipSource<>、8 类任一）且实现 `IBehavior` / `IClip` → hard fail。详§2 「scanner 硬约束（Q1，hard fail）」 § Q1.b。
 
 ### lifecycle 方法 silent ignore
 
-- **Path B (`IBehaviorImpl`) lifecycle 名锁**：`Start` / `Tick` / `LateTick` / `Finish`（`Runtime/Behavior/BehaviorNode.cs:54-63`）。Impl 类上「成员级 `[Blockly]` 并存」场景下，lifecycle 名称上的 `[Blockly]` silent ignore。名单锁点 = `AnnotationScanner.s_BehaviorLifecycleMethodNames`。
-- **Path C (`IClip`) lifecycle 名锁**：`Begin` / `OnFrame` / `End`（`Runtime/Behavior/Timeline/Clip.cs:101-106`）。Impl 类上「成员级 `[Blockly]` 并存」场景下，lifecycle 名称上的 `[Blockly]` silent ignore。名单锁点 = `AnnotationScanner.s_ClipLifecycleMethodNames`（PR-γ 需要则补；本 PR-3 不必落代码，仅设计位占）。Q1 hard fail 升级留给 PR-γ。
+**PR-γ 收口：原 silent ignore 升级为 hard fail。详细实现与错误信息见§2 「scanner 硬约束（Q1，hard fail）」 § Q1.c。**
+
+- **Path B (`IBehavior`) lifecycle 名锁**：`Start` / `Tick` / `LateTick` / `Finish`（`Runtime/Behavior/BehaviorNode.cs:54-63`）。名单锁点 = `AnnotationScanner.s_BehaviorLifecycleMethodNames`。
+- **Path C (`IClip`) lifecycle 名锁**：`Begin` / `OnFrame` / `End`（`Runtime/Behavior/Timeline/Clip.cs:101-106`）。名单锁点 = `AnnotationScanner.s_ClipLifecycleMethodNames`。
+- **未采纳「silent ignore」的原因**：业务方误标 → 什么都不发生 → 以为产物不会出现、实际面判 lifecycle 方法名是保留名。hard fail 直接告诉业务方「这名是 lifecycle、不能标 [Blockly]」。
+- **不影响场景 ζ**：Impl 类内非 lifecycle 名的方法 / 属性 / 字段标 `[Blockly]` 仍然合法、走 Path A 三件套 emitter，与本节无关。
 
 ### Path B / Path C 二件套产物模板契约（Scenario Y）
 

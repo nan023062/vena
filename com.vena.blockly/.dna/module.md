@@ -159,7 +159,7 @@ classDiagram
 16. **行为/Timeline 双路径并存**（KD#11 三层架构的精化，**取代上一版「全塌缩」立场**）：
     - **决议**：Behavior 与 Timeline 两侧均保留**两条对等扩展路径**——
       - **LogicGraph 默认路径**（叶子节点把执行逻辑下沉到嵌入的 `LogicGraph`）：Behavior 侧 = `LogicBehavior`（onStart / onTick / onLateTick / onFinish 各挂一条 `LogicGraph`）；Timeline 侧 = `LogicClip`（onBegin / onFrame / onEnd 各挂一条 `LogicGraph`，sealed concrete）。叶子如需复杂算法，由 `[Blockly]` codegen 产出 `*Impl + *Source + *Source.Node` 三件套登记为 LogicGraph 节点、被嵌入图引用。
-      - **C# Impl 业务扩展路径**（业务方在自己的 asmdef 里直接派生模板基类、把行为写在 `TImpl` 里、Inspector 直接配置）：Behavior 侧 = `BehaviorNode<TSource, TImpl>` + `BehaviorNodeSource<TImpl>` + `IBehaviorImpl`（已存在、不动）；Timeline 侧 = `Clip<TSource, TImpl>` + `Clip<TSource>` 骨架 + `ClipSource<TImpl>` + `IClip`（**本轮恢复**——cbcb41b 阶段 1 误删，按原签名在 `Runtime/Behavior/Timeline/Clip.cs` 重写回，全部用无 U 前缀的新名）。
+      - **C# Impl 业务扩展路径**（业务方在自己的 asmdef 里直接派生模板基类、把行为写在 `TImpl` 里、Inspector 直接配置）：Behavior 侧 = `BehaviorNode<TSource, TImpl>` + `BehaviorNodeSource<TImpl>` + `IBehavior`（已存在、不动）；Timeline 侧 = `Clip<TSource, TImpl>` + `Clip<TSource>` 骨架 + `ClipSource<TImpl>` + `IClip`（**本轮恢复**——cbcb41b 阶段 1 误删，按原签名在 `Runtime/Behavior/Timeline/Clip.cs` 重写回，全部用无 U 前缀的新名）。
     - **两条路径在 `IBehaviorNode` / `ITimelineClip` 接口处汇合**，调度容器（`CompositeBehavior` / `Timeline.Track`）只看接口、不知道叶子走哪条路径。约束放宽：Behavior 侧 `CompositeBehavior<TSource>` `where TSource : class, IBlocklySource`（已是这样）；Timeline 侧 `Track<TClip, TInput>` / `TrackSource<TClip, TSource>` 约束保持 `TClip : ITimelineClip` + `TInput / TSource : ClipSource, new()`（cbcb41b 已放宽过、本轮维持），两条路径都满足。
     - **取消上一版「Impl 全塌缩」语义**：上一版 KD#16 写「Behavior 节点与 Timeline Clip 节点都不再持有 C# `TImpl`」**作废**；C# Impl 是和 LogicGraph 等量的合法扩展路径，不存在贬抑或废弃。两条路径分工：
       - LogicGraph 默认路径 = 玩家 UGC / 策划配图 / AI 生成（Layer 3 多产生者）的主入口；
@@ -169,7 +169,7 @@ classDiagram
     - **理由**：
       - 「LogicGraph 嵌图」与「C# Impl 直写」**变更原因不同**（KD#5 / C2）：前者面向运行期重配置 / UGC / AI 生成；后者面向开发期 C# 工具链 / 性能敏感算法。两条路径满足不同变更原因 = 单一职责的两个模块，强行塌缩成一条 = 违反 C2。
       - 业务侧明示需求：「timeline clip、behaveNode、timelinesignal 都可以业务实现 impl 来更好的配置」——Inspector 直接配置 = 走 SO 路径（KD#13）+ C# Impl 模板，二者协作才能落地。
-      - 维护成本：Timeline 侧 Impl 骨架（`IClip` / `ClipSource<TImpl>` / `Clip<TSource>` / `Clip<TSource,TImpl>`）= **4 类一次性写好**，Behavior 侧对应族 `IBehaviorImpl` / `BehaviorNodeSource<T>` / `BehaviorNode<TSource,TImpl>` = 现已存在 3 类，对等代价，不构成 KD#11 Layer 1 维护风险。
+      - 维护成本：Timeline 侧 Impl 骨架（`IClip` / `ClipSource<TImpl>` / `Clip<TSource>` / `Clip<TSource,TImpl>`）= **4 类一次性写好**，Behavior 侧对应族 `IBehavior` / `BehaviorNodeSource<T>` / `BehaviorNode<TSource,TImpl>` = 现已存在 3 类，对等代价，不构成 KD#11 Layer 1 维护风险。
 17. **KD#11 Layer 1 范围精化**（按 KD#16 双路径修订）：
     - **Behavior 侧 Layer 1** = 组合子（`BranchNode` / `SwitchNode` / `SelectorNode` / `LoopNode` / `ParallelNode` / `SequenceNode` / `Timeline` 调度容器）+ `LogicBehavior` 叶子嵌图接线 + `BehaviorNode<TSource,TImpl>` 模板族（4 类骨架）。叶子 Impl 子类**不进** Layer 1（属业务程序员维护、归 Layer 3 业务侧）。
     - **Timeline 侧 Layer 1** = `LogicClip` 嵌图接线（sealed concrete）+ `Signal` 嵌图接线 + `Clip<TSource,TImpl>` 模板族（4 类骨架：`IClip` / `ClipSource<TImpl>` / `Clip<TSource>` / `Clip<TSource,TImpl>`）+ `FrameInfo` 值类型 + `ClipSource` 非泛型基类。Clip Impl 子类**不进** Layer 1。
@@ -199,14 +199,14 @@ classDiagram
 | 路径 | scanner 识别 | 产物形态 | PR | 状态 |
 |---|---|---|---|---|
 | **Path A — Logic** | `[Blockly]` Class target（成员级 Method / Property / Field） | 三件套：`*Impl` + `*Source : Function/Procedure<*Impl,...>` + `*Source.Node : Block<*Source>` | PR-1（已落 a128b7e） | done |
-| **Path B — Behavior C# Impl** | `IBehaviorImpl` 接口实现类（**反射判定，不依赖 attribute**） | 二件套：`*Source : BehaviorNodeSource<*Impl>` + 嵌套 `Node : BehaviorNode<*Source, *Impl>` | PR-2（已落 fa6e29f / 3f24b89） | done |
+| **Path B — Behavior C# Impl** | `IBehavior` 接口实现类（**反射判定、不依赖 attribute**） | 二件套：`*Source : BehaviorNodeSource<*Impl>` + 嵌套 `Node : BehaviorNode<*Source, *Impl>` | PR-2（已落 fa6e29f / 3f24b89） | done |
 | **Path C — Timeline Clip C# Impl** | `IClip` 接口实现类（反射判定，对称 Path B） | 二件套：`*Source : ClipSource<*Impl>` + 嵌套 `Node : Clip<*Source, *Impl>` | PR-3 | **本轮** |
 
 **三路径正交不重叠**：
 
 - Path A 输入面 = 业务方手写的算法承载类（method / property / field），叶子算法走 LogicGraph 内组合；
-- Path B / Path C 输入面 = 业务方手写的 `IBehaviorImpl` / `IClip` 实现类，叶子算法走 C# Impl 业务扩展路径（KD#16 第二条路径）；
-- 三路径 scanner 分支互斥（同一类型不可能同时命中 Path A 与 Path B / Path C：Path A 强制贴 `[Blockly]` + 不允许打在 runtime 节点根类上；Path B 强制实现 `IBehaviorImpl` 接口；Path C 强制实现 `IClip` 接口；`IBehaviorImpl` 与 `IClip` 是两个独立接口、互不继承）。
+- Path B / Path C 输入面 = 业务方手写的 `IBehavior` / `IClip` 实现类，叶子算法走 C# Impl 业务扩展路径（KD#16 第二条路径）；
+- 三路径 scanner 分支互斥（同一类型不可能同时命中 Path A 与 Path B / Path C：Path A 强制贴 `[Blockly]` + 不允许打在 runtime 节点根类上；Path B 强制实现 `IBehavior` 接口；Path C 强制实现 `IClip` 接口；`IBehavior` 与 `IClip` 是两个独立接口、互不继承）。
 
 **Path B / Path C 镜像对称（PR-3 共享镜像 POCO + 共享 scanner 收集方法）**：
 
@@ -216,5 +216,5 @@ classDiagram
 - 共享 `ImplSlotInfo` 镜像 POCO（PR-2 叫 `BehaviorSlotInfo`，PR-3 rename）：`FieldName / DisplayName / Order / FieldValueType` 四字段不变。
 - 两路径 emitter 字面**不同**：Path B 产 `BehaviorNodeSource<TImpl>` + `BehaviorNode<TSource, TImpl>`、Init 用 `blockly` 字段；Path C 产 `ClipSource<TImpl>` + `Clip<TSource, TImpl>`、Init 用 `timeline.blockly` 走 timeline 属性 hop。
 
-**Q1 互斥校验 + lifecycle 禁列收口**：Path B / Path C 上 Impl 类与 runtime 节点根类（`BehaviorNode<,>` / `Clip<,>` 等）派生的双向矛盾检测，连同 lifecycle 方法（Behavior 侧 `Start` / `Tick` / `LateTick` / `Finish`；Timeline 侧 `Begin` / `OnFrame` / `End`）上 `[Blockly]` 的硬 fail 规则，留给 PR-γ 收口；PR-2 / PR-3 采用 silent ignore 兜底。
+**Q1 互斥校验 + lifecycle 禁列收口**：Path B / Path C 上 Impl 类与 runtime 节点根类（`BehaviorNode<,>` / `Clip<,>` 等）派生的双向矛盾检测，连同 lifecycle 方法（Behavior 侧 `Start` / `Tick` / `LateTick` / `Finish`；Timeline 侧 `Begin` / `OnFrame` / `End`）上 `[Blockly]` 的硬 fail 规则，由 PR-γ 收口落实（详 Editor §2 Q1.a / Q1.b / Q1.c）；PR-2 / PR-3 本身采用 silent ignore 兜底、PR-γ 后升为 hard fail。
 

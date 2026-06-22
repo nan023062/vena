@@ -141,8 +141,8 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
         }
     }
 
-    /// <summary>抛出异常的叶子节点 IBehaviorImpl —— 用于 RunExceptionPath。</summary>
-    public sealed class ThrowingBehaviorImpl : IBehaviorImpl
+    /// <summary>抛出异常的叶子节点 IBehavior —— 用于 RunExceptionPath。</summary>
+    public sealed class ThrowingBehaviorImpl : IBehavior
     {
         public void Start(BehaviorGraph.Blockly graph) { }
 

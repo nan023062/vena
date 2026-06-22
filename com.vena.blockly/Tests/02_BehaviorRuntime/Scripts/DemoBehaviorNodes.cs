@@ -102,7 +102,7 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     // 演示 Parallel 同时跑多个不同步长的 Running 叶子。
     // -------------------------------------------------------------------------
 
-    public sealed class CountdownBehaviorImpl : IBehaviorImpl
+    public sealed class CountdownBehaviorImpl : IBehavior
     {
         public int ticksToRun;
         public string label;

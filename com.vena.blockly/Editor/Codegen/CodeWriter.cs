@@ -427,7 +427,7 @@ namespace Vena.Blockly.Editor
             sb.Append(indent).Append("}").Append(NL);
         }
 
-        // ---- Path B 二件套（IBehaviorImpl，Scenario Y） ----
+        // ---- Path B 二件套（IBehavior，Scenario Y） ----
 
         /// <summary>
         /// Path B 产物文件内容：auto-generated 头 + using + namespace + 单 *Source（嵌套 Node）。

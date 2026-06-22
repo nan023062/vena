@@ -76,7 +76,7 @@
 
 - **Behavior 侧双路径**：
   - LogicGraph 默认路径 = `LogicBehavior` + onStart/onTick/onLateTick/onFinish 嵌入 `LogicGraph`。叶子算法需复杂逻辑则在嵌入图里组合 `[Blockly]` codegen 产出的节点。
-  - C# Impl 业务扩展路径 = `BehaviorNode<TSource, TImpl> : IBehaviorNode where TSource : BehaviorNodeSource<TImpl>` + `IBehaviorImpl` 负责 Start/Tick/LateTick/Finish。业务侧可在自己的 asmdef 里直接派生模板、把叶子算法写在 `TImpl` 中、Inspector 直接配置。
+  - C# Impl 业务扩展路径 = `BehaviorNode<TSource, TImpl> : IBehaviorNode where TSource : BehaviorNodeSource<TImpl>` + `IBehavior` 负责 Start/Tick/LateTick/Finish。业务侧可在自己的 asmdef 里直接派生模板、把叶子算法写在 `TImpl` 中、Inspector 直接配置。
 - **Timeline 侧双路径**（与 Behavior 严格对称）：
   - LogicGraph 默认路径 = `LogicClip : ClipSource, ITimelineClip`（sealed concrete）+ onBegin/onFrame/onEnd 嵌入 `LogicGraph`。与 `LogicBehavior` 同名对称、表明二者都是「LogicGraph 默认叶子」身份。
   - C# Impl 业务扩展路径 = `Clip<TSource, TImpl> : Clip<TSource> where TSource : ClipSource<TImpl> where TImpl : class, IClip, new()` + `Clip<TSource> : ITimelineClip where TSource : ClipSource` 骨架 + `ClipSource<TImpl> : ClipSource` + `IClip` 接口。业务侧在自己的 asmdef 中以 4 类骨架为基点派生模板。
