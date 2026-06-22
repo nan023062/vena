@@ -37,7 +37,6 @@ namespace Vena.Blockly
 
         public void GetValue(string name, IBoxedValue output)
         {
-            // TODO(blockly-2): copy stored value into output once BoxedValue<T> typed accessor lands.
             throw new NotImplementedException();
         }
 

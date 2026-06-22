@@ -27,8 +27,8 @@ namespace Vena.Blockly.Tests.LogicRuntime
     ///                       ├── SetVariableInt ( "sum", AddInt ( GetVariableInt("sum"), GetVariableInt("i") ) )
     ///                       └── SetVariableInt ( "i",   AddInt ( GetVariableInt("i"),   Const 1 ) )
     ///
-    /// 共享变量方案（option A — host 预声明）：见 ControlFlowDemo 顶部 doc。
-    /// 这里 sum / i / n 都通过 root `LogicGraph.Blockly.SetVariable&lt;T&gt;` 预声明，
+    /// 共享变量方案（host 预声明）：见 ControlFlowDemo 顶部 doc。
+    /// sum / i / n 通过 root `LogicGraph.Blockly.SetVariable&lt;T&gt;` 预声明，
     /// While body 内 sibling statements 的 `LogicSetVariable&lt;T&gt;` 写穿透到 root。
     /// </summary>
     public sealed class WhileLoopDemo : MonoBehaviour
@@ -118,7 +118,7 @@ namespace Vena.Blockly.Tests.LogicRuntime
             graph.Set(subject: null, host: _host);
             graph.SetSource(src);
 
-            // option A — host 预声明：把循环用到的 sum / i / n 注册到 root scope。
+            // host 预声明：把循环用到的 sum / i / n 注册到 root scope。
             graph.SetVariable<int>("sum", 0);
             graph.SetVariable<int>("i", 1);
             graph.SetVariable<int>("n", 10);

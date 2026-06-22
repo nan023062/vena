@@ -22,8 +22,7 @@ namespace Vena.Blockly.Editor
     /// </summary>
     internal static class AnnotationScanner
     {
-        // PR-γ Q1.c：lifecycle 方法名集合 —— Path B / Path C 实现类上这些方法不允许标 [Blockly]
-        // （由基类直接调度、不进 codegen 产物）。
+        // IBehavior / IClip 实现类上、这些方法不允许标 [Blockly]：由基类直接调度，不进 codegen 产物。
         private static readonly HashSet<string> s_BehaviorLifecycleMethodNames =
             new HashSet<string>(StringComparer.Ordinal) { "Start", "Tick", "LateTick", "Finish" };
 
@@ -33,7 +32,7 @@ namespace Vena.Blockly.Editor
         /// <summary>
         /// 扫描入口。按 <paramref name="config"/> 程序集白名单 + 类型白名单过滤、
         /// 跳过自身已带 [BlocklySource] 的类、按 [BlocklySourceSlot.Order] 升序固定顺序。
-        /// 硬约束（Q1）：同一类上 [Blockly] 与 [BlocklySource] 不允许同存；[Blockly] 不允许打在 runtime 节点源根类继承链上。
+        /// 硬约束：同一类上 [Blockly] 与 [BlocklySource] 不允许同存；[Blockly] 不允许打在 runtime 节点源根类继承链上。
         /// </summary>
         public static IReadOnlyList<ScannedSource> Scan(CodegenConfig config)
         {
@@ -67,7 +66,7 @@ namespace Vena.Blockly.Editor
                     var classAttr = type.GetCustomAttribute<BlocklyAttribute>();
                     if (classAttr == null)
                     {
-                        // Path B：IBehavior 反射判定（不依赖 [Blockly] attribute）。
+                        // IBehavior 反射判定（不依赖 [Blockly] attribute）。
                         if (typeof(IBehavior).IsAssignableFrom(type))
                         {
                             AssertNotRuntimeNodeRoot(type, "Path B", "IBehavior");
@@ -85,7 +84,7 @@ namespace Vena.Blockly.Editor
                             results.Add(behaviorScanned);
                             continue;
                         }
-                        // Path C：IClip 反射判定（对称 Path B，Timeline Clip C# Impl 业务扩展路径）。
+                        // IClip 反射判定（Timeline Clip C# Impl 业务扩展路径）。
                         if (typeof(IClip).IsAssignableFrom(type))
                         {
                             AssertNotRuntimeNodeRoot(type, "Path C", "IClip");
@@ -106,9 +105,7 @@ namespace Vena.Blockly.Editor
                         continue;
                     }
 
-                    // Q1 硬约束 #1：[Blockly] 不允许与 [BlocklySource] 同存。
-                    // （上一行 skip 已覆盖大多数情况，这里保留显式判断作为防御性兜底——上游若改 skip 逻辑，
-                    //  本约束仍能保护语义不变。）
+                    // 硬约束：[Blockly] 不允许与 [BlocklySource] 同存（防御性兜底，上一段 skip 已覆盖主路径）。
                     if (type.GetCustomAttribute<BlocklySourceAttribute>() != null)
                     {
                         throw new InvalidOperationException(
@@ -116,8 +113,7 @@ namespace Vena.Blockly.Editor
                             + "（两族正交：[Blockly] 是 codegen 输入族；[BlocklySource] 是手写 runtime 节点源族）。");
                     }
 
-                    // Q1 硬约束 #2：[Blockly] 不允许打在 runtime 节点源类上（继承自 Expression / BehaviorNodeSource /
-                    // Block<> / BehaviorNode<,> / ClipSource / ClipSource<> / Clip<> / Clip<,>）。
+                    // 硬约束：[Blockly] 不允许打在 runtime 节点源类上。
                     {
                         var cursor = type.BaseType;
                         while (cursor != null && cursor != typeof(object))
@@ -275,7 +271,7 @@ namespace Vena.Blockly.Editor
         }
 
         /// <summary>
-        /// Path B：扫 Impl 类（实现 <see cref="IBehavior"/>）上贴 [BlocklySourceSlot] 的 public 实例字段。
+        /// 扫 Impl 类（实现 <see cref="IBehavior"/> / <see cref="IClip"/>）上贴 [BlocklySourceSlot] 的 public 实例字段。
         /// 仅 Public | Instance | DeclaredOnly。字段类型 hard fail：禁 <see cref="LogicGraph"/> / <see cref="Expression"/>。
         /// </summary>
         private static IReadOnlyList<ImplSlotInfo> CollectImplSlots(Type type)
@@ -311,7 +307,7 @@ namespace Vena.Blockly.Editor
         }
 
         /// <summary>
-        /// Path B / Path C 默认 menuPath 推导。算法：去 Impl 后缀 → 剥 Vena.Blockly. 前缀 → ns 用 / 折叠 + 简名。
+        /// IBehavior / IClip 实现类默认 menuPath 推导：去 Impl 后缀 → 剥 Vena.Blockly. 前缀 → ns 用 / 折叠 + 简名。
         /// </summary>
         internal static string ComputeDefaultMenuPath(Type type)
         {
@@ -337,9 +333,9 @@ namespace Vena.Blockly.Editor
         }
 
         /// <summary>
-        /// PR-γ Q1.b：派生自 runtime 节点根类（Expression / BehaviorNodeSource / Block&lt;&gt; / BehaviorNode&lt;,&gt; /
-        /// ClipSource / ClipSource&lt;&gt; / Clip&lt;&gt; / Clip&lt;,&gt;）且实现 Impl 接口 → hard fail。
-        /// runtime 节点源类自身已是 codegen 产物 Node 形态，再走 Path B/C 二件套会双重 codegen。
+        /// 派生自 runtime 节点根类（Expression / BehaviorNodeSource / Block&lt;&gt; / BehaviorNode&lt;,&gt; /
+        /// ClipSource / ClipSource&lt;&gt; / Clip&lt;&gt; / Clip&lt;,&gt;）且实现 Impl 接口 → hard fail：
+        /// 否则与 codegen 产物形态双重生成。
         /// </summary>
         private static void AssertNotRuntimeNodeRoot(Type type, string pathTag, string interfaceName)
         {
@@ -357,7 +353,7 @@ namespace Vena.Blockly.Editor
         }
 
         /// <summary>
-        /// PR-γ Q1.c：Path B / Path C 实现类上、lifecycle 方法标 [Blockly] → hard fail。
+        /// IBehavior / IClip 实现类上、lifecycle 方法标 [Blockly] → hard fail：
         /// lifecycle 方法由基类直接调度、不进 codegen 产物。
         /// </summary>
         private static void AssertNoBlocklyOnLifecycleMethods(Type type, IReadOnlyCollection<string> lifecycleNames, string pathTag, string lifecycleSignature)
@@ -375,7 +371,7 @@ namespace Vena.Blockly.Editor
 
         private static bool IsRuntimeNodeRootType(Type t)
         {
-            // LogicGraph / BehaviorGraph 侧（PR-1 锁，4 类）
+            // LogicGraph / BehaviorGraph 侧
             if (t == typeof(Expression)) return true;
             if (t == typeof(BehaviorNodeSource)) return true;
             if (t.IsGenericType)
@@ -383,12 +379,11 @@ namespace Vena.Blockly.Editor
                 var def = t.GetGenericTypeDefinition();
                 if (def.FullName == "Vena.Blockly.Block`1") return true;
                 if (def.FullName == "Vena.Blockly.BehaviorNode`2") return true;
-                // Timeline 侧（PR-γ 锁，4 类）
+                // Timeline 侧
                 if (def.FullName == "Vena.Blockly.ClipSource`1") return true;
                 if (def.FullName == "Vena.Blockly.Clip`1") return true;
                 if (def.FullName == "Vena.Blockly.Clip`2") return true;
             }
-            // Timeline 侧非泛型 ClipSource（PR-γ 锁）
             if (t == typeof(ClipSource)) return true;
             return false;
         }
@@ -399,7 +394,7 @@ namespace Vena.Blockly.Editor
         }
     }
 
-    /// <summary>扫描入参分支：Path A = Logic（[Blockly] 三件套）；Path B = Behavior（IBehavior 二件套）；Path C = Timeline（IClip，PR-3 补）。</summary>
+    /// <summary>扫描入参分支：Logic（[Blockly] 三件套）/ Behavior（IBehavior 二件套）/ Timeline（IClip 二件套）。</summary>
     internal enum ScannedSourceKind
     {
         Logic,
@@ -407,7 +402,7 @@ namespace Vena.Blockly.Editor
         Timeline,
     }
 
-    /// <summary>Path B / Path C 单 slot 镜像信息：Impl 类上贴 [BlocklySourceSlot] 字段的元数据。</summary>
+    /// <summary>Behavior / Timeline 单 slot 镜像信息：Impl 类上贴 [BlocklySourceSlot] 字段的元数据。</summary>
     internal sealed class ImplSlotInfo
     {
         public string FieldName { get; }
@@ -434,13 +429,13 @@ namespace Vena.Blockly.Editor
         /// <summary>源类物理目录（其 .cs 所在目录绝对路径）。emitter 用以将三件套产物落到 `<SourceDirectory>/Generated/`。</summary>
         public string SourceDirectory { get; set; }
 
-        /// <summary>来源分支。默认 Logic（Path A 原路径）。</summary>
+        /// <summary>来源分支。默认 Logic。</summary>
         public ScannedSourceKind Kind { get; set; } = ScannedSourceKind.Logic;
 
-        /// <summary>Path B / Path C 专用：Impl 类上 [BlocklySourceSlot] 字段镜像列表（按声明序，emitter 内部按 Order 升序输出）。</summary>
+        /// <summary>Behavior / Timeline 专用：Impl 类上 [BlocklySourceSlot] 字段镜像列表（按声明序，emitter 内部按 Order 升序输出）。</summary>
         public IReadOnlyList<ImplSlotInfo> ImplSlots { get; set; }
 
-        /// <summary>Path B / Path C 专用：由 <see cref="AnnotationScanner.ComputeDefaultMenuPath"/> 推出的默认菜单路径。</summary>
+        /// <summary>Behavior / Timeline 专用：由 <see cref="AnnotationScanner.ComputeDefaultMenuPath"/> 推出的默认菜单路径。</summary>
         public string MenuPath { get; set; }
 
         public ScannedSource(Type sourceType, string classDisplayName, IReadOnlyList<ScannedMember> members)

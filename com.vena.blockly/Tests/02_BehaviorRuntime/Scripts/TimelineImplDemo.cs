@@ -11,8 +11,8 @@ using Vena.Blockly.Tests.BehaviorRuntime.Generated;
 namespace Vena.Blockly.Tests.BehaviorRuntime
 {
     /// <summary>
-    /// Path C IClip C# Impl 业务扩展 demo：HelloClipImpl 通过 codegen 出的 HelloClipSource 接入 Timeline。
-    /// `greeting` 在 Source 端为 LogicGraph 槽，运行期 Clip Begin 时 Call&lt;string&gt;() 求值后赋回 Impl 字段。
+    /// IClip C# Impl 业务扩展 demo：HelloClipImpl 通过 codegen 出的 HelloClipSource 接入 Timeline。
+    /// `greeting` 在 Source 端为 LogicGraph 槽，Clip Begin 时 Call&lt;string&gt;() 求值后赋回 Impl 字段。
     /// 期望 Console 顺序：
     ///   [HelloClip] Begin: TimelineHello
     ///   [HelloClip] End: TimelineHello

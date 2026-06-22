@@ -379,8 +379,8 @@ namespace Vena.Blockly.Editor
             sb.Append(NL);
 
             // EvaluateChildren：按 order 升序触发子节点 Evaluate（每个子 Push 一次值到栈）。
-            // 5 步协议（合约 §4 / Editor §2）锁定：所有子节点 Push 必须先于 Pop，因此 Evaluate 不能再混在
-            // InitializeProperties 里——否则栈是空的，Pop 立刻撞底。
+            // 5 步协议不变量：所有子节点 Push 必须先于 Pop。Evaluate 不能混入 InitializeProperties，
+            // 否则 Pop 时栈是空的。
             sb.Append(indent).Append("    protected override void EvaluateChildren()").Append(NL);
             sb.Append(indent).Append("    {").Append(NL);
             foreach (var slot in slots)
@@ -427,11 +427,11 @@ namespace Vena.Blockly.Editor
             sb.Append(indent).Append("}").Append(NL);
         }
 
-        // ---- Path B 二件套（IBehavior，Scenario Y） ----
+        // ---- IBehavior 二件套 ----
 
         /// <summary>
-        /// Path B 产物文件内容：auto-generated 头 + using + namespace + 单 *Source（嵌套 Node）。
-        /// 命名空间 = `&lt;ImplNs&gt;.Generated`（与 Path A 同规则，§2 锁）。
+        /// IBehavior 产物文件内容：auto-generated 头 + using + namespace + 单 *Source（嵌套 Node）。
+        /// 命名空间 = `&lt;ImplNs&gt;.Generated`。
         /// </summary>
         private static string EmitBehaviorSourceFile(ScannedSource src)
         {
@@ -536,7 +536,7 @@ namespace Vena.Blockly.Editor
         }
 
         /// <summary>
-        /// Path B *Source 命名：Impl 类去 `Impl` 后缀 → 拼 `Source`（如 `HelloBehaviorImpl` → `HelloBehaviorSource`）；
+        /// IBehavior 路径 *Source 命名：Impl 类去 `Impl` 后缀 → 拼 `Source`（如 `HelloBehaviorImpl` → `HelloBehaviorSource`）；
         /// 未以 `Impl` 结尾 → 直接拼 `Source`（如 `Foo` → `FooSource`）。
         /// </summary>
         private static string BehaviorSourceName(Type implType)
@@ -576,11 +576,11 @@ namespace Vena.Blockly.Editor
             sb.Append(indent).Append("    }),").Append(NL);
         }
 
-        // ---- Path C 二件套（IClip，Scenario Y，对称 Path B） ----
+        // ---- IClip 二件套（对称 IBehavior） ----
 
         /// <summary>
-        /// Path C 产物文件内容：auto-generated 头 + using + namespace + 单 *Source（嵌套 Node）。
-        /// 命名空间 = `&lt;ImplNs&gt;.Generated`（与 Path A / Path B 同规则，§2 锁）。
+        /// IClip 产物文件内容：auto-generated 头 + using + namespace + 单 *Source（嵌套 Node）。
+        /// 命名空间 = `&lt;ImplNs&gt;.Generated`。
         /// </summary>
         private static string EmitTimelineSourceFile(ScannedSource src)
         {
@@ -685,8 +685,7 @@ namespace Vena.Blockly.Editor
         }
 
         /// <summary>
-        /// Path C *Source 命名：Impl 类去 `Impl` 后缀 → 拼 `Source`（如 `HelloClipImpl` → `HelloClipSource`）；
-        /// 未以 `Impl` 结尾 → 直接拼 `Source`（如 `Foo` → `FooSource`）。与 <see cref="BehaviorSourceName"/> 同算法。
+        /// IClip 路径 *Source 命名：同 <see cref="BehaviorSourceName"/> 算法。
         /// </summary>
         private static string TimelineSourceName(Type implType)
         {

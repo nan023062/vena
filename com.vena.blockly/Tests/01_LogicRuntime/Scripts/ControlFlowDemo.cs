@@ -27,16 +27,11 @@ namespace Vena.Blockly.Tests.LogicRuntime
     ///       ├── trueBranch : SetVariableInt ( "result", MultiplyInt ( GetVariableInt("x"), Const 2 ) )
     ///       └── falseBranch: SetVariableInt ( "result", GetVariableInt("x") )
     ///
-    /// 共享变量方案（option A — host 预声明）：
-    ///   `LogicSequence.Node` 为每个 statement 创建一个独立 child `LogicGraph.Blockly`，
-    ///   sibling statement 之间没有可见性 —— 步骤 0 写到自己 child 的 storage 后，
-    ///   步骤 1 走 parent chain 找不到那个 sibling。
-    ///   这里通过 root `LogicGraph.Blockly` 上预先调用 `SetVariable&lt;T&gt;` 把 "x" / "result"
-    ///   注册到 root scope，sibling statements 内的 `LogicSetVariable&lt;T&gt;` 经
-    ///   `ScopeChain.ResolveWriteTarget` 沿父链命中 root → 写穿透到 root；后续 sibling
-    ///   读取也沿父链命中 root。
-    ///   这是一个临时绕路 —— UGC 玩家造图无法触发；正解是 `LogicSequence` 共享 host
-    ///   scope 而非创建 per-statement child Blockly（task #19 backlog）。
+    /// 共享变量方案（host 预声明）：
+    ///   `LogicSequence.Node` 为每个 statement 创建独立 child `LogicGraph.Blockly`，
+    ///   sibling statements 之间互不可见。这里通过 root `LogicGraph.Blockly.SetVariable&lt;T&gt;`
+    ///   将共享变量注册到 root scope，sibling 的 `LogicSetVariable&lt;T&gt;` 经
+    ///   `ScopeChain.ResolveWriteTarget` 沿父链命中 root，写穿透生效，后续读取同理。
     /// </summary>
     public sealed class ControlFlowDemo : MonoBehaviour
     {
@@ -121,8 +116,7 @@ namespace Vena.Blockly.Tests.LogicRuntime
             graph.Set(subject: null, host: _host);
             graph.SetSource(src);
 
-            // option A — host 预声明：把 sibling 共享变量注册到 root scope。
-            // 占位值会被 sibling statement 的写穿透更新。
+            // host 预声明：把 sibling 共享变量注册到 root scope；占位值被 sibling 写穿透更新。
             graph.SetVariable<int>("x", 0);
             graph.SetVariable<int>("result", 0);
 

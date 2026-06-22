@@ -68,9 +68,8 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     // -------------------------------------------------------------------------
     // Demo-local LogicGraph const string source
     //
-    // 用于 Path B 产物喂 HelloBehaviorSource.greeting（LogicGraph）：
-    // codegen 在 Node.InitializeProperties 调 _greeting.Call<string>()，
-    // 该常量节点 Evaluate 时 Push 自身 value，让 Hello impl 拿到 greeting 字面值。
+    // 喂 HelloBehaviorSource.greeting（LogicGraph）：codegen 的 Node.InitializeProperties
+    // 调 _greeting.Call<string>()，该常量节点 Evaluate 时 Push 自身 value。
     // -------------------------------------------------------------------------
 
     public sealed class DemoConstStringImpl : IFunctionImpl<string>

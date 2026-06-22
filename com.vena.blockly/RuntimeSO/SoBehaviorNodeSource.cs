@@ -25,8 +25,6 @@ namespace Vena.Blockly.SO
 
         protected virtual void OnEnable()
         {
-            // TODO（阶段 2）：从 AssetDatabase 派生 stable ulong = Hash64(AssetGuid + fileID)
-            // 阶段 1 仅占位 — 实际 InstanceId 派生留待 Demo 05 SO 工作流验证 demo 时实现
         }
     }
 }

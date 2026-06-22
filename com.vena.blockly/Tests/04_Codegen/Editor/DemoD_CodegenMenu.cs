@@ -16,7 +16,7 @@ namespace Vena.Blockly.Tests.Codegen
     /// <summary>
     /// Demo D — Editor 期 codegen 演示。
     ///
-    /// 双 step 流程（KD9 强制反例：Editor demo 走菜单/资产，禁 sample scene）：
+    /// 双 step 流程：
     ///
     ///   Step 1：菜单 Tools/Vena/Blockly/Demos/04 Codegen/Setup Demo D Config
     ///     在 Assets/VenaBlocklyDemos/04_Codegen/ 下创建 DemoD_CodegenConfig.asset，

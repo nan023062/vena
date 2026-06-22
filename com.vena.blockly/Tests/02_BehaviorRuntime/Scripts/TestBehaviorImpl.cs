@@ -14,29 +14,23 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     {
         public void Start(BehaviorGraph.Blockly graph)
         {
-            // DebugSystem.LogWarning( LogCategory.Framework, "测试行为/测试行为1... Start");
         }
 
         public BehaviorResult Tick(BehaviorGraph.Blockly graph, float deltaTime)
         {
-            // DebugSystem.LogWarning( LogCategory.Framework, "测试行为/测试行为1... Tick");
             return BehaviorResult.Done;
         }
 
         public void LateTick(BehaviorGraph.Blockly graph, float deltaTime)
         {
-            // DebugSystem.LogWarning( LogCategory.Framework, "测试行为/测试行为1... LateTick");
         }
 
         public void Finish(BehaviorGraph.Blockly graph)
         {
-            // DebugSystem.LogWarning( LogCategory.Framework, "测试行为/测试行为1... Finish");
         }
     }
 
-    /// <summary>
-    /// TODO: 所有 IBehavior 参考此代码  生成BehaviorSource代码的示例
-    /// </summary>
+    /// <summary>手写 BehaviorSource 参考样例（无槽位）。</summary>
     [BlocklySource("测试行为/测试行为1", typeof(SampleBehaviorImpl1Source.Node))]
     public sealed class SampleBehaviorImpl1Source : BehaviorNodeSource<SampleBehaviorImpl1>
     {
@@ -71,29 +65,23 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
 
         public void Start(BehaviorGraph.Blockly graph)
         {
-            // DebugSystem.LogWarning( LogCategory.Framework, $"测试行为/测试行为2... Start, {message}");
         }
 
         public BehaviorResult Tick(BehaviorGraph.Blockly graph, float deltaTime)
         {
-            // DebugSystem.LogWarning( LogCategory.Framework, $"测试行为/测试行为2... Tick, {message}");
             return BehaviorResult.Done;
         }
 
         public void LateTick(BehaviorGraph.Blockly graph, float deltaTime)
         {
-            // DebugSystem.LogWarning( LogCategory.Framework, $"测试行为/测试行为2... LateTick, {message}");
         }
 
         public void Finish(BehaviorGraph.Blockly graph)
         {
-            // DebugSystem.LogWarning( LogCategory.Framework, $"测试行为/测试行为2... Finish, {message}");
         }
     }
 
-    /// <summary>
-    /// TODO: 所有 IBehavior 参考此代码  生成BehaviorSource代码的示例
-    /// </summary>
+    /// <summary>手写 BehaviorSource 参考样例（含一个 LogicGraph 字符串槽）。</summary>
     [BlocklySource("测试行为/测试行为2", typeof(SampleBehaviorImpl2Source.Node))]
     public sealed class SampleBehaviorImpl2Source : BehaviorNodeSource<SampleBehaviorImpl2>
     {
