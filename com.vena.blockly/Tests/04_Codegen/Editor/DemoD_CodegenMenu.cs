@@ -22,7 +22,7 @@ namespace Vena.Blockly.Tests.Codegen
     ///     在 Assets/VenaBlocklyDemos/04_Codegen/ 下创建 DemoD_CodegenConfig.asset，
     ///     OutputRoot 写入 ${PackagePath}/Tests/04_Codegen/Generated 解析后的实际路径，
     ///     AssemblyWhitelist=["Vena.Blockly.Tests.Codegen"]，
-    ///     TypeWhitelist=空（接受白名单 asmdef 内全部 [UgcSource] 源类）。
+    ///     TypeWhitelist=空（接受白名单 asmdef 内全部 [BlocklySource] 源类）。
     ///
     ///   Step 2：菜单 Tools/Vena/Blockly/Demos/04 Codegen/Run Demo D Codegen
     ///     调用包心 UgcCodegenMenu.RunCodegen()——它内部 LoadConfig(t:UgcCodegenConfig)

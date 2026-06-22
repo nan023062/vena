@@ -14,7 +14,7 @@
 ## §2 主窗口构成
 
 - `BlocklyEditorWindow` 内三区：
-  - **Toolbox**（左，可折叠）：节点调色板。数据源 = `INodeMetadataProvider.All()`；菜单分层 = `[UgcSource.menuPath]` 原值按 `/` 切分；拖拽 / 双击落入画布。
+  - **Toolbox**（左，可折叠）：节点调色板。数据源 = `INodeMetadataProvider.All()`；菜单分层 = `[BlocklySource.menuPath]` 原值按 `/` 切分；拖拽 / 双击落入画布。
   - **GraphView**（中，主画布）：单画布、双 wire（`ControlWire` / `ValueWire`，§3 锁规则）。`LoadIR(GraphIR)` 入图、`DumpIR() : GraphIR` 出图，`Save()` 触发 `_json` 回写。
   - **Inspector**（右，可折叠）：当前选中 `NodeIR` 的属性面板，绑 `NodeIR.Properties` kv；编辑回写 IR、不直接持有运行期实例。
 - 顶部工具条：Save / Reload / Layout（自动布局）/ Debug Toggle（启用 §4 调试通道 v0 时可视化命中）。

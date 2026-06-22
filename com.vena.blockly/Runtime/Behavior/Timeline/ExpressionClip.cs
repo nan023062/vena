@@ -11,19 +11,19 @@ namespace Vena.Blockly
     /// <summary>
     /// Expression 驱动的时间轴剪辑源数据。
     /// </summary>
-    [UgcSource("时间线/表达式剪辑", typeof(ExpressionClip.Object))]
+    [BlocklySource("时间线/表达式剪辑", typeof(ExpressionClip.Object))]
     public sealed class ExpressionClip : UClipSource
     {
         [ExpressionSignature]
-        [UgcSourceProperty("开始时", 1)]
+        [BlocklySourceSlot("开始时", 1)]
         public LogicGraph onBegin;
 
         [ExpressionSignature(typeof(void), typeof(UFrameInfo))]
-        [UgcSourceProperty("每帧", 2)]
+        [BlocklySourceSlot("每帧", 2)]
         public LogicGraph onFrame;
 
         [ExpressionSignature(typeof(void), typeof(UFrameInfo))]
-        [UgcSourceProperty("结束时", 3)]
+        [BlocklySourceSlot("结束时", 3)]
         public LogicGraph onEnd;
 
         /// <summary>

@@ -18,13 +18,13 @@ namespace Vena.Blockly
     /// <summary>
     /// Expression 驱动的信号源数据（可视化配置路径）
     /// </summary>
-    [UgcSource("时间线/信号", typeof(Signal.Object))]
+    [BlocklySource("时间线/信号", typeof(Signal.Object))]
     public sealed class Signal : IBlocklySource, IBlocklySerializable
     {
         public ulong InstanceId { get; set; } = 0;
 
         [ExpressionSignature]
-        [UgcSourceProperty("表达式", 1)]
+        [BlocklySourceSlot("表达式", 1)]
         public LogicGraph source;
 
         public void Serialize(IBlocklySerializer writer) { }

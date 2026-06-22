@@ -30,11 +30,11 @@ namespace Vena.Blockly.Tests.Codegen
             {
                 if (source == null) throw new ArgumentNullException(nameof(source));
 
-                Type nodeType = UgcSourceAttribute.GetObjectType(source.GetType());
+                Type nodeType = BlocklySourceAttribute.GetNodeType(source.GetType());
                 if (nodeType == null)
                 {
                     throw new InvalidOperationException(
-                        $"[ReflectionNodeFactory] Source type {source.GetType().FullName} is missing [UgcSource]; " +
+                        $"[ReflectionNodeFactory] Source type {source.GetType().FullName} is missing [BlocklySource]; " +
                         $"cannot resolve target node type.");
                 }
 

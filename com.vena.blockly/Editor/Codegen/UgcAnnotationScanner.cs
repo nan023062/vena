@@ -14,7 +14,7 @@ namespace Vena.Blockly.Editor
 {
 
     /// <summary>
-    /// 程序集级 UGC 注解扫描器。识别带 [UgcClass] 的源类、收集其内部 [UgcMethod]/[UgcProperty] 成员，
+    /// 程序集级 UGC 注解扫描器。识别带 [BlocklyCodeGen] 的源类、收集其内部 [BlocklyCodeGenMethod]/[BlocklyCodeGenMember] 成员，
     /// 计算并返回每个成员对应的 codegen 输入项 <see cref="ScannedMember"/>。
     /// 不发射代码、不写盘 —— 仅产出可被 emitter 消费的 POCO 集合。
     /// </summary>
@@ -22,7 +22,7 @@ namespace Vena.Blockly.Editor
     {
         /// <summary>
         /// 扫描入口。按 <paramref name="config"/> 程序集白名单 + 类型白名单过滤、
-        /// 跳过自身已带 [UgcSource] 或 [UgcGenerated] 的类、按 [UgcSourceProperty.Order] 升序固定顺序。
+        /// 跳过自身已带 [BlocklySource] 或 [BlocklyCodeGenerated] 的类、按 [BlocklySourceSlot.Order] 升序固定顺序。
         /// </summary>
         public static IReadOnlyList<ScannedSource> Scan(UgcCodegenConfig config)
         {
@@ -51,10 +51,10 @@ namespace Vena.Blockly.Editor
                     if (typeFilter.Count > 0 && !typeFilter.Contains(type.FullName)) continue;
 
                     // 跳过自身就是 Source / Generated
-                    if (type.GetCustomAttribute<UgcSourceAttribute>() != null) continue;
-                    if (type.GetCustomAttribute<UgcGeneratedAttribute>() != null) continue;
+                    if (type.GetCustomAttribute<BlocklySourceAttribute>() != null) continue;
+                    if (type.GetCustomAttribute<BlocklyCodeGeneratedAttribute>() != null) continue;
 
-                    var classAttr = type.GetCustomAttribute<UgcClassAttribute>();
+                    var classAttr = type.GetCustomAttribute<BlocklyCodeGenAttribute>();
                     if (classAttr == null) continue;
 
                     var members = CollectMembers(type, classAttr);
@@ -67,7 +67,7 @@ namespace Vena.Blockly.Editor
             return results;
         }
 
-        private static IReadOnlyList<ScannedMember> CollectMembers(Type type, UgcClassAttribute classAttr)
+        private static IReadOnlyList<ScannedMember> CollectMembers(Type type, BlocklyCodeGenAttribute classAttr)
         {
             var list = new List<ScannedMember>();
 
@@ -76,7 +76,7 @@ namespace Vena.Blockly.Editor
 
             foreach (var method in type.GetMethods(flags))
             {
-                var methodAttr = method.GetCustomAttribute<UgcMethodAttribute>();
+                var methodAttr = method.GetCustomAttribute<BlocklyCodeGenMethodAttribute>();
                 if (methodAttr == null) continue;
 
                 ValidateMethodSignature(type, method, methodAttr);
@@ -85,7 +85,7 @@ namespace Vena.Blockly.Editor
 
             foreach (var prop in type.GetProperties(flags))
             {
-                var propAttr = prop.GetCustomAttribute<UgcPropertyAttribute>();
+                var propAttr = prop.GetCustomAttribute<BlocklyCodeGenMemberAttribute>();
                 if (propAttr == null) continue;
 
                 if (prop.GetGetMethod(false) != null)
@@ -101,25 +101,25 @@ namespace Vena.Blockly.Editor
             return list;
         }
 
-        private static void ValidateMethodSignature(Type type, MethodInfo method, UgcMethodAttribute attr)
+        private static void ValidateMethodSignature(Type type, MethodInfo method, BlocklyCodeGenMethodAttribute attr)
         {
             var paramInfos = method.GetParameters();
             var declaredNames = attr.ParameterNames ?? Array.Empty<string>();
             if (declaredNames.Length != paramInfos.Length)
             {
                 throw new InvalidOperationException(
-                    $"[Vena.Blockly] {type.FullName}.{method.Name}: [UgcMethod] parameterNames 数 ({declaredNames.Length}) " +
+                    $"[Vena.Blockly] {type.FullName}.{method.Name}: [BlocklyCodeGenMethod] parameterNames 数 ({declaredNames.Length}) " +
                     $"与方法签名参数数 ({paramInfos.Length}) 不匹配。");
             }
             if (attr.IsStatic && !method.IsStatic)
             {
                 throw new InvalidOperationException(
-                    $"[Vena.Blockly] {type.FullName}.{method.Name}: [UgcMethod] isStatic=true 但方法非 static。");
+                    $"[Vena.Blockly] {type.FullName}.{method.Name}: [BlocklyCodeGenMethod] isStatic=true 但方法非 static。");
             }
             if (!attr.IsStatic && method.IsStatic)
             {
                 throw new InvalidOperationException(
-                    $"[Vena.Blockly] {type.FullName}.{method.Name}: [UgcMethod] isStatic=false 但方法是 static。");
+                    $"[Vena.Blockly] {type.FullName}.{method.Name}: [BlocklyCodeGenMethod] isStatic=false 但方法是 static。");
             }
         }
 
@@ -129,7 +129,7 @@ namespace Vena.Blockly.Editor
         }
     }
 
-    /// <summary>扫描结果：一个 [UgcClass] 源类 + 其下所有 codegen 成员。</summary>
+    /// <summary>扫描结果：一个 [BlocklyCodeGen] 源类 + 其下所有 codegen 成员。</summary>
     internal sealed class ScannedSource
     {
         public Type SourceType { get; }
@@ -158,9 +158,9 @@ namespace Vena.Blockly.Editor
         public Type DeclaringType { get; }
         /// <summary>方法对应 method.Name；属性 getter / setter 对应 property.Name。</summary>
         public string MemberName { get; }
-        /// <summary>UI 显示名（来自 [UgcMethod].DisplayName / [UgcProperty].DisplayName）。</summary>
+        /// <summary>UI 显示名（来自 [BlocklyCodeGenMethod].DisplayName / [BlocklyCodeGenMember].DisplayName）。</summary>
         public string DisplayName { get; }
-        /// <summary>菜单路径 = `<UgcClass.DisplayName>/<DisplayName>`。</summary>
+        /// <summary>菜单路径 = `<BlocklyCodeGen.DisplayName>/<DisplayName>`。</summary>
         public string MenuPath { get; }
         /// <summary>是否静态（仅 method 有意义；property 复用 IsStatic = property accessor 的静态性）。</summary>
         public bool IsStatic { get; }
@@ -189,7 +189,7 @@ namespace Vena.Blockly.Editor
             Parameters = parameters;
         }
 
-        public static ScannedMember FromMethod(Type type, MethodInfo method, UgcMethodAttribute attr, string classDisplayName)
+        public static ScannedMember FromMethod(Type type, MethodInfo method, BlocklyCodeGenMethodAttribute attr, string classDisplayName)
         {
             var paramInfos = method.GetParameters();
             var ps = new ParamInfo[paramInfos.Length];
@@ -208,7 +208,7 @@ namespace Vena.Blockly.Editor
                 ps);
         }
 
-        public static ScannedMember FromPropertyGetter(Type type, PropertyInfo prop, UgcPropertyAttribute attr, string classDisplayName)
+        public static ScannedMember FromPropertyGetter(Type type, PropertyInfo prop, BlocklyCodeGenMemberAttribute attr, string classDisplayName)
         {
             var getter = prop.GetGetMethod(false);
             return new ScannedMember(
@@ -222,7 +222,7 @@ namespace Vena.Blockly.Editor
                 Array.Empty<ParamInfo>());
         }
 
-        public static ScannedMember FromPropertySetter(Type type, PropertyInfo prop, UgcPropertyAttribute attr, string classDisplayName)
+        public static ScannedMember FromPropertySetter(Type type, PropertyInfo prop, BlocklyCodeGenMemberAttribute attr, string classDisplayName)
         {
             var setter = prop.GetSetMethod(false);
             var ps = new[] { new ParamInfo("value", "value", prop.PropertyType) };
@@ -240,7 +240,7 @@ namespace Vena.Blockly.Editor
 
     internal sealed class ParamInfo
     {
-        /// <summary>参数 UI 显示名（来自 [UgcMethod].parameterNames[i]）。</summary>
+        /// <summary>参数 UI 显示名（来自 [BlocklyCodeGenMethod].parameterNames[i]）。</summary>
         public string DisplayName { get; }
         /// <summary>C# 标识符（方法签名参数名）。</summary>
         public string Identifier { get; }

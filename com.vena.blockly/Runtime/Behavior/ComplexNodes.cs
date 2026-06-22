@@ -112,10 +112,10 @@ namespace Vena.Blockly
         }
     }
 
-    [UgcSource("行为组合/并行节点", typeof(ParallelNode.Node))]
+    [BlocklySource("行为组合/并行节点", typeof(ParallelNode.Node))]
     public sealed class ParallelNode : BehaviorNodeSource
     {
-        [UgcSourceProperty("子节点列表", 1)]
+        [BlocklySourceSlot("子节点列表", 1)]
         public BehaviorNodeSource[] sources;
 
         sealed class Node : UBehaviorComplexNode<ParallelNode>
@@ -196,10 +196,10 @@ namespace Vena.Blockly
         }
     }
 
-    [UgcSource("行为组合/序列节点", typeof(SequenceNode.Node))]
+    [BlocklySource("行为组合/序列节点", typeof(SequenceNode.Node))]
     public sealed class SequenceNode : BehaviorNodeSource
     {
-        [UgcSourceProperty("子节点列表", 1)]
+        [BlocklySourceSlot("子节点列表", 1)]
         public BehaviorNodeSource[] sources;
 
         sealed class Node : UBehaviorComplexNode<SequenceNode>

@@ -17,16 +17,16 @@ namespace Vena.Blockly.Tests.Codegen
       在 Tests/04_Codegen/Generated/ 下生成（菜单：Tools/Vena/Blockly/Demo D Run Codegen）。
       若要重新观察生成产物，删除 Generated/ 目录后重跑菜单即可。
      */
-    [UgcClass("测试对象")]
+    [BlocklyCodeGen("测试对象")]
     public class InstanceMethod
     {
-        [UgcMethod("加法", false, "参数1", "参数2")]
+        [BlocklyCodeGenMethod("加法", false, "参数1", "参数2")]
         public int TestMethod(int a, int b)
         {
             return a + b;
         }
 
-        [UgcMethod("打印消息", false, "消息内容")]
+        [BlocklyCodeGenMethod("打印消息", false, "消息内容")]
         public void PrintMessage(string message)
         {
             System.Diagnostics.Debug.WriteLine($"InstanceMethod.PrintMessage: {message}");

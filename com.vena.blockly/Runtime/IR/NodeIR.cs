@@ -27,8 +27,8 @@ namespace Vena.Blockly
         public string SourceType;
 
         /// <summary>
-        /// [UgcSourceProperty] 槽位的字面值或子节点引用。
-        /// 顺序按 [UgcSourceProperty.order] 升序；顺序 round-trip 等价。
+        /// [BlocklySourceSlot] 槽位的字面值或子节点引用。
+        /// 顺序按 [BlocklySourceSlot.order] 升序；顺序 round-trip 等价。
         /// </summary>
         public List<NodePropertyIR> Properties;
 
@@ -45,13 +45,13 @@ namespace Vena.Blockly
     }
 
     /// <summary>
-    /// NodeIR.Properties 的单条目 —— 表达一个 [UgcSourceProperty] 槽位。
+    /// NodeIR.Properties 的单条目 —— 表达一个 [BlocklySourceSlot] 槽位。
     /// JSON 形态：`{key:string, value:json}`。键名固定。
     /// </summary>
     public sealed class NodePropertyIR
     {
         /// <summary>
-        /// 槽位 key —— 与 [UgcSourceProperty] 字段名严格对齐。
+        /// 槽位 key —— 与 [BlocklySourceSlot] 字段名严格对齐。
         /// AOT 不变量：必须能在 sourceType 槽位集合内静态匹配。
         /// </summary>
         public string Key;

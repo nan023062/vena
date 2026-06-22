@@ -65,10 +65,10 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
             };
 
             // ----- 反射拿 ExpressionClip.Object 嵌套类型 + 构造 TrackSource<Object, ExpressionClip> -----
-            Type clipObjectType = UgcSourceAttribute.GetObjectType(typeof(ExpressionClip));
+            Type clipObjectType = BlocklySourceAttribute.GetNodeType(typeof(ExpressionClip));
             if (clipObjectType == null)
             {
-                Debug.LogError("[TimelineSignalDemo] UgcSource lookup failed for ExpressionClip.");
+                Debug.LogError("[TimelineSignalDemo] BlocklySource lookup failed for ExpressionClip.");
                 return;
             }
             Type trackSourceType = typeof(TimelineSource.TrackSource<,>)

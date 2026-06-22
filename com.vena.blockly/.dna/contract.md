@@ -92,13 +92,13 @@
 
 - 作用域重名抛 `InvalidOperationException`。
 - `Init` 类型不匹配抛 `ArgumentException`。
-- 根作用域缺 host 抛 `InvalidOperationException`。
+- 根作用域缺 缺 host 抛 `InvalidOperationException`。
 - **异常不走 Tick 返回值**。基类（`BehaviorNode` / `CompositeBehavior`）Tick 路径 try/catch → `IBlocklyHost.Logger.Error` 记录 → 以 `Done` 收尾。调用方订阅 `IBlocklyLogger` 观察。
 
 ### 非冻结声明
 
 1. 反射识别规则。
-2. `UgcSourceAttribute / UgcMethod / UgcProperty / ExpressionSignatureAttribute` 元数据语义。
+2. `BlocklySourceAttribute / BlocklyCodeGenMethod / BlocklyCodeGenMember / ExpressionSignatureAttribute` 元数据语义。
 3. codegen 输出格式与目标产物。
 4. 节点注册表数据结构。
 5. 行为/逻辑节点的具体子类清单。

@@ -13,8 +13,8 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     /// Demo 用 host：override BlocklyHostBase.NodeFactory 注入 ReflectionNodeFactory。
     /// 默认 BlocklyHostBase.NodeFactory = ActivatorNodeFactory，其 Create&lt;T&gt; 直接
     /// Activator.CreateInstance(typeof(T))；T 为 ILogicNode/IBehaviorNode 接口时无法实例化。
-    /// 本 demo 通过 [UgcSource(menuPath, typeof(NodeType))] 注解把源类与具体 NodeType 绑定，
-    /// ReflectionNodeFactory 走 UgcSourceAttribute.GetObjectType 反射定位 NodeType 并实例化。
+    /// 本 demo 通过 [BlocklySource(menuPath, typeof(NodeType))] 注解把源类与具体 NodeType 绑定，
+    /// ReflectionNodeFactory 走 BlocklySourceAttribute.GetNodeType 反射定位 NodeType 并实例化。
     /// </summary>
     public sealed class DemoSampleHost : BlocklyHostBase
     {
@@ -28,11 +28,11 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
             {
                 if (source == null) throw new ArgumentNullException(nameof(source));
 
-                Type nodeType = UgcSourceAttribute.GetObjectType(source.GetType());
+                Type nodeType = BlocklySourceAttribute.GetNodeType(source.GetType());
                 if (nodeType == null)
                 {
                     throw new InvalidOperationException(
-                        $"[ReflectionNodeFactory] Source type {source.GetType().FullName} is missing [UgcSource]; " +
+                        $"[ReflectionNodeFactory] Source type {source.GetType().FullName} is missing [BlocklySource]; " +
                         $"cannot resolve target node type.");
                 }
 

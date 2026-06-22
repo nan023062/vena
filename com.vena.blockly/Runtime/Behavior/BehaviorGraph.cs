@@ -14,12 +14,12 @@ namespace Vena.Blockly
     /// <summary>
     /// Behavior 图源数据
     /// </summary>
-    [UgcSource("逻辑图", typeof(BehaviorGraph.Blockly))]
+    [BlocklySource("逻辑图", typeof(BehaviorGraph.Blockly))]
     public sealed class BehaviorGraph : IBlocklySource
     {
         public ulong InstanceId { get; set; } = 0;
 
-        [UgcSourceProperty("根节点", 1)]
+        [BlocklySourceSlot("根节点", 1)]
         public BehaviorNodeSource root;
 
         /// <summary>

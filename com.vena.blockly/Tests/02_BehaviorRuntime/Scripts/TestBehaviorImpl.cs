@@ -37,7 +37,7 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     /// <summary>
     /// TODO: 所有IBehaviorImpl 参考此代码  生成BehaviorSource代码的示例
     /// </summary>
-    [UgcSource("测试行为/测试行为1", typeof(SampleBehaviorImpl1Source.Node))]
+    [BlocklySource("测试行为/测试行为1", typeof(SampleBehaviorImpl1Source.Node))]
     public sealed class SampleBehaviorImpl1Source : BehaviorNodeSource<SampleBehaviorImpl1>
     {
         sealed class Node : BehaviorNode<SampleBehaviorImpl1Source, SampleBehaviorImpl1>
@@ -94,11 +94,11 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     /// <summary>
     /// TODO: 所有IBehaviorImpl 参考此代码  生成BehaviorSource代码的示例
     /// </summary>
-    [UgcSource("测试行为/测试行为2", typeof(SampleBehaviorImpl2Source.Node))]
+    [BlocklySource("测试行为/测试行为2", typeof(SampleBehaviorImpl2Source.Node))]
     public sealed class SampleBehaviorImpl2Source : BehaviorNodeSource<SampleBehaviorImpl2>
     {
         [ExpressionSignature(typeof(string))]
-        [UgcSourceProperty("消息", 1)]
+        [BlocklySourceSlot("消息", 1)]
         public LogicGraph message;
 
         sealed class Node : BehaviorNode<SampleBehaviorImpl2Source, SampleBehaviorImpl2>

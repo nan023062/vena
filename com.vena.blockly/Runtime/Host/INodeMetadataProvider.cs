@@ -16,7 +16,7 @@ namespace Vena.Blockly
     /// </summary>
     public interface INodeMetadataProvider
     {
-        /// <summary>按源类（带 [UgcSource] 的类）查询元数据；命中返回 true。</summary>
+        /// <summary>按源类（带 [BlocklySource] 的类）查询元数据；命中返回 true。</summary>
         bool TryGet(System.Type sourceType, out NodeMetadata metadata);
 
         /// <summary>枚举所有已注册的 NodeMetadata。</summary>

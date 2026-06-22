@@ -42,7 +42,7 @@ namespace Vena.Blockly
     /// 端口引用 —— 由 (nodeGuid, port 名) 双字段唯一定位。
     /// port 字段语义：
     ///   Control 端口 = 节点声明的具名出/入口（如 "next" / "true" / "false"）。
-    ///   Value   端口 = [UgcSourceProperty] 槽位名（与 NodeIR.Properties 对齐）。
+    ///   Value   端口 = [BlocklySourceSlot] 槽位名（与 NodeIR.Properties 对齐）。
     /// </summary>
     public struct PortRef : IEquatable<PortRef>
     {

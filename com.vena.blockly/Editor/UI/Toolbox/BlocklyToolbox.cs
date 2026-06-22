@@ -17,7 +17,7 @@ namespace Vena.Blockly.Editor.UI
     /// 节点调色板。
     ///
     /// 数据源 = INodeMetadataProvider.All()（codegen 生成、Runtime 实现）。
-    /// 菜单分层：[UgcSource.menuPath] 原值按 `/` 切分；UI 端自行树形展开。
+    /// 菜单分层：[BlocklySource.menuPath] 原值按 `/` 切分；UI 端自行树形展开。
     /// 双击触发 OnPick；后续可接拖拽落画布。
     /// </summary>
     public sealed class BlocklyToolbox : VisualElement

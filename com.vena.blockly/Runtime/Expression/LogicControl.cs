@@ -12,10 +12,10 @@ namespace Vena.Blockly
 
     #region LogicSequence
 
-    [UgcSource("程序节点/控制/顺序执行", typeof(LogicSequence.Node))]
+    [BlocklySource("程序节点/控制/顺序执行", typeof(LogicSequence.Node))]
     public sealed class LogicSequence : Expression
     {
-        [UgcSourceProperty("语句列表", 1)]
+        [BlocklySourceSlot("语句列表", 1)]
         public LogicGraph[] statements;
 
         internal sealed class Node : ILogicNode
@@ -78,17 +78,17 @@ namespace Vena.Blockly
 
     #region LogicBranch
 
-    [UgcSource("程序节点/控制/条件分支", typeof(LogicBranch.Node))]
+    [BlocklySource("程序节点/控制/条件分支", typeof(LogicBranch.Node))]
     public sealed class LogicBranch : Expression
     {
         [ExpressionSignature(typeof(bool))]
-        [UgcSourceProperty("条件", 1)]
+        [BlocklySourceSlot("条件", 1)]
         public LogicGraph condition;
 
-        [UgcSourceProperty("为真时", 2)]
+        [BlocklySourceSlot("为真时", 2)]
         public LogicGraph trueBranch;
 
-        [UgcSourceProperty("为假时", 3)]
+        [BlocklySourceSlot("为假时", 3)]
         public LogicGraph falseBranch;
 
         internal sealed class Node : ILogicNode
@@ -146,17 +146,17 @@ namespace Vena.Blockly
 
     #region LogicWhile
 
-    [UgcSource("程序节点/控制/While循环", typeof(LogicWhile.Node))]
+    [BlocklySource("程序节点/控制/While循环", typeof(LogicWhile.Node))]
     public sealed class LogicWhile : Expression
     {
         [ExpressionSignature(typeof(bool))]
-        [UgcSourceProperty("条件", 1)]
+        [BlocklySourceSlot("条件", 1)]
         public LogicGraph condition;
 
-        [UgcSourceProperty("循环体", 2)]
+        [BlocklySourceSlot("循环体", 2)]
         public LogicGraph body;
 
-        [UgcSourceProperty("最大迭代次数", 3)]
+        [BlocklySourceSlot("最大迭代次数", 3)]
         public int maxIterations = 10000;
 
         internal sealed class Node : ILogicNode
@@ -216,7 +216,7 @@ namespace Vena.Blockly
 
     public abstract class LogicGetVariable<T> : Expression
     {
-        [UgcSourceProperty("变量名", 1)]
+        [BlocklySourceSlot("变量名", 1)]
         public string variableName;
 
         protected internal sealed class Node : ILogicNode
@@ -244,16 +244,16 @@ namespace Vena.Blockly
         }
     }
 
-    [UgcSource("程序节点/变量/获取Int变量", typeof(LogicGetVariable<int>.Node))]
+    [BlocklySource("程序节点/变量/获取Int变量", typeof(LogicGetVariable<int>.Node))]
     public sealed class LogicGetVariableInt : LogicGetVariable<int> { }
 
-    [UgcSource("程序节点/变量/获取Bool变量", typeof(LogicGetVariable<bool>.Node))]
+    [BlocklySource("程序节点/变量/获取Bool变量", typeof(LogicGetVariable<bool>.Node))]
     public sealed class LogicGetVariableBool : LogicGetVariable<bool> { }
 
-    [UgcSource("程序节点/变量/获取Float变量", typeof(LogicGetVariable<float>.Node))]
+    [BlocklySource("程序节点/变量/获取Float变量", typeof(LogicGetVariable<float>.Node))]
     public sealed class LogicGetVariableFloat : LogicGetVariable<float> { }
 
-    [UgcSource("程序节点/变量/获取String变量", typeof(LogicGetVariable<string>.Node))]
+    [BlocklySource("程序节点/变量/获取String变量", typeof(LogicGetVariable<string>.Node))]
     public sealed class LogicGetVariableString : LogicGetVariable<string> { }
 
     #endregion
@@ -262,10 +262,10 @@ namespace Vena.Blockly
 
     public abstract class LogicSetVariable<T> : Expression
     {
-        [UgcSourceProperty("变量名", 1)]
+        [BlocklySourceSlot("变量名", 1)]
         public string variableName;
 
-        [UgcSourceProperty("值", 2)]
+        [BlocklySourceSlot("值", 2)]
         public LogicGraph value;
 
         protected internal sealed class Node : ILogicNode
@@ -308,16 +308,16 @@ namespace Vena.Blockly
         }
     }
 
-    [UgcSource("程序节点/变量/设置Int变量", typeof(LogicSetVariable<int>.Node))]
+    [BlocklySource("程序节点/变量/设置Int变量", typeof(LogicSetVariable<int>.Node))]
     public sealed class LogicSetVariableInt : LogicSetVariable<int> { }
 
-    [UgcSource("程序节点/变量/设置Bool变量", typeof(LogicSetVariable<bool>.Node))]
+    [BlocklySource("程序节点/变量/设置Bool变量", typeof(LogicSetVariable<bool>.Node))]
     public sealed class LogicSetVariableBool : LogicSetVariable<bool> { }
 
-    [UgcSource("程序节点/变量/设置Float变量", typeof(LogicSetVariable<float>.Node))]
+    [BlocklySource("程序节点/变量/设置Float变量", typeof(LogicSetVariable<float>.Node))]
     public sealed class LogicSetVariableFloat : LogicSetVariable<float> { }
 
-    [UgcSource("程序节点/变量/设置String变量", typeof(LogicSetVariable<string>.Node))]
+    [BlocklySource("程序节点/变量/设置String变量", typeof(LogicSetVariable<string>.Node))]
     public sealed class LogicSetVariableString : LogicSetVariable<string> { }
 
     #endregion

@@ -10,17 +10,17 @@ using System;
 namespace Vena.Blockly
 {
 
-    [UgcSource("行为控制/if-else", typeof(BranchNode.Node))]
+    [BlocklySource("行为控制/if-else", typeof(BranchNode.Node))]
     public sealed class BranchNode : BehaviorNodeSource
     {
         [ExpressionSignature(typeof(bool))]
-        [UgcSourceProperty("条件", 1)]
+        [BlocklySourceSlot("条件", 1)]
         public LogicGraph condition;
 
-        [UgcSourceProperty("为真时", 2)]
+        [BlocklySourceSlot("为真时", 2)]
         public BehaviorNodeSource trueSource;
 
-        [UgcSourceProperty("为假时", 3)]
+        [BlocklySourceSlot("为假时", 3)]
         public BehaviorNodeSource falseSource;
 
         sealed class Node : CompositeBehavior<BranchNode>
@@ -95,17 +95,17 @@ namespace Vena.Blockly
         }
     }
 
-    [UgcSource("行为控制/switch", typeof(SwitchNode.Node))]
+    [BlocklySource("行为控制/switch", typeof(SwitchNode.Node))]
     public sealed class SwitchNode : BehaviorNodeSource
     {
         [ExpressionSignature(typeof(int))]
-        [UgcSourceProperty("分支值", 1)]
+        [BlocklySourceSlot("分支值", 1)]
         public LogicGraph switchValue;
 
-        [UgcSourceProperty("分支列表", 2)]
+        [BlocklySourceSlot("分支列表", 2)]
         public BehaviorNodeSource[] caseSources;
 
-        [UgcSourceProperty("默认分支", 3)]
+        [BlocklySourceSlot("默认分支", 3)]
         public BehaviorNodeSource defaultSource;
 
         sealed class Node : CompositeBehavior<SwitchNode>
@@ -209,13 +209,13 @@ namespace Vena.Blockly
         }
     }
 
-    [UgcSource("行为控制/选择", typeof(SelectorNode.Node))]
+    [BlocklySource("行为控制/选择", typeof(SelectorNode.Node))]
     public sealed class SelectorNode : BehaviorNodeSource
     {
-        [UgcSourceProperty("条件列表", 1)]
+        [BlocklySourceSlot("条件列表", 1)]
         public LogicGraph[] conditions;
 
-        [UgcSourceProperty("行为列表", 2)]
+        [BlocklySourceSlot("行为列表", 2)]
         public BehaviorNodeSource[] behaviors;
 
         sealed class Node : CompositeBehavior<SelectorNode>
@@ -319,14 +319,14 @@ namespace Vena.Blockly
         }
     }
 
-    [UgcSource("行为控制/循环", typeof(LoopNode.Node))]
+    [BlocklySource("行为控制/循环", typeof(LoopNode.Node))]
     public class LoopNode : BehaviorNodeSource
     {
         [ExpressionSignature(typeof(int))]
-        [UgcSourceProperty("循环次数", 1)]
+        [BlocklySourceSlot("循环次数", 1)]
         public LogicGraph loopCount;
 
-        [UgcSourceProperty("循环体", 2)]
+        [BlocklySourceSlot("循环体", 2)]
         public BehaviorNodeSource behavior;
 
         sealed class Node : CompositeBehavior<LoopNode>

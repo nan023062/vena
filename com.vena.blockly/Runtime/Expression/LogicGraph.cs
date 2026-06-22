@@ -40,12 +40,12 @@ namespace Vena.Blockly
     /// Expression Blockly 源数据。对应可视化编辑器中的一个 Expression 图。
     /// 内含 Blockly 内部类作为运行时实例。
     /// </summary>
-    [UgcSource("表达式图", typeof(LogicGraph.Blockly))]
+    [BlocklySource("表达式图", typeof(LogicGraph.Blockly))]
     public sealed class LogicGraph : IBlocklySource
     {
         public ulong InstanceId { get; set; } = 0;
 
-        [UgcSourceProperty("根表达式", 1)]
+        [BlocklySourceSlot("根表达式", 1)]
         public Expression root;
 
         /// <summary>

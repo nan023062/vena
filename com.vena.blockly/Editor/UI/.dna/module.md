@@ -117,7 +117,7 @@ classDiagram
 1. 画布 = 单 GraphView 双 wire（`ControlWire` / `ValueWire` 同图，`EdgeIR.WireKind` 显式标记，无默认）。
 2. IR 载体 = `GraphAsset` ScriptableObject + 单字段 `[SerializeField] string _json`；Unity 序列化只触发整串 round-trip、不参与字段级 diff。
 3. IR 编解码 = `IBlocklyGraphSerializer`（Editor 期接口）；不复用 Runtime `IBlocklySerializer`（字节流原语）；不进父 §6 聚合。
-4. Toolbox 数据源 = `INodeMetadataProvider.All()`（codegen 生成、Runtime 实现）；菜单分层切自 `[UgcSource.menuPath]` 原值。
+4. Toolbox 数据源 = `INodeMetadataProvider.All()`（codegen 生成、Runtime 实现）；菜单分层切自 `[BlocklySource.menuPath]` 原值。
 5. Inspector 数据源 = `NodeIR.Properties`（kv 直绑）；编辑后回写 IR、不直接持有运行期实例。
 6. 调试通道 v0 = `IBlocklyDebugChannel`（Editor 期接口、Runtime 侧实现注入）；与 `IBlocklyLogger` 分离原因 = 调试目标（可视化标定 / 命中节点高亮）≠ 日志目标（文本流），不同变更原因；**不进父 §6 聚合**。
 7. 顶层菜单 = 单入口 `Window/Vena/Blockly Editor`；新建 `GraphAsset` = `Assets/Create/Vena/Blockly/Behavior Graph` & `Logic Graph` 两项。

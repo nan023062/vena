@@ -72,31 +72,31 @@ classDiagram
         +Create~T~(IBlocklySource) T
         +Initialize() void
     }
-    class UgcSourceAttribute { <<sealed>> }
-    class UgcMethodAttribute { <<sealed>> }
-    class UgcPropertyAttribute { <<sealed>> }
-    class UgcSourcePropertyAttribute { <<sealed>> }
-    class UgcGeneratedAttribute { <<sealed, marker>> }
+    class BlocklySourceAttribute { <<sealed>> }
+    class BlocklyCodeGenMethodAttribute { <<sealed>> }
+    class BlocklyCodeGenMemberAttribute { <<sealed>> }
+    class BlocklySourceSlotAttribute { <<sealed>> }
+    class BlocklyCodeGeneratedAttribute { <<sealed, marker>> }
 
     UgcCodegenMenu ..> UgcCodegenConfig
     UgcCodegenMenu ..> UgcAnnotationScanner
     UgcCodegenMenu ..> UgcCodeWriter
     UgcAnnotationScanner ..> NodeMetadata
-    UgcAnnotationScanner ..> UgcSourceAttribute
-    UgcAnnotationScanner ..> UgcMethodAttribute
-    UgcAnnotationScanner ..> UgcPropertyAttribute
-    UgcAnnotationScanner ..> UgcSourcePropertyAttribute
+    UgcAnnotationScanner ..> BlocklySourceAttribute
+    UgcAnnotationScanner ..> BlocklyCodeGenMethodAttribute
+    UgcAnnotationScanner ..> BlocklyCodeGenMemberAttribute
+    UgcAnnotationScanner ..> BlocklySourceSlotAttribute
     UgcCodeWriter ..> _Gen_Impl
     UgcCodeWriter ..> _Gen_Source
     UgcCodeWriter ..> _Gen_SourceNode
-    _Gen_Source ..> UgcGeneratedAttribute
-    _Gen_Impl ..> UgcGeneratedAttribute
-    _Gen_SourceNode ..> UgcGeneratedAttribute
+    _Gen_Source ..> BlocklyCodeGeneratedAttribute
+    _Gen_Impl ..> BlocklyCodeGeneratedAttribute
+    _Gen_SourceNode ..> BlocklyCodeGeneratedAttribute
     IBlocklyNodeFactory ..> INodeMetadataProvider
     INodeMetadataProvider ..> NodeMetadata
 ```
 
-**依赖单向**：`Editor → Runtime`；`Runtime → Editor` 禁止。`INodeMetadataProvider` / `[UgcGenerated]` / 产物三件套均落 Runtime，其词汇由 Editor 合约 §1、§2 锁。
+**依赖单向**：`Editor → Runtime`；`Runtime → Editor` 禁止。`INodeMetadataProvider` / `[BlocklyCodeGenerated]` / 产物三件套均落 Runtime，其词汇由 Editor 合约 §1、§2 锁。
 
 ## Key Decisions
 
@@ -106,14 +106,14 @@ classDiagram
 4. 反射注册 = `IBlocklyNodeFactory.Initialize()` per-host 首次扫程序集 + 加载 `INodeMetadataProvider` 实现，幂等。
 5. 新增运行期接口 = `INodeMetadataProvider`：`bool TryGet(Type sourceType, out NodeMetadata)` + `IReadOnlyList<NodeMetadata> All()`；生成代码实现、运行期消费。
 6. 依赖 = Editor → Runtime 单向；Runtime → Editor 禁止；生成产物落 Runtime 目录、不引 Editor 命名空间。
-7. 注解 4 类（`UgcSource` / `UgcMethod` / `UgcProperty` / `UgcSourceProperty`）+ 类级 `UgcClass` + 签名 `ExpressionSignature` + 标记 `UgcGenerated` 全部 `sealed`、`Inherited=false, AllowMultiple=false`。
-8. **codegen 产物三件套**：`*Impl`（0-arity `IFunctionImpl<TOutput>` / `IProcedureImpl`） + `*Source`（0 泛型 arity `Function<*Impl, TOutput>` / `Procedure<*Impl>`） + `*Source.Node`（`Block<*Source>` 子类，手动 Pop）。Pop 顺序 ≡ IR 顺序 ≡ UI 顺序 ≡ `[UgcSourceProperty.order]` 升序。实例方法示例落点：`Tests/04_Codegen/Scripts/InstanceMethod.cs`（Demo 04 代码生成测试内，取代原 `Samples/Expression/InstanceMethod.cs`）。
+7. 注解 4 类（`BlocklySource` / `BlocklyCodeGenMethod` / `BlocklyCodeGenMember` / `BlocklySourceSlot`）+ 类级 `BlocklyCodeGen` + 签名 `ExpressionSignature` + 标记 `BlocklyCodeGenerated` 全部 `sealed`、`Inherited=false, AllowMultiple=false`。
+8. **codegen 产物三件套**：`*Impl`（0-arity `IFunctionImpl<TOutput>` / `IProcedureImpl`） + `*Source`（0 泛型 arity `Function<*Impl, TOutput>` / `Procedure<*Impl>`） + `*Source.Node`（`Block<*Source>` 子类，手动 Pop）。Pop 顺序 ≡ IR 顺序 ≡ UI 顺序 ≡ `[BlocklySourceSlot.order]` 升序。实例方法示例落点：`Tests/04_Codegen/Scripts/InstanceMethod.cs`（Demo 04 代码生成测试内，取代原 `Samples/Expression/InstanceMethod.cs`）。
 
 ## Phase 2 Ratchet
 
 **做**：
 
-1. PR-1：注解定型 + ScriptableObject 白名单容器。范围 = `[UgcGenerated]`（`Runtime/Host/Attributes/UgcGeneratedAttribute.cs`、sealed marker）、`UgcCodegenConfig` ScriptableObject、菜单骨架。不变动其他 6 个注解。
+1. PR-1：注解定型 + ScriptableObject 白名单容器。范围 = `[BlocklyCodeGenerated]`（`Runtime/Host/Attributes/BlocklyCodeGeneratedAttribute.cs`、sealed marker）、`UgcCodegenConfig` ScriptableObject、菜单骨架。不变动其他 6 个注解。
 2. PR-2：Editor 菜单 + 程序集扫描 + 产出三件套 → `Runtime/Generated/<源类名>.g.cs`。合约 §2 为准。包含：Demo 04 `Tests/04_Codegen/Scripts/InstanceMethod.cs` 覆写（取代现手写 Impl/Source/Node 部分、源类 `InstanceMethod` 保留、完成原文件 TODO）；不另开 `Tests/Editor/`。原 `Samples/Expression/InstanceMethod.cs` 迁入 Demo 04 后为本 PR 覆写起点（具体迁移由 programmer 负责、本领域只锁产物路径）。
 3. PR-3：`IBlocklyNodeFactory.Initialize()` 反射注册 + `INodeMetadataProvider` 装载（接口由§6 §5 锁：TryGet + All）。
 
@@ -122,3 +122,4 @@ classDiagram
 ## Phase 3 锚
 
 Phase 3 = AOT（IR → 原生 C# 代码）。Phase 2 IR 设计须保 AOT 友好（节点连接静态可推断、避免运行时动态分发埋入 IR 形态）。
+

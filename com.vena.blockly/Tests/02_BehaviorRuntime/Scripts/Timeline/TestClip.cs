@@ -32,10 +32,10 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
         }
     }
 
-    [UgcSource( "时间线/测试剪辑源1", typeof( TestClipSource.UClip ) )]
+    [BlocklySource( "时间线/测试剪辑源1", typeof( TestClipSource.UClip ) )]
     public class TestClipSource : UClipSource<TestClip>
     {
-        [UgcSourceProperty("时间", 1)]
+        [BlocklySourceSlot("时间", 1)]
         private LogicGraph _time;
 
         class UClip : UClip<TestClipSource, TestClip>
@@ -85,11 +85,11 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
         }
     }
 
-    [UgcSource( "时间线/测试剪辑源2", typeof( TestClip2Source.UClip ) )]
+    [BlocklySource( "时间线/测试剪辑源2", typeof( TestClip2Source.UClip ) )]
     public class TestClip2Source : UClipSource<TestClip2>
     {
         [ExpressionSignature(typeof(float))]
-        [UgcSourceProperty("秒数", 1)]
+        [BlocklySourceSlot("秒数", 1)]
         public LogicGraph seconds;
 
         class UClip : UClip<TestClip2Source, TestClip2>

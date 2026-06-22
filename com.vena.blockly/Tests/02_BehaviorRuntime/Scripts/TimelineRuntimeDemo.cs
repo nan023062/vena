@@ -29,7 +29,7 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     /// 为什么用反射构造 TrackSource&lt;,&gt;：
     ///   TestClip2Source.UClip 是嵌套 + private 类型（同样是 codegen 路径产物）；
     ///   `TrackSource&lt;TClip, TInput&gt;` 的 TClip 必须是该私有类型，
-    ///   只能用 UgcSourceAttribute.GetObjectType 走反射拿到 + MakeGenericType 实例化。
+    ///   只能用 BlocklySourceAttribute.GetNodeType 走反射拿到 + MakeGenericType 实例化。
     /// </summary>
     public sealed class TimelineRuntimeDemo : MonoBehaviour
     {
@@ -63,10 +63,10 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
             };
 
             // ----- 反射拿 UClip 嵌套类型 + 构造 TrackSource<UClip, TestClip2Source> -----
-            Type uclipType = UgcSourceAttribute.GetObjectType(typeof(TestClip2Source));
+            Type uclipType = BlocklySourceAttribute.GetNodeType(typeof(TestClip2Source));
             if (uclipType == null)
             {
-                Debug.LogError("[TimelineDemo] UgcSource lookup failed for TestClip2Source.");
+                Debug.LogError("[TimelineDemo] BlocklySource lookup failed for TestClip2Source.");
                 return;
             }
             Type trackSourceType = typeof(TimelineSource.TrackSource<,>)
@@ -133,7 +133,7 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     }
 
     /// <summary>DemoConstFloatImpl 的 source + Node 装配。</summary>
-    [UgcSource("Demo常量/Float", typeof(DemoConstFloatSource.Node))]
+    [BlocklySource("Demo常量/Float", typeof(DemoConstFloatSource.Node))]
     public sealed class DemoConstFloatSource : Function<DemoConstFloatImpl, float>
     {
         public float value;

@@ -122,7 +122,7 @@ namespace Vena.Blockly
             // 但具体类有 set；这里允许具体类没有 setter 时静默跳过）。
             TrySetInstanceId(instance, nodeIR.Guid);
 
-            // 字段填充：每个 [UgcSourceProperty] 槽位一条 NodePropertyIR。
+            // 字段填充：每个 [BlocklySourceSlot] 槽位一条 NodePropertyIR。
             // 槽位类型：
             //   - 值流子节点（如 BehaviorNodeSource / Expression 引用）→ properties[].value 应为 nodeRef。
             //   - 字面值（int / string / bool / float / ...）            → properties[].value 应为 literal。

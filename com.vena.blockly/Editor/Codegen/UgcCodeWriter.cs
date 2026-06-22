@@ -16,7 +16,7 @@ namespace Vena.Blockly.Editor
 
     /// <summary>
     /// 三件套 emitter：把 <see cref="ScannedSource"/> 集合写盘为 `<源类名>.g.cs`。
-    /// 每个被扫描源类一个 .g.cs，含其全部 [UgcMethod] / [UgcProperty] 成员的三件套（Impl + Source + Source.Node）。
+    /// 每个被扫描源类一个 .g.cs，含其全部 [BlocklyCodeGenMethod] / [BlocklyCodeGenMember] 成员的三件套（Impl + Source + Source.Node）。
     /// </summary>
     internal static class UgcCodeWriter
     {
@@ -134,7 +134,7 @@ namespace Vena.Blockly.Editor
             sb.Append("namespace Vena.Blockly.Generated").Append(NL);
             sb.Append("{").Append(NL);
             sb.Append(NL);
-            sb.Append("    [UgcGenerated]").Append(NL);
+            sb.Append("    [BlocklyCodeGenerated]").Append(NL);
             sb.Append("    public sealed class GeneratedNodeMetadataProvider : INodeMetadataProvider").Append(NL);
             sb.Append("    {").Append(NL);
             sb.Append("        private readonly Dictionary<Type, NodeMetadata> _byType;").Append(NL);
@@ -234,7 +234,7 @@ namespace Vena.Blockly.Editor
             var implIface = isProcedure ? "IProcedureImpl" : $"IFunctionImpl<{TypeRef(m.ReturnType)}>";
             var srcRef = TypeRef(sourceType);
 
-            sb.Append(indent).Append("[UgcGenerated]").Append(NL);
+            sb.Append(indent).Append("[BlocklyCodeGenerated]").Append(NL);
             sb.Append(indent).Append("public sealed class ").Append(implName).Append(" : ").Append(implIface).Append(NL);
             sb.Append(indent).Append("{").Append(NL);
 
@@ -315,15 +315,15 @@ namespace Vena.Blockly.Editor
 
             var slots = BuildSlotList(m);
 
-            sb.Append(indent).Append("[UgcGenerated]").Append(NL);
-            sb.Append(indent).Append("[UgcSource(\"").Append(EscapeStringLiteral(m.MenuPath))
+            sb.Append(indent).Append("[BlocklyCodeGenerated]").Append(NL);
+            sb.Append(indent).Append("[BlocklySource(\"").Append(EscapeStringLiteral(m.MenuPath))
                 .Append("\", typeof(").Append(srcName).Append(".Node))]").Append(NL);
             sb.Append(indent).Append("public sealed class ").Append(srcName).Append(" : ").Append(baseType).Append(NL);
             sb.Append(indent).Append("{").Append(NL);
 
             foreach (var slot in slots)
             {
-                sb.Append(indent).Append("    [UgcSourceProperty(\"").Append(EscapeStringLiteral(slot.DisplayName))
+                sb.Append(indent).Append("    [BlocklySourceSlot(\"").Append(EscapeStringLiteral(slot.DisplayName))
                     .Append("\", ").Append(slot.Order).Append(")]").Append(NL);
                 sb.Append(indent).Append("    public ").Append(slot.SlotType).Append(' ').Append(slot.FieldName).Append(";").Append(NL);
                 sb.Append(NL);
@@ -335,7 +335,7 @@ namespace Vena.Blockly.Editor
 
         private static void AppendNode(StringBuilder sb, string srcName, string implName, IReadOnlyList<SlotInfo> slots, string indent)
         {
-            sb.Append(indent).Append("[UgcGenerated]").Append(NL);
+            sb.Append(indent).Append("[BlocklyCodeGenerated]").Append(NL);
             sb.Append(indent).Append("sealed class Node : Block<").Append(srcName).Append(">").Append(NL);
             sb.Append(indent).Append("{").Append(NL);
 

@@ -17,7 +17,7 @@ MonoBehaviour.
    - `OutputRoot = Packages/com.vena.blockly/Tests/04_Codegen/Generated`
      (resolved from the placeholder `${PackagePath}/Tests/04_Codegen/Generated`)
    - `AssemblyWhitelist = ["Vena.Blockly.Tests.Codegen"]`
-   - `TypeWhitelist = []` (accept all `[UgcSource]` source classes in the
+   - `TypeWhitelist = []` (accept all `[BlocklyNode]` source classes in the
      whitelisted asmdef)
 3. Menu **Tools → Vena → Blockly → Demos → 04 Codegen → Run Demo D Codegen**:
    delegates to the package's `UgcCodegenMenu.RunCodegen()`, which scans the
@@ -35,8 +35,8 @@ After running step 3, `Tests/04_Codegen/Generated/` should contain:
 - `GeneratedNodeMetadataProvider.g.cs` — aggregated `INodeMetadataProvider`
   implementation registered under namespace `Vena.Blockly.Generated`
 
-`InstanceMethod.cs` itself only carries the source class with `[UgcMethod]` /
-`[UgcProperty]` annotations — the previously-handwritten `#region Impl` and
+`InstanceMethod.cs` itself only carries the source class with `[BlocklyExportMethod]` /
+`[BlocklyExportMember]` annotations — the previously-handwritten `#region Impl` and
 `#region Source` blocks (scheme P) have been removed in the migration; the
 codegen produces exactly those two blocks again under
 `Generated/InstanceMethod*.g.cs`. Re-running codegen is idempotent (same

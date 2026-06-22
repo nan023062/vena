@@ -156,7 +156,7 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
         public void Finish(BehaviorGraph.Blockly graph) { }
     }
 
-    [UgcSource("测试行为/异常行为", typeof(ThrowingBehaviorImplSource.Node))]
+    [BlocklySource("测试行为/异常行为", typeof(ThrowingBehaviorImplSource.Node))]
     public sealed class ThrowingBehaviorImplSource : BehaviorNodeSource<ThrowingBehaviorImpl>
     {
         sealed class Node : BehaviorNode<ThrowingBehaviorImplSource, ThrowingBehaviorImpl>

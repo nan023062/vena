@@ -11,23 +11,23 @@ namespace Vena.Blockly
     /// <summary>
     /// Expression 驱动的行为源数据。
     /// </summary>
-    [UgcSource("行为节点/表达式行为", typeof(LogicBehavior))]
+    [BlocklySource("行为节点/表达式行为", typeof(LogicBehavior))]
     public sealed class LogicBehaviorSource : BehaviorNodeSource
     {
         [ExpressionSignature]
-        [UgcSourceProperty("启动时", 1)]
+        [BlocklySourceSlot("启动时", 1)]
         public LogicGraph onStart;
 
         [ExpressionSignature(typeof(bool))]
-        [UgcSourceProperty("每帧", 2)]
+        [BlocklySourceSlot("每帧", 2)]
         public LogicGraph onTick;
 
         [ExpressionSignature]
-        [UgcSourceProperty("延迟帧", 3)]
+        [BlocklySourceSlot("延迟帧", 3)]
         public LogicGraph onLateTick;
 
         [ExpressionSignature]
-        [UgcSourceProperty("结束时", 4)]
+        [BlocklySourceSlot("结束时", 4)]
         public LogicGraph onFinish;
     }
 

@@ -23,10 +23,10 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
         public bool Evaluate() => value;
     }
 
-    [UgcSource("Demo常量/Bool", typeof(DemoConstBoolSource.Node))]
+    [BlocklySource("Demo常量/Bool", typeof(DemoConstBoolSource.Node))]
     public sealed class DemoConstBoolSource : Function<DemoConstBoolImpl, bool>
     {
-        [UgcSourceProperty("常量", 1)]
+        [BlocklySourceSlot("常量", 1)]
         public bool value;
 
         sealed class Node : Block<DemoConstBoolSource>
@@ -51,10 +51,10 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
         public int Evaluate() => value;
     }
 
-    [UgcSource("Demo常量/Int", typeof(DemoConstIntSource.Node))]
+    [BlocklySource("Demo常量/Int", typeof(DemoConstIntSource.Node))]
     public sealed class DemoConstIntSource : Function<DemoConstIntImpl, int>
     {
-        [UgcSourceProperty("常量", 1)]
+        [BlocklySourceSlot("常量", 1)]
         public int value;
 
         sealed class Node : Block<DemoConstIntSource>
@@ -101,7 +101,7 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
         }
     }
 
-    [UgcSource("示例行为/Countdown", typeof(CountdownBehaviorSource.Node))]
+    [BlocklySource("示例行为/Countdown", typeof(CountdownBehaviorSource.Node))]
     public sealed class CountdownBehaviorSource : BehaviorNodeSource<CountdownBehaviorImpl>
     {
         public int ticksToRun = 1;
@@ -144,10 +144,10 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
         }
     }
 
-    [UgcSource("Demo信号/Log", typeof(LogSignalSource.Node))]
+    [BlocklySource("Demo信号/Log", typeof(LogSignalSource.Node))]
     public sealed class LogSignalSource : Procedure<LogSignalImpl>
     {
-        [UgcSourceProperty("消息", 1)]
+        [BlocklySourceSlot("消息", 1)]
         public string message;
 
         sealed class Node : Block<LogSignalSource>

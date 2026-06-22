@@ -496,7 +496,7 @@ namespace Vena.Blockly
 
                 var timeline = _group.Timeline;
 
-                Type clipType = UgcSourceAttribute.GetObjectType(clipSource.GetType());
+                Type clipType = BlocklySourceAttribute.GetNodeType(clipSource.GetType());
 
                 var clipObject = (ITimelineClip)Activator.CreateInstance(clipType);
 

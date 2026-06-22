@@ -13,14 +13,14 @@ namespace Vena.Blockly
 
     /// <summary>
     /// 节点元数据 —— Editor 扫描期收集、运行期通过 <c>INodeMetadataProvider</c> 查询。
-    /// 字段值由 <c>[UgcSource]</c> / <c>[UgcSourceProperty]</c> 注解原值透传。
+    /// 字段值由 <c>[BlocklySource]</c> / <c>[BlocklySourceSlot]</c> 注解原值透传。
     /// </summary>
     public sealed class NodeMetadata
     {
-        /// <summary>源类（带 [UgcSource] 的类，可能是 codegen 产物 *Source）。</summary>
+        /// <summary>源类（带 [BlocklySource] 的类，可能是 codegen 产物 *Source）。</summary>
         public Type SourceType { get; }
 
-        /// <summary>运行期 ILogicNode / IBehaviorNode 实现类（=`UgcSource.NodeType`）。</summary>
+        /// <summary>运行期 ILogicNode / IBehaviorNode 实现类（=`BlocklySource.NodeType`）。</summary>
         public Type NodeType { get; }
 
         /// <summary>调色板菜单路径，原值透传，可含 `/` 分层。</summary>
@@ -38,7 +38,7 @@ namespace Vena.Blockly
         }
     }
 
-    /// <summary>NodeMetadata 子条目：源类上一个 [UgcSourceProperty] 字段/属性的固化形态。</summary>
+    /// <summary>NodeMetadata 子条目：源类上一个 [BlocklySourceSlot] 字段/属性的固化形态。</summary>
     public sealed class NodePropertyMetadata
     {
         /// <summary>UI 显示名（原值透传）。</summary>

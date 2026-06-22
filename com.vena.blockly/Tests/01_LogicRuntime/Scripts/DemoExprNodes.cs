@@ -18,7 +18,7 @@ namespace Vena.Blockly.Tests.LogicRuntime
     }
 
     /// <summary>ConstInt 的 source + Node 装配。</summary>
-    [UgcSource("示例表达式/Int常量", typeof(ConstIntSource.Node))]
+    [BlocklySource("示例表达式/Int常量", typeof(ConstIntSource.Node))]
     public sealed class ConstIntSource : Function<ConstIntImpl, int>
     {
         public int value;
@@ -44,7 +44,7 @@ namespace Vena.Blockly.Tests.LogicRuntime
     }
 
     /// <summary>ConstFloat 的 source + Node 装配。</summary>
-    [UgcSource("示例表达式/Float常量", typeof(ConstFloatSource.Node))]
+    [BlocklySource("示例表达式/Float常量", typeof(ConstFloatSource.Node))]
     public sealed class ConstFloatSource : Function<ConstFloatImpl, float>
     {
         public float value;
@@ -71,7 +71,7 @@ namespace Vena.Blockly.Tests.LogicRuntime
     /// AddInt 的 source + Node 装配。两个子 Expression（a / b）通过 Blockly 栈帧
     /// 把求值结果 Push 到栈，基类自动 Pop&lt;T1&gt;/Pop&lt;T2&gt; 喂给 impl.Evaluate(in a, in b)。
     /// </summary>
-    [UgcSource("示例表达式/Int加法", typeof(AddIntSource.Node))]
+    [BlocklySource("示例表达式/Int加法", typeof(AddIntSource.Node))]
     public sealed class AddIntSource : Function<AddIntImpl, int, int, int>
     {
         public Expression a;
@@ -123,11 +123,11 @@ namespace Vena.Blockly.Tests.LogicRuntime
     }
 
     /// <summary>SubtractInt 的 source + Node 装配。结构同 AddIntSource。</summary>
-    [UgcSource("示例表达式/Int减法", typeof(SubtractIntSource.Node))]
+    [BlocklySource("示例表达式/Int减法", typeof(SubtractIntSource.Node))]
     public sealed class SubtractIntSource : Function<SubtractIntImpl, int, int, int>
     {
-        [UgcSourceProperty("a", 1)] public Expression a;
-        [UgcSourceProperty("b", 2)] public Expression b;
+        [BlocklySourceSlot("a", 1)] public Expression a;
+        [BlocklySourceSlot("b", 2)] public Expression b;
 
         sealed class Node : Block<SubtractIntSource>
         {
@@ -169,11 +169,11 @@ namespace Vena.Blockly.Tests.LogicRuntime
     }
 
     /// <summary>MultiplyInt 的 source + Node 装配。结构同 AddIntSource。</summary>
-    [UgcSource("示例表达式/Int乘法", typeof(MultiplyIntSource.Node))]
+    [BlocklySource("示例表达式/Int乘法", typeof(MultiplyIntSource.Node))]
     public sealed class MultiplyIntSource : Function<MultiplyIntImpl, int, int, int>
     {
-        [UgcSourceProperty("a", 1)] public Expression a;
-        [UgcSourceProperty("b", 2)] public Expression b;
+        [BlocklySourceSlot("a", 1)] public Expression a;
+        [BlocklySourceSlot("b", 2)] public Expression b;
 
         sealed class Node : Block<MultiplyIntSource>
         {
@@ -219,11 +219,11 @@ namespace Vena.Blockly.Tests.LogicRuntime
     /// Block.Evaluate() 内部会 Push&lt;bool&gt; 结果，调用方（如 LogicBranch.condition
     /// 的 LogicGraph.Call&lt;bool&gt;()）Pop&lt;bool&gt; 取出。
     /// </summary>
-    [UgcSource("示例表达式/Int大于", typeof(GreaterThanIntSource.Node))]
+    [BlocklySource("示例表达式/Int大于", typeof(GreaterThanIntSource.Node))]
     public sealed class GreaterThanIntSource : Function<GreaterThanIntImpl, int, int, bool>
     {
-        [UgcSourceProperty("a", 1)] public Expression a;
-        [UgcSourceProperty("b", 2)] public Expression b;
+        [BlocklySourceSlot("a", 1)] public Expression a;
+        [BlocklySourceSlot("b", 2)] public Expression b;
 
         sealed class Node : Block<GreaterThanIntSource>
         {
@@ -265,11 +265,11 @@ namespace Vena.Blockly.Tests.LogicRuntime
     }
 
     /// <summary>LessThanOrEqualInt 的 source + Node 装配。返回 bool。</summary>
-    [UgcSource("示例表达式/Int小于等于", typeof(LessThanOrEqualIntSource.Node))]
+    [BlocklySource("示例表达式/Int小于等于", typeof(LessThanOrEqualIntSource.Node))]
     public sealed class LessThanOrEqualIntSource : Function<LessThanOrEqualIntImpl, int, int, bool>
     {
-        [UgcSourceProperty("a", 1)] public Expression a;
-        [UgcSourceProperty("b", 2)] public Expression b;
+        [BlocklySourceSlot("a", 1)] public Expression a;
+        [BlocklySourceSlot("b", 2)] public Expression b;
 
         sealed class Node : Block<LessThanOrEqualIntSource>
         {

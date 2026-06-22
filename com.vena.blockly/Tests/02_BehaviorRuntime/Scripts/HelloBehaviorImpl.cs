@@ -41,7 +41,7 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     /// <summary>
     /// HelloBehaviorImpl 的 source + Node 装配。结构对照同目录 TestBehaviorImpl.cs（迁入 demo 后的 SampleBehaviorImpl1Source 形态）。
     /// </summary>
-    [UgcSource("示例行为/Hello", typeof(HelloBehaviorSource.Node))]
+    [BlocklySource("示例行为/Hello", typeof(HelloBehaviorSource.Node))]
     public sealed class HelloBehaviorSource : BehaviorNodeSource<HelloBehaviorImpl>
     {
         public string greeting;
