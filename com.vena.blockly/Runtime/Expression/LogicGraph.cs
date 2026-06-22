@@ -43,7 +43,9 @@ namespace Vena.Blockly
     [BlocklySource("表达式图", typeof(LogicGraph.Blockly))]
     public sealed class LogicGraph : IBlocklySource
     {
-        public ulong InstanceId { get; set; } = 0;
+        // 包心 plain 路径自动分配进程内单调递增 InstanceId（构造时即赋值）。
+        // setter 保留 public：GraphLoader.TrySetInstanceId 通过反射用 IR Guid 折叠值覆盖（公共 BindingFlags）。
+        public ulong InstanceId { get; set; } = InstanceIdAllocator.Next();
 
         [BlocklySourceSlot("根表达式", 1)]
         public Expression root;
