@@ -98,7 +98,7 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     public sealed class SampleBehaviorImpl2Source : BehaviorNodeSource<SampleBehaviorImpl2>
     {
         [ExpressionSignature(typeof(string))]
-        [BlocklySourceSlot("消息", 1)]
+        [BlocklySourceProperty("消息", 1)]
         public LogicGraph message;
 
         sealed class Node : BehaviorNode<SampleBehaviorImpl2Source, SampleBehaviorImpl2>

@@ -15,19 +15,19 @@ namespace Vena.Blockly
     public sealed class LogicBehaviorSource : BehaviorNodeSource
     {
         [ExpressionSignature]
-        [BlocklySourceSlot("启动时", 1)]
+        [BlocklySourceProperty("启动时", 1)]
         public LogicGraph onStart;
 
         [ExpressionSignature(typeof(bool))]
-        [BlocklySourceSlot("每帧", 2)]
+        [BlocklySourceProperty("每帧", 2)]
         public LogicGraph onTick;
 
         [ExpressionSignature]
-        [BlocklySourceSlot("延迟帧", 3)]
+        [BlocklySourceProperty("延迟帧", 3)]
         public LogicGraph onLateTick;
 
         [ExpressionSignature]
-        [BlocklySourceSlot("结束时", 4)]
+        [BlocklySourceProperty("结束时", 4)]
         public LogicGraph onFinish;
     }
 

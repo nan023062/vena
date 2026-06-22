@@ -115,7 +115,7 @@ namespace Vena.Blockly
     [BlocklySource("行为组合/并行节点", typeof(ParallelNode.Node))]
     public sealed class ParallelNode : BehaviorNodeSource
     {
-        [BlocklySourceSlot("子节点列表", 1)]
+        [BlocklySourceProperty("子节点列表", 1)]
         public BehaviorNodeSource[] sources;
 
         sealed class Node : UBehaviorComplexNode<ParallelNode>
@@ -199,7 +199,7 @@ namespace Vena.Blockly
     [BlocklySource("行为组合/序列节点", typeof(SequenceNode.Node))]
     public sealed class SequenceNode : BehaviorNodeSource
     {
-        [BlocklySourceSlot("子节点列表", 1)]
+        [BlocklySourceProperty("子节点列表", 1)]
         public BehaviorNodeSource[] sources;
 
         sealed class Node : UBehaviorComplexNode<SequenceNode>

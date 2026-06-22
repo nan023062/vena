@@ -24,7 +24,7 @@ namespace Vena.Blockly
         public ulong InstanceId { get; set; } = 0;
 
         [ExpressionSignature]
-        [BlocklySourceSlot("表达式", 1)]
+        [BlocklySourceProperty("表达式", 1)]
         public LogicGraph source;
 
         public void Serialize(IBlocklySerializer writer) { }

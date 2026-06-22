@@ -126,8 +126,8 @@ namespace Vena.Blockly.Tests.LogicRuntime
     [BlocklySource("示例表达式/Int减法", typeof(SubtractIntSource.Node))]
     public sealed class SubtractIntSource : Function<SubtractIntImpl, int, int, int>
     {
-        [BlocklySourceSlot("a", 1)] public Expression a;
-        [BlocklySourceSlot("b", 2)] public Expression b;
+        [BlocklySourceProperty("a", 1)] public Expression a;
+        [BlocklySourceProperty("b", 2)] public Expression b;
 
         sealed class Node : Block<SubtractIntSource>
         {
@@ -172,8 +172,8 @@ namespace Vena.Blockly.Tests.LogicRuntime
     [BlocklySource("示例表达式/Int乘法", typeof(MultiplyIntSource.Node))]
     public sealed class MultiplyIntSource : Function<MultiplyIntImpl, int, int, int>
     {
-        [BlocklySourceSlot("a", 1)] public Expression a;
-        [BlocklySourceSlot("b", 2)] public Expression b;
+        [BlocklySourceProperty("a", 1)] public Expression a;
+        [BlocklySourceProperty("b", 2)] public Expression b;
 
         sealed class Node : Block<MultiplyIntSource>
         {
@@ -222,8 +222,8 @@ namespace Vena.Blockly.Tests.LogicRuntime
     [BlocklySource("示例表达式/Int大于", typeof(GreaterThanIntSource.Node))]
     public sealed class GreaterThanIntSource : Function<GreaterThanIntImpl, int, int, bool>
     {
-        [BlocklySourceSlot("a", 1)] public Expression a;
-        [BlocklySourceSlot("b", 2)] public Expression b;
+        [BlocklySourceProperty("a", 1)] public Expression a;
+        [BlocklySourceProperty("b", 2)] public Expression b;
 
         sealed class Node : Block<GreaterThanIntSource>
         {
@@ -268,8 +268,8 @@ namespace Vena.Blockly.Tests.LogicRuntime
     [BlocklySource("示例表达式/Int小于等于", typeof(LessThanOrEqualIntSource.Node))]
     public sealed class LessThanOrEqualIntSource : Function<LessThanOrEqualIntImpl, int, int, bool>
     {
-        [BlocklySourceSlot("a", 1)] public Expression a;
-        [BlocklySourceSlot("b", 2)] public Expression b;
+        [BlocklySourceProperty("a", 1)] public Expression a;
+        [BlocklySourceProperty("b", 2)] public Expression b;
 
         sealed class Node : Block<LessThanOrEqualIntSource>
         {

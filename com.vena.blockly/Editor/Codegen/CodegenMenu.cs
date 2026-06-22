@@ -12,7 +12,7 @@ namespace Vena.Blockly.Editor
 {
 
     /// <summary>
-    /// Codegen 菜单触发入口。扫描白名单内带 [BlocklyCodeGen] 的源类、生成三件套并写盘到 OutputRoot。
+    /// Codegen 菜单触发入口。扫描白名单内带 [Blockly] 的源类、生成三件套并写盘到 OutputRoot。
     /// </summary>
     public static class CodegenMenu
     {

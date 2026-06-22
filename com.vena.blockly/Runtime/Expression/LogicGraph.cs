@@ -47,7 +47,7 @@ namespace Vena.Blockly
         // setter 保留 public：GraphLoader.TrySetInstanceId 通过反射用 IR Guid 折叠值覆盖（公共 BindingFlags）。
         public ulong InstanceId { get; set; } = InstanceIdAllocator.Next();
 
-        [BlocklySourceSlot("根表达式", 1)]
+        [BlocklySourceProperty("根表达式", 1)]
         public Expression root;
 
         /// <summary>

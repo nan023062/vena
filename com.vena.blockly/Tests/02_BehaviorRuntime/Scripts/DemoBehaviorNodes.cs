@@ -26,7 +26,7 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     [BlocklySource("Demo常量/Bool", typeof(DemoConstBoolSource.Node))]
     public sealed class DemoConstBoolSource : Function<DemoConstBoolImpl, bool>
     {
-        [BlocklySourceSlot("常量", 1)]
+        [BlocklySourceProperty("常量", 1)]
         public bool value;
 
         sealed class Node : Block<DemoConstBoolSource>
@@ -54,7 +54,7 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     [BlocklySource("Demo常量/Int", typeof(DemoConstIntSource.Node))]
     public sealed class DemoConstIntSource : Function<DemoConstIntImpl, int>
     {
-        [BlocklySourceSlot("常量", 1)]
+        [BlocklySourceProperty("常量", 1)]
         public int value;
 
         sealed class Node : Block<DemoConstIntSource>
@@ -147,7 +147,7 @@ namespace Vena.Blockly.Tests.BehaviorRuntime
     [BlocklySource("Demo信号/Log", typeof(LogSignalSource.Node))]
     public sealed class LogSignalSource : Procedure<LogSignalImpl>
     {
-        [BlocklySourceSlot("消息", 1)]
+        [BlocklySourceProperty("消息", 1)]
         public string message;
 
         sealed class Node : Block<LogSignalSource>

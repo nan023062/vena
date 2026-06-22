@@ -16,7 +16,9 @@ namespace Vena.Blockly.Editor
 
     /// <summary>
     /// 三件套 emitter：把 <see cref="ScannedSource"/> 集合写盘为 `<源类名>.g.cs`。
-    /// 每个被扫描源类一个 .g.cs，含其全部 [BlocklyCodeGenMethod] / [BlocklyCodeGenMember] 成员的三件套（Impl + Source + Source.Node）。
+    /// 每个被扫描源类一个 .g.cs，含其全部 [Blockly] 成员（method / property / field）的三件套（Impl + Source + Source.Node）。
+    /// 产物落点：`<源类目录>/Generated/<源类名>.g.cs`（per-source，命名空间 = `<源类命名空间>.Generated`）。
+    /// Provider 产物（聚合所有 NodeMetadata）落在 <c>outputRoot</c>，命名空间固定 <c>Vena.Blockly.Generated</c>。
     /// </summary>
     internal static class CodeWriter
     {
@@ -38,8 +40,10 @@ namespace Vena.Blockly.Editor
             "// -----------------------------------------------------------------------------\r\n";
 
         /// <summary>
-        /// 默认写盘模式：对每个源类，产出 <c><paramref name="outputRoot"/>/&lt;源类名&gt;.g.cs</c>。
-        /// 命名空间随源类、文件头打 auto-generated 标记。返回每次实际写盘 / 跳过（内容相同）的统计。
+        /// 默认写盘模式：对每个源类，产出 <c>&lt;src.SourceDirectory&gt;/Generated/&lt;源类名&gt;.g.cs</c>
+        /// （命名空间 = `&lt;源类命名空间&gt;.Generated`，与源类物理目录平行）；
+        /// Provider 产物落到 <paramref name="outputRoot"/>（命名空间 <c>Vena.Blockly.Generated</c>）。
+        /// 文件头打 auto-generated 标记。返回每次实际写盘 / 跳过（内容相同）的统计。
         /// </summary>
         public static EmitReport Emit(IReadOnlyList<ScannedSource> sources, string outputRoot)
         {
@@ -47,16 +51,24 @@ namespace Vena.Blockly.Editor
             if (string.IsNullOrEmpty(outputRoot)) throw new ArgumentException("outputRoot 不能为空", nameof(outputRoot));
 
             var report = new EmitReport();
-            Directory.CreateDirectory(outputRoot);
 
             foreach (var src in sources)
             {
+                if (string.IsNullOrEmpty(src.SourceDirectory))
+                {
+                    throw new InvalidOperationException(
+                        $"[Vena.Blockly] 无法定位源类物理目录: {src.SourceType.FullName}");
+                }
+                var perSourceDir = Path.Combine(src.SourceDirectory, "Generated");
+                Directory.CreateDirectory(perSourceDir);
+
                 var content = EmitSourceFile(src);
-                var path = Path.Combine(outputRoot, src.SourceType.Name + ".g.cs").Replace('\\', '/');
+                var path = Path.Combine(perSourceDir, src.SourceType.Name + ".g.cs").Replace('\\', '/');
                 WriteIfChanged(path, content, report);
             }
 
             // Provider 产物：聚合所有 *Source 的 NodeMetadata，运行期由 IBlocklyNodeFactory.Initialize() 加载。
+            Directory.CreateDirectory(outputRoot);
             var providerContent = EmitProviderFile(sources);
             var providerPath = Path.Combine(outputRoot, "GeneratedNodeMetadataProvider.g.cs").Replace('\\', '/');
             WriteIfChanged(providerPath, providerContent, report);
@@ -89,6 +101,7 @@ namespace Vena.Blockly.Editor
 
         /// <summary>
         /// 生成完整 .g.cs 文件内容（独立编译单元）：auto-generated 头 + using + namespace + 所有成员的三件套。
+        /// 命名空间 = `&lt;源类命名空间&gt;.Generated`（源类无命名空间时退化为 `Generated`），始终有 namespace 块。
         /// </summary>
         private static string EmitSourceFile(ScannedSource src)
         {
@@ -97,23 +110,18 @@ namespace Vena.Blockly.Editor
             sb.Append("using Vena.Blockly;").Append(NL);
             sb.Append(NL);
 
-            var ns = src.SourceType.Namespace;
-            var hasNs = !string.IsNullOrEmpty(ns);
-            if (hasNs)
-            {
-                sb.Append("namespace ").Append(ns).Append(NL);
-                sb.Append("{").Append(NL);
-                sb.Append(NL);
-            }
+            var srcNs = src.SourceType.Namespace;
+            var ns = string.IsNullOrEmpty(srcNs) ? "Generated" : srcNs + ".Generated";
 
-            AppendImpls(sb, src, hasNs);
+            sb.Append("namespace ").Append(ns).Append(NL);
+            sb.Append("{").Append(NL);
             sb.Append(NL);
-            AppendSources(sb, src, hasNs);
 
-            if (hasNs)
-            {
-                sb.Append("}").Append(NL);
-            }
+            AppendImpls(sb, src, hasNs: true);
+            sb.Append(NL);
+            AppendSources(sb, src, hasNs: true);
+
+            sb.Append("}").Append(NL);
 
             return sb.ToString();
         }
@@ -134,7 +142,6 @@ namespace Vena.Blockly.Editor
             sb.Append("namespace Vena.Blockly.Generated").Append(NL);
             sb.Append("{").Append(NL);
             sb.Append(NL);
-            sb.Append("    [BlocklyGenerated]").Append(NL);
             sb.Append("    public sealed class GeneratedNodeMetadataProvider : INodeMetadataProvider").Append(NL);
             sb.Append("    {").Append(NL);
             sb.Append("        private readonly Dictionary<Type, NodeMetadata> _byType;").Append(NL);
@@ -173,7 +180,8 @@ namespace Vena.Blockly.Editor
         {
             var srcName = SourceName(src.SourceType, m);
             var ns = src.SourceType.Namespace;
-            var srcFqn = string.IsNullOrEmpty(ns) ? srcName : ns + "." + srcName;
+            var generatedNs = string.IsNullOrEmpty(ns) ? "Generated" : ns + ".Generated";
+            var srcFqn = generatedNs + "." + srcName;
             var slots = BuildSlotList(m);
 
             sb.Append(indent).Append("new NodeMetadata(").Append(NL);
@@ -234,7 +242,6 @@ namespace Vena.Blockly.Editor
             var implIface = isProcedure ? "IProcedureImpl" : $"IFunctionImpl<{TypeRef(m.ReturnType)}>";
             var srcRef = TypeRef(sourceType);
 
-            sb.Append(indent).Append("[BlocklyGenerated]").Append(NL);
             sb.Append(indent).Append("public sealed class ").Append(implName).Append(" : ").Append(implIface).Append(NL);
             sb.Append(indent).Append("{").Append(NL);
 
@@ -315,7 +322,6 @@ namespace Vena.Blockly.Editor
 
             var slots = BuildSlotList(m);
 
-            sb.Append(indent).Append("[BlocklyGenerated]").Append(NL);
             sb.Append(indent).Append("[BlocklySource(\"").Append(EscapeStringLiteral(m.MenuPath))
                 .Append("\", typeof(").Append(srcName).Append(".Node))]").Append(NL);
             sb.Append(indent).Append("public sealed class ").Append(srcName).Append(" : ").Append(baseType).Append(NL);
@@ -323,7 +329,7 @@ namespace Vena.Blockly.Editor
 
             foreach (var slot in slots)
             {
-                sb.Append(indent).Append("    [BlocklySourceSlot(\"").Append(EscapeStringLiteral(slot.DisplayName))
+                sb.Append(indent).Append("    [BlocklySourceProperty(\"").Append(EscapeStringLiteral(slot.DisplayName))
                     .Append("\", ").Append(slot.Order).Append(")]").Append(NL);
                 sb.Append(indent).Append("    public ").Append(slot.SlotType).Append(' ').Append(slot.FieldName).Append(";").Append(NL);
                 sb.Append(NL);
@@ -335,7 +341,6 @@ namespace Vena.Blockly.Editor
 
         private static void AppendNode(StringBuilder sb, string srcName, string implName, IReadOnlyList<SlotInfo> slots, string indent)
         {
-            sb.Append(indent).Append("[BlocklyGenerated]").Append(NL);
             sb.Append(indent).Append("sealed class Node : Block<").Append(srcName).Append(">").Append(NL);
             sb.Append(indent).Append("{").Append(NL);
 
@@ -438,7 +443,7 @@ namespace Vena.Blockly.Editor
         {
             // 按 order 升序固定 UI / IR / Pop 三者一致顺序：
             // 1) instance（若需）
-            // 2) 参数（method 走 [BlocklyCodeGenMethod].parameterNames 顺序；property setter 走单 value 槽）
+            // 2) 参数（method 走 [Blockly].parameterNames 顺序；property / field setter 走单 value 槽）
             var list = new List<SlotInfo>();
             int order = 1;
 
@@ -491,7 +496,7 @@ namespace Vena.Blockly.Editor
 
         /// <summary>
         /// C# 类型引用打印。处理：void / 内置基元别名 / 泛型 / 嵌套类。不处理：array、ref/in/out、tuple。
-        /// 当前 codegen 输入面（[BlocklyCodeGenMethod] / [BlocklyCodeGenMember] 参数）只有非 ref 普通类型，足够。
+        /// 当前 codegen 输入面（[Blockly] method / property / field 参数）只有非 ref 普通类型，足够。
         /// </summary>
         private static string TypeRef(Type t)
         {

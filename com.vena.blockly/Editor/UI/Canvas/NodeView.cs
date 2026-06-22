@@ -18,7 +18,7 @@ namespace Vena.Blockly.Editor.UI
     /// GraphView Node 视图 —— 单节点的端口 + 标签呈现。
     /// 端口规则：
     ///   控制端口（如 "next" / "true" / "false"）：Color/Capacity = single（入度 1）。
-    ///   值端口（[BlocklySourceSlot] 槽位）：Capacity = single（值入度 1）。
+    ///   值端口（[BlocklySourceProperty] 槽位）：Capacity = single（值入度 1）。
     /// </summary>
     public sealed class NodeView : Node
     {
@@ -48,7 +48,7 @@ namespace Vena.Blockly.Editor.UI
             outputContainer.Add(controlOut);
             _outputPorts["next"] = controlOut;
 
-            // 值端口：每个 NodeIR.Properties 一条值入端口（按 [BlocklySourceSlot] 升序，与 IR 顺序一致）。
+            // 值端口：每个 NodeIR.Properties 一条值入端口（按 [BlocklySourceProperty] 升序，与 IR 顺序一致）。
             if (nodeIR.Properties != null)
             {
                 foreach (var p in nodeIR.Properties)

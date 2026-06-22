@@ -14,13 +14,13 @@ namespace Vena.Blockly
     public sealed class BranchNode : BehaviorNodeSource
     {
         [ExpressionSignature(typeof(bool))]
-        [BlocklySourceSlot("条件", 1)]
+        [BlocklySourceProperty("条件", 1)]
         public LogicGraph condition;
 
-        [BlocklySourceSlot("为真时", 2)]
+        [BlocklySourceProperty("为真时", 2)]
         public BehaviorNodeSource trueSource;
 
-        [BlocklySourceSlot("为假时", 3)]
+        [BlocklySourceProperty("为假时", 3)]
         public BehaviorNodeSource falseSource;
 
         sealed class Node : CompositeBehavior<BranchNode>
@@ -99,13 +99,13 @@ namespace Vena.Blockly
     public sealed class SwitchNode : BehaviorNodeSource
     {
         [ExpressionSignature(typeof(int))]
-        [BlocklySourceSlot("分支值", 1)]
+        [BlocklySourceProperty("分支值", 1)]
         public LogicGraph switchValue;
 
-        [BlocklySourceSlot("分支列表", 2)]
+        [BlocklySourceProperty("分支列表", 2)]
         public BehaviorNodeSource[] caseSources;
 
-        [BlocklySourceSlot("默认分支", 3)]
+        [BlocklySourceProperty("默认分支", 3)]
         public BehaviorNodeSource defaultSource;
 
         sealed class Node : CompositeBehavior<SwitchNode>
@@ -212,10 +212,10 @@ namespace Vena.Blockly
     [BlocklySource("行为控制/选择", typeof(SelectorNode.Node))]
     public sealed class SelectorNode : BehaviorNodeSource
     {
-        [BlocklySourceSlot("条件列表", 1)]
+        [BlocklySourceProperty("条件列表", 1)]
         public LogicGraph[] conditions;
 
-        [BlocklySourceSlot("行为列表", 2)]
+        [BlocklySourceProperty("行为列表", 2)]
         public BehaviorNodeSource[] behaviors;
 
         sealed class Node : CompositeBehavior<SelectorNode>
@@ -323,10 +323,10 @@ namespace Vena.Blockly
     public class LoopNode : BehaviorNodeSource
     {
         [ExpressionSignature(typeof(int))]
-        [BlocklySourceSlot("循环次数", 1)]
+        [BlocklySourceProperty("循环次数", 1)]
         public LogicGraph loopCount;
 
-        [BlocklySourceSlot("循环体", 2)]
+        [BlocklySourceProperty("循环体", 2)]
         public BehaviorNodeSource behavior;
 
         sealed class Node : CompositeBehavior<LoopNode>

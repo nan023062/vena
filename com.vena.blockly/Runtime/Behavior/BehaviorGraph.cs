@@ -19,7 +19,7 @@ namespace Vena.Blockly
     {
         public ulong InstanceId { get; set; } = 0;
 
-        [BlocklySourceSlot("根节点", 1)]
+        [BlocklySourceProperty("根节点", 1)]
         public BehaviorNodeSource root;
 
         /// <summary>

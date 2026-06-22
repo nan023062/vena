@@ -14,10 +14,10 @@ namespace Vena.Blockly
     [BlocklySource("行为节点/时间轴", typeof(Timeline))]
     public class TimelineSource : BehaviorNodeSource
     {
-        [BlocklySourceSlot("帧率", 1)]
+        [BlocklySourceProperty("帧率", 1)]
         public int frameRate = 30;
 
-        [BlocklySourceSlot("组", 2)]
+        [BlocklySourceProperty("组", 2)]
         public readonly GroupSource group = new GroupSource();
 
         public interface ISource

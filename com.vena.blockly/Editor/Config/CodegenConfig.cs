@@ -20,10 +20,10 @@ namespace Vena.Blockly.Editor
         [Tooltip("被扫描的程序集名清单（asmdef name）。空 = 不扫描。")]
         public string[] AssemblyWhitelist;
 
-        [Tooltip("被扫描的类型全名清单（namespace.Type）。空 = 接受程序集内全部带 [BlocklySource] 的类。")]
+        [Tooltip("被扫描的类型全名清单（namespace.Type）。空 = 接受程序集内全部带 [Blockly] 的类。")]
         public string[] TypeWhitelist;
 
-        [Tooltip("生成产物输出根目录（相对项目根 / Assets 的 Unity 路径）。默认 Packages/com.vena.blockly/Runtime/Generated。")]
+        [Tooltip("Provider 产物输出根目录（相对项目根 / Assets 的 Unity 路径）。三件套不再使用此字段——其落点 = 各源类 `Generated/` 子目录；本字段仅 Provider 用。")]
         public string OutputRoot = "Packages/com.vena.blockly/Runtime/Generated";
     }
 }

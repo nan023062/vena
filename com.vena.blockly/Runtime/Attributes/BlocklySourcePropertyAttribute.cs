@@ -9,19 +9,18 @@ using System;
 
 namespace Vena.Blockly
 {
-
     /// <summary>
-    /// 标注 Blockly runtime 节点源类（Source）上的槽位字段：声明槽位显示名与 UI / IR / Pop 顺序号。
-    /// 与 <see cref="BlocklySourceAttribute"/> 同属 Source 族，描述节点源上的可见输入。
+    /// 标注 Blockly runtime 节点源类（Source）上的输入字段 / 属性：声明显示名与 UI / IR / Push 顺序号
+    /// （Pop 顺序 = Push 顺序的反序，详见 Editor 合约 §2）。
+    /// 与 <see cref="BlocklySourceAttribute"/> 同属 Source 族，描述节点源上的可见输入 property。
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
-    public sealed class BlocklySourceSlotAttribute : Attribute
+    public sealed class BlocklySourcePropertyAttribute : Attribute
     {
         public string DisplayName { get; }
-
         public int Order { get; }
 
-        public BlocklySourceSlotAttribute(string displayName, int order)
+        public BlocklySourcePropertyAttribute(string displayName, int order)
         {
             DisplayName = displayName;
             Order = order;
