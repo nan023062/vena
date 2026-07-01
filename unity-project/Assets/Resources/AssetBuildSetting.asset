@@ -15,5 +15,5 @@ MonoBehaviour:
   useAssetBundle: 0
   assetRootPath: 
   bundleOutputPath: 
-  localStorePath: '{0}/../AssetStore'
+  localStorePath: 
   assetPackages: []
