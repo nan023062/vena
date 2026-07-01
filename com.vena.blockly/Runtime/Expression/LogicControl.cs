@@ -16,57 +16,44 @@ namespace Vena.Blockly
     public sealed class LogicSequence : Expression
     {
         [BlocklySourceSlot("语句列表", 1)]
-        public LogicGraph[] statements;
+        public Expression[] statements;
 
-        internal sealed class Node : ILogicNode
+        internal sealed class Node : Block<LogicSequence>
         {
-            public LogicGraph.Blockly Blockly { get; private set; }
-            Blockly IBlock.scope => Blockly;
-            private LogicSequence _source;
-            private LogicGraph.Blockly[] _statements;
+            private ILogicNode[] _statements;
 
-            void ILogicNode.Init(LogicGraph.Blockly blockly, Expression source)
+            protected override void Initialize()
             {
-                Blockly = blockly;
-                _source = (LogicSequence)source;
-                Initialize();
+                if (source.statements == null)
+                {
+                    _statements = null;
+                    return;
+                }
+                _statements = new ILogicNode[source.statements.Length];
+                for (int i = 0; i < source.statements.Length; i++)
+                {
+                    var s = source.statements[i];
+                    _statements[i] = s != null ? Blockly.CreateBlock(s) : null;
+                }
             }
 
-            void ILogicNode.Evaluate()
+            public override void Evaluate()
             {
                 if (_statements == null) return;
                 for (int i = 0; i < _statements.Length; i++)
                 {
-                    _statements[i]?.Invoke();
+                    _statements[i]?.Evaluate();
                 }
             }
 
-            void IBlock.Destroy()
-            {
-                OnDestroy();
-                Blockly = null;
-                _source = null;
-            }
-
-            private void Initialize()
-            {
-                if (_source.statements != null)
-                {
-                    _statements = new LogicGraph.Blockly[_source.statements.Length];
-                    for (int i = 0; i < _source.statements.Length; i++)
-                    {
-                        _statements[i] = Blockly.CreateBlockly(_source.statements[i]);
-                    }
-                }
-            }
-
-            private void OnDestroy()
+            protected override void OnDestroy()
             {
                 if (_statements != null)
                 {
                     for (int i = 0; i < _statements.Length; i++)
                     {
-                        Blockly.DestroyBlockly(_statements[i]);
+                        Blockly.DestroyBlock(_statements[i]);
+                        _statements[i] = null;
                     }
                     _statements = null;
                 }
@@ -83,58 +70,46 @@ namespace Vena.Blockly
     {
         [ExpressionSignature(typeof(bool))]
         [BlocklySourceSlot("条件", 1)]
-        public LogicGraph condition;
+        public Expression condition;
 
         [BlocklySourceSlot("为真时", 2)]
-        public LogicGraph trueBranch;
+        public Expression trueBranch;
 
         [BlocklySourceSlot("为假时", 3)]
-        public LogicGraph falseBranch;
+        public Expression falseBranch;
 
-        internal sealed class Node : ILogicNode
+        internal sealed class Node : Block<LogicBranch>
         {
-            public LogicGraph.Blockly Blockly { get; private set; }
-            Blockly IBlock.scope => Blockly;
-            private LogicBranch _source;
-            private LogicGraph.Blockly _condition;
-            private LogicGraph.Blockly _trueBranch;
-            private LogicGraph.Blockly _falseBranch;
+            private ILogicNode _condition;
+            private ILogicNode _trueBranch;
+            private ILogicNode _falseBranch;
 
-            void ILogicNode.Init(LogicGraph.Blockly blockly, Expression source)
+            protected override void Initialize()
             {
-                Blockly = blockly;
-                _source = (LogicBranch)source;
-                Initialize();
+                _condition = source.condition != null ? Blockly.CreateBlock(source.condition) : null;
+                _trueBranch = source.trueBranch != null ? Blockly.CreateBlock(source.trueBranch) : null;
+                _falseBranch = source.falseBranch != null ? Blockly.CreateBlock(source.falseBranch) : null;
             }
 
-            void ILogicNode.Evaluate()
+            public override void Evaluate()
             {
-                bool result = _condition.Call<bool>();
+                _condition.Evaluate();
+                bool result = Pop<bool>();
                 if (result)
-                    _trueBranch?.Invoke();
+                {
+                    _trueBranch?.Evaluate();
+                }
                 else
-                    _falseBranch?.Invoke();
+                {
+                    _falseBranch?.Evaluate();
+                }
             }
 
-            void IBlock.Destroy()
+            protected override void OnDestroy()
             {
-                OnDestroy();
-                Blockly = null;
-                _source = null;
-            }
-
-            private void Initialize()
-            {
-                _condition = Blockly.CreateBlockly(_source.condition);
-                _trueBranch = Blockly.CreateBlockly(_source.trueBranch);
-                _falseBranch = Blockly.CreateBlockly(_source.falseBranch);
-            }
-
-            private void OnDestroy()
-            {
-                Blockly.DestroyBlockly(_condition);
-                Blockly.DestroyBlockly(_trueBranch);
-                Blockly.DestroyBlockly(_falseBranch);
+                Blockly.DestroyBlock(_condition);
+                Blockly.DestroyBlock(_trueBranch);
+                Blockly.DestroyBlock(_falseBranch);
                 _condition = null;
                 _trueBranch = null;
                 _falseBranch = null;
@@ -151,59 +126,46 @@ namespace Vena.Blockly
     {
         [ExpressionSignature(typeof(bool))]
         [BlocklySourceSlot("条件", 1)]
-        public LogicGraph condition;
+        public Expression condition;
 
         [BlocklySourceSlot("循环体", 2)]
-        public LogicGraph body;
+        public Expression body;
 
         [BlocklySourceSlot("最大迭代次数", 3)]
         public int maxIterations = 10000;
 
-        internal sealed class Node : ILogicNode
+        internal sealed class Node : Block<LogicWhile>
         {
-            public LogicGraph.Blockly Blockly { get; private set; }
-            Blockly IBlock.scope => Blockly;
-            private LogicWhile _source;
-            private LogicGraph.Blockly _condition;
-            private LogicGraph.Blockly _body;
+            private ILogicNode _condition;
+            private ILogicNode _body;
 
-            void ILogicNode.Init(LogicGraph.Blockly blockly, Expression source)
+            protected override void Initialize()
             {
-                Blockly = blockly;
-                _source = (LogicWhile)source;
-                Initialize();
+                _condition = source.condition != null ? Blockly.CreateBlock(source.condition) : null;
+                _body = source.body != null ? Blockly.CreateBlock(source.body) : null;
             }
 
-            void ILogicNode.Evaluate()
+            public override void Evaluate()
             {
-                int max = _source.maxIterations;
+                int max = source.maxIterations;
                 int count = 0;
-                while (_condition.Call<bool>())
+                while (true)
                 {
-                    _body?.Invoke();
+                    _condition.Evaluate();
+                    if (!Pop<bool>()) break;
+                    _body?.Evaluate();
                     if (++count >= max)
+                    {
                         throw new InvalidOperationException(
                             $"LogicWhile exceeded maxIterations={max}, possible infinite loop");
+                    }
                 }
             }
 
-            void IBlock.Destroy()
+            protected override void OnDestroy()
             {
-                OnDestroy();
-                Blockly = null;
-                _source = null;
-            }
-
-            private void Initialize()
-            {
-                _condition = Blockly.CreateBlockly(_source.condition);
-                _body = Blockly.CreateBlockly(_source.body);
-            }
-
-            private void OnDestroy()
-            {
-                Blockly.DestroyBlockly(_condition);
-                Blockly.DestroyBlockly(_body);
+                Blockly.DestroyBlock(_condition);
+                Blockly.DestroyBlock(_body);
                 _condition = null;
                 _body = null;
             }
@@ -219,27 +181,11 @@ namespace Vena.Blockly
         [BlocklySourceSlot("变量名", 1)]
         public string variableName;
 
-        protected internal sealed class Node : ILogicNode
+        protected internal sealed class Node : Block<LogicGetVariable<T>>
         {
-            public LogicGraph.Blockly Blockly { get; private set; }
-            Blockly IBlock.scope => Blockly;
-            private LogicGetVariable<T> _source;
-
-            void ILogicNode.Init(LogicGraph.Blockly blockly, Expression source)
+            public override void Evaluate()
             {
-                Blockly = blockly;
-                _source = (LogicGetVariable<T>)source;
-            }
-
-            void ILogicNode.Evaluate()
-            {
-                Blockly.Push<T>(Blockly.GetVariable<T>(_source.variableName));
-            }
-
-            void IBlock.Destroy()
-            {
-                Blockly = null;
-                _source = null;
+                Push<T>(Blockly.GetVariable<T>(source.variableName));
             }
         }
     }
@@ -266,43 +212,27 @@ namespace Vena.Blockly
         public string variableName;
 
         [BlocklySourceSlot("值", 2)]
-        public LogicGraph value;
+        public Expression value;
 
-        protected internal sealed class Node : ILogicNode
+        protected internal sealed class Node : Block<LogicSetVariable<T>>
         {
-            public LogicGraph.Blockly Blockly { get; private set; }
-            Blockly IBlock.scope => Blockly;
-            private LogicSetVariable<T> _source;
-            private LogicGraph.Blockly _value;
+            private ILogicNode _value;
 
-            void ILogicNode.Init(LogicGraph.Blockly blockly, Expression source)
+            protected override void Initialize()
             {
-                Blockly = blockly;
-                _source = (LogicSetVariable<T>)source;
-                Initialize();
+                _value = source.value != null ? Blockly.CreateBlock(source.value) : null;
             }
 
-            void ILogicNode.Evaluate()
+            public override void Evaluate()
             {
-                T result = _value.Call<T>();
-                Blockly.SetVariable<T>(_source.variableName, result);
+                _value.Evaluate();
+                T result = Pop<T>();
+                Blockly.SetVariable<T>(source.variableName, result);
             }
 
-            void IBlock.Destroy()
+            protected override void OnDestroy()
             {
-                OnDestroy();
-                Blockly = null;
-                _source = null;
-            }
-
-            private void Initialize()
-            {
-                _value = Blockly.CreateBlockly(_source.value);
-            }
-
-            private void OnDestroy()
-            {
-                Blockly.DestroyBlockly(_value);
+                Blockly.DestroyBlock(_value);
                 _value = null;
             }
         }

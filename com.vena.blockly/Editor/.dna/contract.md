@@ -18,7 +18,7 @@
 | AllowMultiple | `false` |
 | sealed | 是 |
 | 字段语义 | `MenuPath:string` = 编辑器调色板菜单路径，允许含 `/` 分层（如 `"测试对象/加法"`），也允许不含 `/` 作为顶层 displayName（如 `"表达式图"`）；**原值透传**至 NodeMetadata，UI 端自行切分。`NodeType:Type` = 该 source 对应的 `ILogicNode` / `IBehaviorNode` 实现类（通常是 source 类嵌套的 `Node`/`Block` 子类，可能是 codegen 产出产物）。 |
-| codegen 处理 | 识别为 Blockly 源项、入扫描集；如该类需 codegen 产出三件套（§2），nodeType 填入生成产物的 `Node` 型。 |
+| codegen 处理 | 识别为 Blockly 源项、入扫描集；如该类需 codegen 产出二件套（§2），nodeType 填入生成产物的 `Node` 型。 |
 | 提醒 | 字段名与 Runtime 源码 `BlocklySourceAttribute.MenuPath / NodeType` 对齐；Runtime 定义不动、契约措辞向源码看齐。 |
 
 ### `[BlocklySourceSlot(displayName, order:int)]`
@@ -45,7 +45,7 @@
 | 类名 | `BlocklyAttribute`（C# 中代码使用形式 `[Blockly(...)]`） |
 | 构造函数 | `BlocklyAttribute(string displayName)` 与 `BlocklyAttribute(string displayName, bool isStatic, params string[] parameterNames)` 二重载 |
 | 字段语义 | `DisplayName:string` = UI 显示名（所有 target 通用）；`IsStatic:bool` = 仅 Method target 有意义（生成静态 / 实例胶水分路）；`ParameterNames:string[]` = 仅 Method target 有意义（参数顺序与取名，必须与方法签名参数位置严格一致）。非 Method target 上 `IsStatic` / `ParameterNames` 由 scanner 忽略（不报错、不读取）。 |
-| codegen 处理 | scanner 以 `MemberInfo.MemberType` 分支：<br/>• **Class** = 宿主类入 codegen 扫描集；`displayName` 参与产物 `*Source` 上 `[BlocklySource]` 的 `menuPath` 拼接（§2）。<br/>• **Method** = 生成三件套（§2）；Impl 采用 0-arity `IFunctionImpl<TOutput>` / `IProcedureImpl`（静态 N 参 → N 个字段 + 1 个 `instance` 字段只在 `IsStatic=false` 时生成）。Pop 路径语义以 §2 为准。<br/>• **Property** = 生成 getter/setter 两个三件套（按读写可访问性裁剪）；getter 走 `IFunctionImpl<TOutput>`、setter 走 `IProcedureImpl<T>`。<br/>• **Field** = 同 Property（读写都生）。 |
+| codegen 处理（KD#18 后，Path A 产物从三件套坍缩为二件套） | scanner 以 `MemberInfo.MemberType` 分支：<br/>• **Class** = 宿主类入 codegen 扫描集；`displayName` 参与产物 `*Source` 上 `[BlocklySource]` 的 `menuPath` 拼接（§2）。<br/>• **Method** = 生成二件套（§2）：`*Source : Expression` + `*Source.Node : Block<*Source>`。Node.Evaluate 内 inline `Pop<T_N>() ... Pop<T_1>()` + 目标方法调用（非-void 时可选 `Push(result)`）。`IsStatic=false` 时额外引入 `instance` 槽位（order=1）作为接收者。<br/>• **Property** = 生成 getter/setter 两个二件套（按读写可访问性裁剪）。<br/>• **Field** = 同 Property（读写都生）。<br/>**不再产出 `*Impl` 类**（KD#18）。 |
 | 硬约束 Q1（§2 锁） | 同一类上 `[Blockly]` 不允许与 `[BlocklySource]` 同存；`[Blockly]` 不允许打在「runtime 节点源类」上（继承自 `Vena.Blockly.Expression` / `Vena.Blockly.BehaviorNodeSource` / `Vena.Blockly.Block<TSource>` / `Vena.Blockly.BehaviorNode<TSource, TImpl>` 的类不可携）。违者 scanner 抛 `InvalidOperationException` 中止整个 codegen run。 |
 
 ### `[ExpressionSignature]` / `[ExpressionSignature(returnType)]` / `[ExpressionSignature(returnType, params Type[])]`
@@ -59,7 +59,7 @@
 | AllowMultiple | `false` |
 | sealed | 是 |
 | 字段语义 | 三重载：（1）无参 = **占位形态**，接受任意签名；（2）`returnType` = 锁返回型、参数任意；（3）`returnType + params Type[]` = 返回型 + 参数型列表全锁。 |
-| codegen 处理 | 无参形态 = 跳过签名校验；有参形态 = 在连接期校验 LogicGraph 返回型 / 形参型，不匹配 → 报错。 |
+| codegen 处理 | 无参形态 = 跳过签名校验；有参形态 = 在连接期校验 ExpressionBlockly 返回型 / 形参型，不匹配 → 报错。 |
 
 ### 废除注解清单
 
@@ -74,6 +74,8 @@
 | 上轮 ContextPack 中的 `[BlocklyMethod]` | `[Blockly]`（Method target）——同上 |
 | 上轮 ContextPack 中的 `[BlocklyProperty]` | `[Blockly]`（Property / Field target）——同上 |
 | `[BlocklyGenerated]` | 无取代。产物身份走**命名空间隔离**（`<SourceNs>.Generated`，§2）、不再使用 attribute marker。 |
+| `IProcedureImpl` / `IFunctionImpl` 接口族 | 无取代。随父模块 KD#18 Expression 值传递重构删除；Path A codegen 产物不再产 `*Impl` 类、Node.Evaluate 内直接 inline 目标调用。 |
+| `Procedure<TImpl,T1..Tn>` / `Function<TImpl,T1..Tn,TOutput>` 12 类基类 | 无取代。arity 展开交给 codegen emitter、不再由类型系统承载。 |
 
 ## §2 codegen 输出格式契约
 
@@ -562,3 +564,26 @@ internal interface IBlocklyGraphSerializer
 3. IR 序列化格式与版本字段（§4）。
 4. 编辑器菜单路径与提示 UI（§5）。
 5. Phase 3 AOT 产物形态与驱动入口（未开始，锁定品后附）。
+
+## §2 Path A — Logic 产物契约
+
+Path A scanner 识别 `[Blockly]` Class target（成员级 Method / Property / Field），为每个目标产出**二件套**（KD#18 后无独立 `*Impl` 类）：
+
+**件 1：`*Source : Expression`**
+- 命名：`{TargetClassName}Source`，命名空间 `{SourceNs}.Generated`，文件 `{SourceFile_dir}/Generated/{SourceClassName}.g.cs`。
+- 继承 `Expression`（非泛型）；携带 `[BlocklySource(menuPath, NodeType.Logic)]`。
+- 槽位字段：每个 Method 参数 / Property Set 参数 / Field 各一个 `Expression`-typed 字段，携带 `[BlocklySourceSlot(displayName, order)]`。
+- 无默认构造以外的成员；不含算法。
+
+**件 2：`*Source.Node : Block<*Source>`**（嵌套类）
+- 覆写 `Evaluate()`，inline 展开完整求值序列（4 步，详父 §4）：
+  1. `EvaluateChildren()` — 递归触发子节点 Evaluate。
+  2. `Pop<T_N>() ... Pop<T_1>()` — 右→左取参数（铁律，顺序不可换）。
+  3. 目标调用：Method = `receiver.Method(arg1..argN)`；Property getter = `receiver.Prop`；Property setter = `receiver.Prop = arg1`；Field getter/setter 同理。
+  4. `Push(result)` — 仅非-void 返回形态。
+- 不含 `_impl` 字段、`InitializeProperties`、`CleanProperties`——算法直接 inline，无中间 Impl 层。
+- `Init(ExpressionBlockly.Blockly blockly, *Source source)` 存 `source` 字段（泛型基类保证编译期类型安全）。
+
+**禁止**：为 Path A 目标生成独立 `*Impl` 类（旧三件套中第一件）；禁止在 `*Source.Node` 内 `CreateBlockly` / `DestroyBlockly`；禁止 Node 内持有 `ExpressionBlockly` 字段——控制流子槽直接持有 `Expression`，不是 `ExpressionBlockly`。
+
+**Q1 互斥校验**：`[Blockly]` 禁止打在 `IBehaviorNode` / `ITimelineClip` 派生类的 lifecycle 方法（Start/Tick/LateTick/Finish/Begin/OnFrame/End）上——scanner 遇到即 hard fail（PR-γ 收口，当前 silent ignore）。

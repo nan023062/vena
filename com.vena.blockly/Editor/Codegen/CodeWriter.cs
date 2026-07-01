@@ -124,8 +124,6 @@ namespace Vena.Blockly.Editor
             sb.Append("{").Append(NL);
             sb.Append(NL);
 
-            AppendImpls(sb, src, hasNs: true);
-            sb.Append(NL);
             AppendSources(sb, src, hasNs: true);
 
             sb.Append("}").Append(NL);
@@ -219,13 +217,16 @@ namespace Vena.Blockly.Editor
             sb.Append(indent).Append("    }),").Append(NL);
         }
 
-        /// <summary>仅生成 Impl 区块体（不含 namespace 头）—— sample 覆盖模式专用。</summary>
+        /// <summary>
+        /// 仅生成 Impl 区块体（不含 namespace 头）—— sample 覆盖模式专用。
+        /// 二件套后 Impl 层已删除；此方法保留 API 兼容，产物为空占位（sample 里如仍有 <c>#region Impl</c>，
+        /// 覆盖后区块内为空——不影响编译，等下轮 sample 手写清理）。
+        /// </summary>
         private static string BuildImplsBlock(ScannedSource src)
         {
-            var sb = new StringBuilder(2048);
+            var sb = new StringBuilder(64);
             sb.Append("    #region Impl").Append(NL);
             sb.Append(NL);
-            AppendImpls(sb, src, hasNs: true);
             sb.Append("    #endregion");
             return sb.ToString();
         }
@@ -241,83 +242,7 @@ namespace Vena.Blockly.Editor
             return sb.ToString();
         }
 
-        // ---- Impl 三件套之一：纯逻辑容器 ----
-
-        private static void AppendImpls(StringBuilder sb, ScannedSource src, bool hasNs)
-        {
-            var indent = hasNs ? "    " : "";
-            for (int i = 0; i < src.Members.Count; i++)
-            {
-                if (i > 0) sb.Append(NL);
-                AppendImpl(sb, src.SourceType, src.Members[i], indent);
-            }
-        }
-
-        private static void AppendImpl(StringBuilder sb, Type sourceType, ScannedMember m, string indent)
-        {
-            var implName = ImplName(sourceType, m);
-            var isProcedure = m.ReturnType == typeof(void);
-            var implIface = isProcedure ? "IProcedureImpl" : $"IFunctionImpl<{TypeRef(m.ReturnType)}>";
-            var srcRef = TypeRef(sourceType);
-
-            sb.Append(indent).Append("public sealed class ").Append(implName).Append(" : ").Append(implIface).Append(NL);
-            sb.Append(indent).Append("{").Append(NL);
-
-            var emittedField = false;
-
-            if (RequiresInstanceField(m))
-            {
-                sb.Append(indent).Append("    public ").Append(srcRef).Append(" instance;").Append(NL);
-                emittedField = true;
-            }
-
-            foreach (var p in m.Parameters)
-            {
-                if (emittedField) sb.Append(NL);
-                sb.Append(indent).Append("    public ").Append(TypeRef(p.ParameterType)).Append(' ').Append(p.Identifier).Append(";").Append(NL);
-                emittedField = true;
-            }
-
-            if (emittedField) sb.Append(NL);
-            if (isProcedure)
-            {
-                sb.Append(indent).Append("    public void Evaluate()").Append(NL);
-            }
-            else
-            {
-                sb.Append(indent).Append("    public ").Append(TypeRef(m.ReturnType)).Append(" Evaluate()").Append(NL);
-            }
-            sb.Append(indent).Append("    {").Append(NL);
-            sb.Append(indent).Append("        ").Append(EvaluateCallSite(sourceType, m)).Append(NL);
-            sb.Append(indent).Append("    }").Append(NL);
-
-            sb.Append(indent).Append("}").Append(NL);
-        }
-
-        private static string EvaluateCallSite(Type sourceType, ScannedMember m)
-        {
-            var receiver = m.IsStatic ? TypeRef(sourceType) : "instance";
-            var args = string.Join(", ", m.Parameters.Select(p => p.Identifier));
-            switch (m.Kind)
-            {
-                case ScannedMemberKind.Method:
-                    {
-                        var call = $"{receiver}.{m.MemberName}({args})";
-                        return m.ReturnType == typeof(void) ? call + ";" : "return " + call + ";";
-                    }
-                case ScannedMemberKind.PropertyGetter:
-                    return $"return {receiver}.{m.MemberName};";
-                case ScannedMemberKind.PropertySetter:
-                    {
-                        var valueIdent = m.Parameters[0].Identifier;
-                        return $"{receiver}.{m.MemberName} = {valueIdent};";
-                    }
-                default:
-                    throw new InvalidOperationException($"Unknown member kind: {m.Kind}");
-            }
-        }
-
-        // ---- Source + Source.Node 三件套之二/三 ----
+        // ---- Source + Source.Node 二件套 ----
 
         private static void AppendSources(StringBuilder sb, ScannedSource src, bool hasNs)
         {
@@ -331,18 +256,12 @@ namespace Vena.Blockly.Editor
 
         private static void AppendSource(StringBuilder sb, Type sourceType, ScannedMember m, string indent)
         {
-            var implName = ImplName(sourceType, m);
             var srcName = SourceName(sourceType, m);
-            var isProcedure = m.ReturnType == typeof(void);
-            var baseType = isProcedure
-                ? $"Procedure<{implName}>"
-                : $"Function<{implName}, {TypeRef(m.ReturnType)}>";
-
             var slots = BuildSlotList(m);
 
             sb.Append(indent).Append("[BlocklySource(\"").Append(EscapeStringLiteral(m.MenuPath))
                 .Append("\", typeof(").Append(srcName).Append(".Node))]").Append(NL);
-            sb.Append(indent).Append("public sealed class ").Append(srcName).Append(" : ").Append(baseType).Append(NL);
+            sb.Append(indent).Append("public sealed class ").Append(srcName).Append(" : Expression").Append(NL);
             sb.Append(indent).Append("{").Append(NL);
 
             foreach (var slot in slots)
@@ -353,12 +272,19 @@ namespace Vena.Blockly.Editor
                 sb.Append(NL);
             }
 
-            AppendNode(sb, srcName, implName, slots, indent + "    ");
+            AppendNode(sb, sourceType, m, srcName, slots, indent + "    ");
             sb.Append(indent).Append("}").Append(NL);
         }
 
-        private static void AppendNode(StringBuilder sb, string srcName, string implName, IReadOnlyList<SlotInfo> slots, string indent)
+        /// <summary>
+        /// 生成 Node（二件套第二件）。<see cref="Expression.Block{TSource}"/> 派生；<c>Evaluate()</c> inline
+        /// 展开契约 §4「4 步求值协议」：EvaluateChildren（子节点 Push） → 逆序 Pop 存 arg → 目标调用 → 可选 Push 结果。
+        /// 无 <c>InitializeProperties</c> / <c>CleanProperties</c> / <c>_impl</c>——Path A 二件套无 Impl 层。
+        /// </summary>
+        private static void AppendNode(StringBuilder sb, Type sourceType, ScannedMember m, string srcName, IReadOnlyList<SlotInfo> slots, string indent)
         {
+            var isProcedure = m.ReturnType == typeof(void);
+
             sb.Append(indent).Append("sealed class Node : Block<").Append(srcName).Append(">").Append(NL);
             sb.Append(indent).Append("{").Append(NL);
 
@@ -366,7 +292,7 @@ namespace Vena.Blockly.Editor
             {
                 sb.Append(indent).Append("    private ILogicNode _").Append(slot.FieldName).Append(";").Append(NL);
             }
-            sb.Append(NL);
+            if (slots.Count > 0) sb.Append(NL);
 
             sb.Append(indent).Append("    protected override void Initialize()").Append(NL);
             sb.Append(indent).Append("    {").Append(NL);
@@ -378,40 +304,40 @@ namespace Vena.Blockly.Editor
             sb.Append(indent).Append("    }").Append(NL);
             sb.Append(NL);
 
-            // EvaluateChildren：按 order 升序触发子节点 Evaluate（每个子 Push 一次值到栈）。
-            // 5 步协议不变量：所有子节点 Push 必须先于 Pop。Evaluate 不能混入 InitializeProperties，
-            // 否则 Pop 时栈是空的。
-            sb.Append(indent).Append("    protected override void EvaluateChildren()").Append(NL);
+            // Evaluate：inline 4 步。
+            //   1) EvaluateChildren —— 按 order 升序触发子节点 Evaluate（每个内部 Push）。
+            //   2) 逆序 Pop —— T_N 先 Pop、T_1 最后（LIFO 与 Push 顺序对称）。
+            //   3) 目标调用 —— method / property / field getter | setter。
+            //   4) Push(result) —— 仅 non-void 返回形态。
+            sb.Append(indent).Append("    public override void Evaluate()").Append(NL);
             sb.Append(indent).Append("    {").Append(NL);
+
+            // Step 1: EvaluateChildren
             foreach (var slot in slots)
             {
                 sb.Append(indent).Append("        _").Append(slot.FieldName).Append(".Evaluate();").Append(NL);
             }
-            sb.Append(indent).Append("    }").Append(NL);
-            sb.Append(NL);
 
-            // InitializeProperties：仅 Pop + 字段拷贝，无副作用。栈是 LIFO——Push 顺序 = order 升序，
-            // 因此 Pop 顺序 = order 降序（最后入栈的最先出栈）。
-            sb.Append(indent).Append("    protected override void InitializeProperties(")
-                .Append(implName).Append(" impl)").Append(NL);
-            sb.Append(indent).Append("    {").Append(NL);
+            // Step 2: 逆序 Pop 存本地变量
             for (int i = slots.Count - 1; i >= 0; i--)
             {
                 var slot = slots[i];
-                sb.Append(indent).Append("        impl.").Append(slot.FieldName)
-                    .Append(" = Blockly.Pop<").Append(TypeRef(slot.PopType)).Append(">();").Append(NL);
+                sb.Append(indent).Append("        var ").Append(slot.FieldName)
+                    .Append(" = Pop<").Append(TypeRef(slot.PopType)).Append(">();").Append(NL);
             }
-            sb.Append(indent).Append("    }").Append(NL);
-            sb.Append(NL);
 
-            sb.Append(indent).Append("    protected override void CleanProperties(")
-                .Append(implName).Append(" impl)").Append(NL);
-            sb.Append(indent).Append("    {").Append(NL);
-            foreach (var slot in slots)
+            // Step 3: 目标调用（+ Step 4 隐式 Push 返回值）
+            var callSite = EvaluateCallSiteInline(sourceType, m);
+            if (isProcedure)
             {
-                if (!slot.PopTypeIsReference) continue;
-                sb.Append(indent).Append("        impl.").Append(slot.FieldName).Append(" = null;").Append(NL);
+                sb.Append(indent).Append("        ").Append(callSite).Append(NL);
             }
+            else
+            {
+                sb.Append(indent).Append("        var result = ").Append(callSite).Append(NL);
+                sb.Append(indent).Append("        Push<").Append(TypeRef(m.ReturnType)).Append(">(result);").Append(NL);
+            }
+
             sb.Append(indent).Append("    }").Append(NL);
             sb.Append(NL);
 
@@ -425,6 +351,33 @@ namespace Vena.Blockly.Editor
             sb.Append(indent).Append("    }").Append(NL);
 
             sb.Append(indent).Append("}").Append(NL);
+        }
+
+        /// <summary>
+        /// 目标调用点字面量（不含 <c>return</c> 前缀，返回值场景由 <see cref="AppendNode"/> 负责在
+        /// <c>var result = &lt;callSite&gt;</c> 里存值）。
+        /// receiver：static → <c>TypeRef(sourceType)</c>；非 static → <c>instance</c> 局部变量（由 Pop 序列取得）。
+        /// </summary>
+        private static string EvaluateCallSiteInline(Type sourceType, ScannedMember m)
+        {
+            var receiver = m.IsStatic ? TypeRef(sourceType) : "instance";
+            switch (m.Kind)
+            {
+                case ScannedMemberKind.Method:
+                    {
+                        var args = string.Join(", ", m.Parameters.Select(p => p.Identifier));
+                        return $"{receiver}.{m.MemberName}({args});";
+                    }
+                case ScannedMemberKind.PropertyGetter:
+                    return $"{receiver}.{m.MemberName};";
+                case ScannedMemberKind.PropertySetter:
+                    {
+                        var valueIdent = m.Parameters[0].Identifier;
+                        return $"{receiver}.{m.MemberName} = {valueIdent};";
+                    }
+                default:
+                    throw new InvalidOperationException($"Unknown member kind: {m.Kind}");
+            }
         }
 
         // ---- IBehavior 二件套 ----
@@ -725,12 +678,6 @@ namespace Vena.Blockly.Editor
         }
 
         // ---- 命名规则 ----
-
-        /// <summary>
-        /// 命名规则：`*Impl` = `<源类简名><成员名>Impl`，源类简名取 <c>sourceType.Name</c>。
-        /// 字面拼接更通用、可泛化、无歧义。冲突由 <see cref="SourceName"/> 追加 `Source` 后缀解决。
-        /// </summary>
-        private static string ImplName(Type sourceType, ScannedMember m) => sourceType.Name + MemberSuffix(m) + "Impl";
 
         /// <summary>命名规则：`*Source` = `<源类简名><成员名>`；与源类同名时追加 `Source` 后缀消歧。</summary>
         private static string SourceName(Type sourceType, ScannedMember m)

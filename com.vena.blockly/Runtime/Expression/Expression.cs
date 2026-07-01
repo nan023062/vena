@@ -6,6 +6,8 @@
 // -----------------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Vena.Blockly
 {
@@ -18,6 +20,97 @@ namespace Vena.Blockly
         // 包心 plain 路径自动分配进程内单调递增 InstanceId（构造时即赋值）。
         // setter 保留 public：GraphLoader.TrySetInstanceId 通过反射用 IR Guid 折叠值覆盖（公共 BindingFlags）。
         public ulong InstanceId { get; set; } = InstanceIdAllocator.Next();
+
+        /// <summary>
+        /// 值栈静态宿主（非泛型）。承载 <c>[ThreadStatic] Stack&lt;IBoxedValue&gt;</c>。
+        /// 所有 <see cref="Block{TSource}"/> 派生 Push / Pop 通过转发方法（<see cref="Block{TSource}.Push{T}"/> 等）
+        /// 落回该单一栈——若把栈挂在泛型 <c>Block&lt;TSource&gt;</c> 内，每个封闭泛型类型会各拥独立静态字段，
+        /// 破坏「所有 Expression Node 共享调用栈」的契约。
+        /// </summary>
+        internal static class Stack
+        {
+            [ThreadStatic]
+            private static System.Collections.Generic.Stack<IBoxedValue> _stack;
+            
+            private static System.Collections.Generic.Stack<IBoxedValue> S
+                => _stack ??= new System.Collections.Generic.Stack<IBoxedValue>(8);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal static void Push<T>(in T value) => S.Push(BoxedValue<T>.Create(value));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal static void Push(in IBoxedValue value) => S.Push(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal static T Pop<T>()
+            {
+                using var value = S.Pop();
+                return ((BoxedValue<T>)value).value;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal static IBoxedValue Pop() => S.Pop();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal static int CurrentDepth() => S.Count;
+        }
+
+        /// <summary>
+        /// Expression 运行时节点基类。<typeparamref name="TSource"/> = 具体 <see cref="Expression"/> 派生源类。
+        /// Push / Pop 通过静态转发方法落到 <see cref="Stack"/>（非泛型宿主）保证「所有派生共享同一栈」。
+        /// </summary>
+        public abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
+        {
+            // Push / Pop / CurrentStackDepth / PopBoxed 语义 = 「派生 Block<TSource> 可直接继承调用、
+            // 非派生的图外用户不可访问」；因此 protected internal（不是纯 internal —— tests / 用户
+            // codegen 产物都在独立 asmdef，纯 internal 会阻断跨 assembly 的派生调用）。
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            protected internal static void Push<T>(in T value) => Expression.Stack.Push(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            protected internal static void Push(in IBoxedValue value) => Expression.Stack.Push(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            protected internal static T Pop<T>() => Expression.Stack.Pop<T>();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            protected internal static IBoxedValue Pop() => Expression.Stack.Pop();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            protected internal static int CurrentStackDepth() => Expression.Stack.CurrentDepth();
+
+            public LogicGraph.Blockly Blockly { get; private set; }
+
+            Blockly IBlock.scope => Blockly;
+
+            protected TSource source { get; private set; }
+
+            void ILogicNode.Init(LogicGraph.Blockly blockly, Expression s)
+            {
+                if (!(s is TSource ts))
+                {
+                    throw new ArgumentException($"{GetType().Name}.Init: source type mismatch (expected {typeof(TSource).Name}, got {s?.GetType().Name ?? "null"}).");
+                }
+                Blockly = blockly;
+                source = ts;
+                Initialize();
+            }
+
+            void ILogicNode.Evaluate() => Evaluate();
+
+            void IBlock.Destroy()
+            {
+                OnDestroy();
+                Blockly = null;
+                source = null;
+            }
+
+            protected virtual void Initialize() { }
+
+            public abstract void Evaluate();
+
+            protected virtual void OnDestroy() { }
+        }
     }
 
     /// <summary>
@@ -29,598 +122,5 @@ namespace Vena.Blockly
 
         void Evaluate();
     }
-
-    #region ProcedureImpl（无返回值）
-
-    public interface IProcedureImpl
-    {
-        void Evaluate();
-    }
-
-    public interface IProcedureImpl<T1>
-    {
-        void Evaluate(in T1 arg1);
-    }
-
-    public interface IProcedureImpl<T1, T2>
-    {
-        void Evaluate(in T1 arg1, in T2 arg2);
-    }
-
-    public interface IProcedureImpl<T1, T2, T3>
-    {
-        void Evaluate(in T1 arg1, in T2 arg2, in T3 arg3);
-    }
-
-    public interface IProcedureImpl<T1, T2, T3, T4>
-    {
-        void Evaluate(in T1 arg1, in T2 arg2, in T3 arg3, in T4 arg4);
-    }
-
-    public interface IProcedureImpl<T1, T2, T3, T4, T5>
-    {
-        void Evaluate(in T1 arg1, in T2 arg2, in T3 arg3, in T4 arg4, in T5 arg5);
-    }
-
-    #endregion
-
-    #region FunctionImpl（有返回值）
-
-    public interface IFunctionImpl<out TOutput>
-    {
-        TOutput Evaluate();
-    }
-
-    public interface IFunctionImpl<T1, out TOutput>
-    {
-        TOutput Evaluate(in T1 arg1);
-    }
-
-    public interface IFunctionImpl<T1, T2, out TOutput>
-    {
-        TOutput Evaluate(in T1 arg1, in T2 arg2);
-    }
-
-    public interface IFunctionImpl<T1, T2, T3, out TOutput>
-    {
-        TOutput Evaluate(in T1 arg1, in T2 arg2, in T3 arg3);
-    }
-
-    public interface IFunctionImpl<T1, T2, T3, T4, out TOutput>
-    {
-        TOutput Evaluate(in T1 arg1, in T2 arg2, in T3 arg3, in T4 arg4);
-    }
-
-    public interface IFunctionImpl<T1, T2, T3, T4, T5, out TOutput>
-    {
-        TOutput Evaluate(in T1 arg1, in T2 arg2, in T3 arg3, in T4 arg4, in T5 arg5);
-    }
-
-    #endregion
-
-    #region ProcedureSource + FunctionSource Block 基类（底层封装栈逻辑）
-
-    /// <summary>
-    /// 0 参数，无返回值
-    /// </summary>
-    public abstract class Procedure<TImpl> : Expression where TImpl : class, IProcedureImpl, new()
-    {
-        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
-        {
-            private readonly TImpl _impl = new TImpl();
-            public LogicGraph.Blockly Blockly { get; private set; }
-            Blockly IBlock.scope => Blockly;
-            public TSource source { get; private set; }
-
-            void ILogicNode.Init(LogicGraph.Blockly b, Expression s)
-            {
-                if (!(s is TSource ts)) throw new ArgumentException($"{GetType().Name}.Init: source type mismatch.");
-                Blockly = b; source = ts;
-                Initialize();
-            }
-
-            void ILogicNode.Evaluate()
-            {
-                EvaluateChildren();
-                InitializeProperties(_impl);
-                _impl.Evaluate();
-            }
-
-            void IBlock.Destroy()
-            {
-                CleanProperties(_impl);
-                OnDestroy();
-                Blockly = null; source = null;
-            }
-
-            protected abstract void Initialize();
-            protected virtual void EvaluateChildren() { }
-            protected abstract void InitializeProperties(TImpl impl);
-            protected abstract void CleanProperties(TImpl impl);
-            protected virtual void OnDestroy() { }
-        }
-    }
-
-    /// <summary>
-    /// 0 参数，有返回值（底层自动 Push 返回值到栈）
-    /// </summary>
-    public abstract class Function<TImpl, TOutput> : Expression where TImpl : class, IFunctionImpl<TOutput>, new()
-    {
-        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
-        {
-            private readonly TImpl _impl = new TImpl();
-            public LogicGraph.Blockly Blockly { get; private set; }
-            Blockly IBlock.scope => Blockly;
-            public TSource source { get; private set; }
-
-            void ILogicNode.Init(LogicGraph.Blockly b, Expression s)
-            {
-                if (!(s is TSource ts)) throw new ArgumentException($"{GetType().Name}.Init: source type mismatch.");
-                Blockly = b;
-                source = ts;
-                Initialize();
-            }
-
-            void ILogicNode.Evaluate()
-            {
-                EvaluateChildren();
-                InitializeProperties(_impl);
-                TOutput result = _impl.Evaluate();
-                Blockly.Push(result);
-            }
-
-            void IBlock.Destroy()
-            {
-                CleanProperties(_impl);
-                OnDestroy();
-                Blockly = null; source = null;
-            }
-
-            protected abstract void Initialize();
-            protected virtual void EvaluateChildren() { }
-            protected abstract void InitializeProperties(TImpl impl);
-            protected abstract void CleanProperties(TImpl impl);
-            protected virtual void OnDestroy() { }
-        }
-    }
-
-    /// <summary>
-    /// 1 参数，无返回值（底层自动 Pop 参数）
-    /// </summary>
-    public abstract class Procedure<TImpl, T1> : Expression where TImpl : class, IProcedureImpl<T1>, new()
-    {
-        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
-        {
-            private readonly TImpl _impl = new TImpl();
-            public LogicGraph.Blockly Blockly { get; private set; }
-            Blockly IBlock.scope => Blockly;
-            public TSource source { get; private set; }
-
-            void ILogicNode.Init(LogicGraph.Blockly b, Expression s)
-            {
-                if (!(s is TSource ts)) throw new ArgumentException($"{GetType().Name}.Init: source type mismatch.");
-                Blockly = b; source = ts;
-                Initialize();
-            }
-
-            void ILogicNode.Evaluate()
-            {
-                EvaluateChildren();
-                T1 arg1 = Blockly.Pop<T1>();
-                InitializeProperties(_impl);
-                _impl.Evaluate(arg1);
-            }
-
-            void IBlock.Destroy()
-            {
-                CleanProperties(_impl); OnDestroy();
-                Blockly = null; source = null;
-            }
-
-            protected abstract void Initialize();
-            protected virtual void EvaluateChildren() { }
-            protected abstract void InitializeProperties(TImpl impl);
-            protected abstract void CleanProperties(TImpl impl);
-            protected virtual void OnDestroy() { }
-        }
-    }
-
-    /// <summary>
-    /// 1 参数，有返回值（底层自动 Pop 参数 + Push 返回值）
-    /// </summary>
-    public abstract class Function<TImpl, T1, TOutput> : Expression
-        where TImpl : class, IFunctionImpl<T1, TOutput>, new()
-    {
-        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
-        {
-            private readonly TImpl _impl = new TImpl();
-            public LogicGraph.Blockly Blockly { get; private set; }
-            Blockly IBlock.scope => Blockly;
-            public TSource source { get; private set; }
-
-            void ILogicNode.Init(LogicGraph.Blockly b, Expression s)
-            {
-                if (!(s is TSource ts)) throw new ArgumentException($"{GetType().Name}.Init: source type mismatch.");
-                Blockly = b; source = ts;
-                Initialize();
-            }
-
-            void ILogicNode.Evaluate()
-            {
-                EvaluateChildren();
-                T1 arg1 = Blockly.Pop<T1>();
-                InitializeProperties(_impl);
-                TOutput result = _impl.Evaluate(arg1);
-                Blockly.Push(result);
-            }
-
-            void IBlock.Destroy()
-            {
-                CleanProperties(_impl); OnDestroy();
-                Blockly = null; source = null;
-            }
-
-            protected abstract void Initialize();
-            protected virtual void EvaluateChildren() { }
-            protected abstract void InitializeProperties(TImpl impl);
-            protected abstract void CleanProperties(TImpl impl);
-            protected virtual void OnDestroy() { }
-        }
-    }
-
-    /// <summary>
-    /// 2 参数，无返回值（底层自动 Pop 参数）
-    /// </summary>
-    public abstract class Procedure<TImpl, T1, T2> : Expression where TImpl : class, IProcedureImpl<T1, T2>, new()
-    {
-        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
-        {
-            private readonly TImpl _impl = new TImpl();
-            public LogicGraph.Blockly Blockly { get; private set; }
-            Blockly IBlock.scope => Blockly;
-            public TSource source { get; private set; }
-
-            void ILogicNode.Init(LogicGraph.Blockly b, Expression s)
-            {
-                if (!(s is TSource ts)) throw new ArgumentException($"{GetType().Name}.Init: source type mismatch.");
-                Blockly = b; source = ts;
-                Initialize();
-            }
-
-            void ILogicNode.Evaluate()
-            {
-                EvaluateChildren();
-                T2 arg2 = Blockly.Pop<T2>();
-                T1 arg1 = Blockly.Pop<T1>();
-                InitializeProperties(_impl);
-                _impl.Evaluate(arg1, arg2);
-            }
-
-            void IBlock.Destroy()
-            {
-                CleanProperties(_impl);
-                OnDestroy();
-                Blockly = null; source = null;
-            }
-
-            protected abstract void Initialize();
-            protected virtual void EvaluateChildren() { }
-            protected abstract void InitializeProperties(TImpl impl);
-            protected abstract void CleanProperties(TImpl impl);
-            protected virtual void OnDestroy() { }
-        }
-    }
-
-    /// <summary>
-    /// 2 参数，有返回值（底层自动 Pop 参数 + Push 返回值）
-    /// </summary>
-    public abstract class Function<TImpl, T1, T2, TOutput> : Expression where TImpl : class, IFunctionImpl<T1, T2, TOutput>, new()
-    {
-        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
-        {
-            private readonly TImpl _impl = new TImpl();
-            public LogicGraph.Blockly Blockly { get; private set; }
-            Blockly IBlock.scope => Blockly;
-            public TSource source { get; private set; }
-
-            void ILogicNode.Init(LogicGraph.Blockly b, Expression s)
-            {
-                if (!(s is TSource ts)) throw new ArgumentException($"{GetType().Name}.Init: source type mismatch.");
-                Blockly = b; source = ts;
-                Initialize();
-            }
-
-            void ILogicNode.Evaluate()
-            {
-                EvaluateChildren();
-                T2 arg2 = Blockly.Pop<T2>();
-                T1 arg1 = Blockly.Pop<T1>();
-                InitializeProperties(_impl);
-                TOutput result = _impl.Evaluate(arg1, arg2);
-                Blockly.Push(result);
-            }
-
-            void IBlock.Destroy()
-            {
-                CleanProperties(_impl); OnDestroy();
-                Blockly = null; source = null;
-            }
-
-            protected abstract void Initialize();
-            protected virtual void EvaluateChildren() { }
-            protected abstract void InitializeProperties(TImpl impl);
-            protected abstract void CleanProperties(TImpl impl);
-            protected virtual void OnDestroy() { }
-        }
-    }
-
-    /// <summary>
-    /// 3 参数，无返回值（底层自动 Pop 参数）
-    /// </summary>
-    public abstract class Procedure<TImpl, T1, T2, T3> : Expression where TImpl : class, IProcedureImpl<T1, T2, T3>, new()
-    {
-        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
-        {
-            private readonly TImpl _impl = new TImpl();
-            public LogicGraph.Blockly Blockly { get; private set; }
-            Blockly IBlock.scope => Blockly;
-            public TSource source { get; private set; }
-
-            void ILogicNode.Init(LogicGraph.Blockly b, Expression s)
-            {
-                if (!(s is TSource ts)) throw new ArgumentException($"{GetType().Name}.Init: source type mismatch.");
-                Blockly = b; source = ts;
-                Initialize();
-            }
-
-            void ILogicNode.Evaluate()
-            {
-                EvaluateChildren();
-                T3 arg3 = Blockly.Pop<T3>();
-                T2 arg2 = Blockly.Pop<T2>();
-                T1 arg1 = Blockly.Pop<T1>();
-                InitializeProperties(_impl);
-                _impl.Evaluate(arg1, arg2, arg3);
-            }
-
-            void IBlock.Destroy()
-            {
-                CleanProperties(_impl); OnDestroy();
-                Blockly = null; source = null;
-            }
-
-            protected abstract void Initialize();
-            protected virtual void EvaluateChildren() { }
-            protected abstract void InitializeProperties(TImpl impl);
-            protected abstract void CleanProperties(TImpl impl);
-            protected virtual void OnDestroy() { }
-        }
-    }
-
-    /// <summary>
-    /// 3 参数，有返回值（底层自动 Pop 参数 + Push 返回值）
-    /// </summary>
-    public abstract class Function<TImpl, T1, T2, T3, TOutput> : Expression where TImpl : class, IFunctionImpl<T1, T2, T3, TOutput>, new()
-    {
-        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
-        {
-            private readonly TImpl _impl = new TImpl();
-            public LogicGraph.Blockly Blockly { get; private set; }
-            Blockly IBlock.scope => Blockly;
-            public TSource source { get; private set; }
-
-            void ILogicNode.Init(LogicGraph.Blockly b, Expression s)
-            {
-                if (!(s is TSource ts)) throw new ArgumentException($"{GetType().Name}.Init: source type mismatch.");
-                Blockly = b; source = ts;
-                Initialize();
-            }
-
-            void ILogicNode.Evaluate()
-            {
-                EvaluateChildren();
-                T3 arg3 = Blockly.Pop<T3>();
-                T2 arg2 = Blockly.Pop<T2>();
-                T1 arg1 = Blockly.Pop<T1>();
-                InitializeProperties(_impl);
-                TOutput result = _impl.Evaluate(arg1, arg2, arg3);
-                Blockly.Push(result);
-            }
-
-            void IBlock.Destroy()
-            {
-                CleanProperties(_impl); OnDestroy();
-                Blockly = null; source = null;
-            }
-
-            protected abstract void Initialize();
-            protected virtual void EvaluateChildren() { }
-            protected abstract void InitializeProperties(TImpl impl);
-            protected abstract void CleanProperties(TImpl impl);
-            protected virtual void OnDestroy() { }
-        }
-    }
-
-    /// <summary>
-    /// 4 参数，无返回值（底层自动 Pop 参数）
-    /// </summary>
-    public abstract class Procedure<TImpl, T1, T2, T3, T4> : Expression where TImpl : class, IProcedureImpl<T1, T2, T3, T4>, new()
-    {
-        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
-        {
-            private readonly TImpl _impl = new TImpl();
-            public LogicGraph.Blockly Blockly { get; private set; }
-            Blockly IBlock.scope => Blockly;
-            public TSource source { get; private set; }
-
-            void ILogicNode.Init(LogicGraph.Blockly b, Expression s)
-            {
-                if (!(s is TSource ts)) throw new ArgumentException($"{GetType().Name}.Init: source type mismatch.");
-                Blockly = b; source = ts;
-                Initialize();
-            }
-
-            void ILogicNode.Evaluate()
-            {
-                EvaluateChildren();
-                T4 arg4 = Blockly.Pop<T4>();
-                T3 arg3 = Blockly.Pop<T3>();
-                T2 arg2 = Blockly.Pop<T2>();
-                T1 arg1 = Blockly.Pop<T1>();
-                InitializeProperties(_impl);
-                _impl.Evaluate(arg1, arg2, arg3, arg4);
-            }
-
-            void IBlock.Destroy()
-            {
-                CleanProperties(_impl); OnDestroy();
-                Blockly = null; source = null;
-            }
-
-            protected abstract void Initialize();
-            protected virtual void EvaluateChildren() { }
-            protected abstract void InitializeProperties(TImpl impl);
-            protected abstract void CleanProperties(TImpl impl);
-            protected virtual void OnDestroy() { }
-        }
-    }
-
-    /// <summary>
-    /// 4 参数，有返回值（底层自动 Pop 参数 + Push 返回值）
-    /// </summary>
-    public abstract class Function<TImpl, T1, T2, T3, T4, TOutput> : Expression where TImpl : class, IFunctionImpl<T1, T2, T3, T4, TOutput>, new()
-    {
-        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
-        {
-            private readonly TImpl _impl = new TImpl();
-            public LogicGraph.Blockly Blockly { get; private set; }
-            Blockly IBlock.scope => Blockly;
-            public TSource source { get; private set; }
-
-            void ILogicNode.Init(LogicGraph.Blockly b, Expression s)
-            {
-                if (!(s is TSource ts)) throw new ArgumentException($"{GetType().Name}.Init: source type mismatch.");
-                Blockly = b; source = ts;
-                Initialize();
-            }
-
-            void ILogicNode.Evaluate()
-            {
-                EvaluateChildren();
-                T4 arg4 = Blockly.Pop<T4>();
-                T3 arg3 = Blockly.Pop<T3>();
-                T2 arg2 = Blockly.Pop<T2>();
-                T1 arg1 = Blockly.Pop<T1>();
-                InitializeProperties(_impl);
-                TOutput result = _impl.Evaluate(arg1, arg2, arg3, arg4);
-                Blockly.Push(result);
-            }
-
-            void IBlock.Destroy()
-            {
-                CleanProperties(_impl); OnDestroy();
-                Blockly = null; source = null;
-            }
-
-            protected abstract void Initialize();
-            protected virtual void EvaluateChildren() { }
-            protected abstract void InitializeProperties(TImpl impl);
-            protected abstract void CleanProperties(TImpl impl);
-            protected virtual void OnDestroy() { }
-        }
-    }
-
-    /// <summary>
-    /// 5 参数，无返回值（底层自动 Pop 参数）
-    /// </summary>
-    public abstract class Procedure<TImpl, T1, T2, T3, T4, T5> : Expression where TImpl : class, IProcedureImpl<T1, T2, T3, T4, T5>, new()
-    {
-        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
-        {
-            private readonly TImpl _impl = new TImpl();
-            public LogicGraph.Blockly Blockly { get; private set; }
-            Blockly IBlock.scope => Blockly;
-            public TSource source { get; private set; }
-
-            void ILogicNode.Init(LogicGraph.Blockly b, Expression s)
-            {
-                if (!(s is TSource ts)) throw new ArgumentException($"{GetType().Name}.Init: source type mismatch.");
-                Blockly = b; source = ts;
-                Initialize();
-            }
-
-            void ILogicNode.Evaluate()
-            {
-                EvaluateChildren();
-                T5 arg5 = Blockly.Pop<T5>();
-                T4 arg4 = Blockly.Pop<T4>();
-                T3 arg3 = Blockly.Pop<T3>();
-                T2 arg2 = Blockly.Pop<T2>();
-                T1 arg1 = Blockly.Pop<T1>();
-                InitializeProperties(_impl);
-                _impl.Evaluate(arg1, arg2, arg3, arg4, arg5);
-            }
-
-            void IBlock.Destroy()
-            {
-                CleanProperties(_impl); OnDestroy();
-                Blockly = null; source = null;
-            }
-
-            protected abstract void Initialize();
-            protected virtual void EvaluateChildren() { }
-            protected abstract void InitializeProperties(TImpl impl);
-            protected abstract void CleanProperties(TImpl impl);
-            protected virtual void OnDestroy() { }
-        }
-    }
-
-    /// <summary>
-    /// 5 参数，有返回值（底层自动 Pop 参数 + Push 返回值）
-    /// </summary>
-    public abstract class Function<TImpl, T1, T2, T3, T4, T5, TOutput> : Expression where TImpl : class, IFunctionImpl<T1, T2, T3, T4, T5, TOutput>, new()
-    {
-        protected abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
-        {
-            private readonly TImpl _impl = new TImpl();
-            public LogicGraph.Blockly Blockly { get; private set; }
-            Blockly IBlock.scope => Blockly;
-            public TSource source { get; private set; }
-
-            void ILogicNode.Init(LogicGraph.Blockly b, Expression s)
-            {
-                if (!(s is TSource ts)) throw new ArgumentException($"{GetType().Name}.Init: source type mismatch.");
-                Blockly = b; source = ts;
-                Initialize();
-            }
-
-            void ILogicNode.Evaluate()
-            {
-                EvaluateChildren();
-                T5 arg5 = Blockly.Pop<T5>();
-                T4 arg4 = Blockly.Pop<T4>();
-                T3 arg3 = Blockly.Pop<T3>();
-                T2 arg2 = Blockly.Pop<T2>();
-                T1 arg1 = Blockly.Pop<T1>();
-                InitializeProperties(_impl);
-                TOutput result = _impl.Evaluate(arg1, arg2, arg3, arg4, arg5);
-                Blockly.Push(result);
-            }
-
-            void IBlock.Destroy()
-            {
-                CleanProperties(_impl); OnDestroy();
-                Blockly = null; source = null;
-            }
-
-            protected abstract void Initialize();
-            protected virtual void EvaluateChildren() { }
-            protected abstract void InitializeProperties(TImpl impl);
-            protected abstract void CleanProperties(TImpl impl);
-            protected virtual void OnDestroy() { }
-        }
-    }
-
-    #endregion
 
 }
