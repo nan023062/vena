@@ -32,7 +32,7 @@ namespace Vena.Blockly.Editor.UI
             if (aKind.Value != bKind.Value) return false;
 
             // 控制连线只能在 IBehaviorNode 之间。
-            // 值连线允许 ILogicNode 输出端 → 任意端口。
+            // 值连线允许 IExpressionBlock 输出端 → 任意端口。
             // 这层语义需要 sourceType 元数据，待接入 INodeMetadataProvider 后落细。
             return true;
         }

@@ -59,7 +59,7 @@ namespace Vena.Blockly
         /// Expression 运行时节点基类。<typeparamref name="TSource"/> = 具体 <see cref="Expression"/> 派生源类。
         /// Push / Pop 通过静态转发方法落到 <see cref="Stack"/>（非泛型宿主）保证「所有派生共享同一栈」。
         /// </summary>
-        public abstract class Block<TSource> : ILogicNode where TSource : class, IBlocklySource
+        public abstract class Block<TSource> : IExpressionBlock where TSource : class, IBlocklySource
         {
             // Push / Pop / CurrentStackDepth / PopBoxed 语义 = 「派生 Block<TSource> 可直接继承调用、
             // 非派生的图外用户不可访问」；因此 protected internal（不是纯 internal —— tests / 用户
@@ -79,7 +79,7 @@ namespace Vena.Blockly
 
             protected TSource source { get; private set; }
 
-            void ILogicNode.Init(ExpressionBlockly.Blockly blockly, Expression s)
+            void IExpressionBlock.Init(ExpressionBlockly.Blockly blockly, Expression s)
             {
                 if (!(s is TSource ts))
                 {
@@ -90,7 +90,7 @@ namespace Vena.Blockly
                 Initialize();
             }
 
-            void ILogicNode.Evaluate() => Evaluate();
+            void IExpressionBlock.Evaluate() => Evaluate();
 
             void IBlock.Destroy()
             {
@@ -110,7 +110,7 @@ namespace Vena.Blockly
     /// <summary>
     /// 逻辑节点接口
     /// </summary>
-    public interface ILogicNode : IBlock
+    public interface IExpressionBlock : IBlock
     {
         void Init(ExpressionBlockly.Blockly blockly, Expression source);
 

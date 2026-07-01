@@ -61,7 +61,7 @@ namespace Vena.Blockly
         /// </summary>
         public sealed class Blockly : Vena.Blockly.Blockly
         {
-            private ILogicNode _entry;
+            private IExpressionBlock _entry;
 
             public void SetSource(ExpressionBlockly source)
             {
@@ -191,9 +191,9 @@ namespace Vena.Blockly
 
             #region Expression Block Create / Destroy
 
-            public ILogicNode CreateBlock(Expression source)
+            public IExpressionBlock CreateBlock(Expression source)
             {
-                var block = Host.NodeFactory.Create<ILogicNode>(source);
+                var block = Host.NodeFactory.Create<IExpressionBlock>(source);
                 block.Init(this, source);
                 RegisterInstanceInternal(source.InstanceId, block);
                 return block;

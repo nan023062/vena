@@ -290,7 +290,7 @@ namespace Vena.Blockly.Editor
 
             foreach (var slot in slots)
             {
-                sb.Append(indent).Append("    private ILogicNode _").Append(slot.FieldName).Append(";").Append(NL);
+                sb.Append(indent).Append("    private IExpressionBlock _").Append(slot.FieldName).Append(";").Append(NL);
             }
             if (slots.Count > 0) sb.Append(NL);
 

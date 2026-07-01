@@ -20,7 +20,7 @@ namespace Vena.Blockly
 
         internal sealed class Node : Block<LogicSequence>
         {
-            private ILogicNode[] _statements;
+            private IExpressionBlock[] _statements;
 
             protected override void Initialize()
             {
@@ -29,7 +29,7 @@ namespace Vena.Blockly
                     _statements = null;
                     return;
                 }
-                _statements = new ILogicNode[source.statements.Length];
+                _statements = new IExpressionBlock[source.statements.Length];
                 for (int i = 0; i < source.statements.Length; i++)
                 {
                     var s = source.statements[i];
@@ -80,9 +80,9 @@ namespace Vena.Blockly
 
         internal sealed class Node : Block<LogicBranch>
         {
-            private ILogicNode _condition;
-            private ILogicNode _trueBranch;
-            private ILogicNode _falseBranch;
+            private IExpressionBlock _condition;
+            private IExpressionBlock _trueBranch;
+            private IExpressionBlock _falseBranch;
 
             protected override void Initialize()
             {
@@ -136,8 +136,8 @@ namespace Vena.Blockly
 
         internal sealed class Node : Block<LogicWhile>
         {
-            private ILogicNode _condition;
-            private ILogicNode _body;
+            private IExpressionBlock _condition;
+            private IExpressionBlock _body;
 
             protected override void Initialize()
             {
@@ -216,7 +216,7 @@ namespace Vena.Blockly
 
         protected internal sealed class Node : Block<LogicSetVariable<T>>
         {
-            private ILogicNode _value;
+            private IExpressionBlock _value;
 
             protected override void Initialize()
             {

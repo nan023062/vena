@@ -20,7 +20,7 @@ namespace Vena.Blockly
         /// <summary>源类（带 [BlocklySource] 的类，可能是 codegen 产物 *Source）。</summary>
         public Type SourceType { get; }
 
-        /// <summary>运行期 ILogicNode / IBehaviorNode 实现类（=`BlocklySource.NodeType`）。</summary>
+        /// <summary>运行期 IExpressionBlock / IBehaviorNode 实现类（=`BlocklySource.NodeType`）。</summary>
         public Type NodeType { get; }
 
         /// <summary>调色板菜单路径，原值透传，可含 `/` 分层。</summary>
