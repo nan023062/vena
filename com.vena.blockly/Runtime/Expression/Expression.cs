@@ -112,7 +112,7 @@ namespace Vena.Blockly
     /// </summary>
     public interface ILogicNode : IBlock
     {
-        void Init(LogicGraph.Blockly blockly, Expression source);
+        void Init(ExpressionBlockly.Blockly blockly, Expression source);
 
         void Evaluate();
     }
