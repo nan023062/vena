@@ -73,13 +73,13 @@ namespace Vena.Blockly
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             protected internal static T Pop<T>() => Expression.Stack.Pop<T>();
             
-            public LogicGraph.Blockly Blockly { get; private set; }
+            public ExpressionBlockly.Blockly Blockly { get; private set; }
 
             Blockly IBlock.scope => Blockly;
 
             protected TSource source { get; private set; }
 
-            void ILogicNode.Init(LogicGraph.Blockly blockly, Expression s)
+            void ILogicNode.Init(ExpressionBlockly.Blockly blockly, Expression s)
             {
                 if (!(s is TSource ts))
                 {
