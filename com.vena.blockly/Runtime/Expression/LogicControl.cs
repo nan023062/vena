@@ -12,13 +12,13 @@ namespace Vena.Blockly
 
     #region LogicSequence
 
-    [BlocklySource("程序节点/控制/顺序执行", typeof(LogicSequence.Node))]
-    public sealed class LogicSequence : Expression
+    [BlocklySource("程序节点/控制/顺序执行", typeof(ExpressionSequence.Node))]
+    public sealed class ExpressionSequence : Expression
     {
         [BlocklySourceSlot("语句列表", 1)]
         public Expression[] statements;
 
-        internal sealed class Node : Block<LogicSequence>
+        internal sealed class Node : Block<ExpressionSequence>
         {
             private IExpressionBlock[] _statements;
 
@@ -65,8 +65,8 @@ namespace Vena.Blockly
 
     #region LogicBranch
 
-    [BlocklySource("程序节点/控制/条件分支", typeof(LogicBranch.Node))]
-    public sealed class LogicBranch : Expression
+    [BlocklySource("程序节点/控制/条件分支", typeof(ExpressionBranch.Node))]
+    public sealed class ExpressionBranch : Expression
     {
         [ExpressionSignature(typeof(bool))]
         [BlocklySourceSlot("条件", 1)]
@@ -78,7 +78,7 @@ namespace Vena.Blockly
         [BlocklySourceSlot("为假时", 3)]
         public Expression falseBranch;
 
-        internal sealed class Node : Block<LogicBranch>
+        internal sealed class Node : Block<ExpressionBranch>
         {
             private IExpressionBlock _condition;
             private IExpressionBlock _trueBranch;
@@ -121,8 +121,8 @@ namespace Vena.Blockly
 
     #region LogicWhile
 
-    [BlocklySource("程序节点/控制/While循环", typeof(LogicWhile.Node))]
-    public sealed class LogicWhile : Expression
+    [BlocklySource("程序节点/控制/While循环", typeof(ExpressionWhile.Node))]
+    public sealed class ExpressionWhile : Expression
     {
         [ExpressionSignature(typeof(bool))]
         [BlocklySourceSlot("条件", 1)]
@@ -134,7 +134,7 @@ namespace Vena.Blockly
         [BlocklySourceSlot("最大迭代次数", 3)]
         public int maxIterations = 10000;
 
-        internal sealed class Node : Block<LogicWhile>
+        internal sealed class Node : Block<ExpressionWhile>
         {
             private IExpressionBlock _condition;
             private IExpressionBlock _body;
@@ -174,14 +174,14 @@ namespace Vena.Blockly
 
     #endregion
 
-    #region LogicGetVariable<T>
+    #region ExpressionVariableGetter<T>
 
-    public abstract class LogicGetVariable<T> : Expression
+    public abstract class ExpressionGetVariable<T> : Expression
     {
         [BlocklySourceSlot("变量名", 1)]
         public string variableName;
 
-        protected internal sealed class Node : Block<LogicGetVariable<T>>
+        protected internal sealed class Node : Block<ExpressionGetVariable<T>>
         {
             public override void Evaluate()
             {
@@ -190,23 +190,23 @@ namespace Vena.Blockly
         }
     }
 
-    [BlocklySource("程序节点/变量/获取Int变量", typeof(LogicGetVariable<int>.Node))]
-    public sealed class LogicGetVariableInt : LogicGetVariable<int> { }
+    [BlocklySource("程序节点/变量/获取Int变量", typeof(ExpressionGetVariable<int>.Node))]
+    public sealed class ExpressionGetVariableInt : ExpressionGetVariable<int> { }
+    
+    [BlocklySource("程序节点/变量/获取Bool变量", typeof(ExpressionGetVariable<bool>.Node))]
+    public sealed class ExpressionGetVariableBool : ExpressionGetVariable<bool> { }
+    
+    [BlocklySource("程序节点/变量/获取Float变量", typeof(ExpressionGetVariable<float>.Node))]
+    public sealed class ExpressionGetVariableFloat : ExpressionGetVariable<float> { }
 
-    [BlocklySource("程序节点/变量/获取Bool变量", typeof(LogicGetVariable<bool>.Node))]
-    public sealed class LogicGetVariableBool : LogicGetVariable<bool> { }
-
-    [BlocklySource("程序节点/变量/获取Float变量", typeof(LogicGetVariable<float>.Node))]
-    public sealed class LogicGetVariableFloat : LogicGetVariable<float> { }
-
-    [BlocklySource("程序节点/变量/获取String变量", typeof(LogicGetVariable<string>.Node))]
-    public sealed class LogicGetVariableString : LogicGetVariable<string> { }
-
+    [BlocklySource("程序节点/变量/获取String变量", typeof(ExpressionGetVariable<string>.Node))]
+    public sealed class ExpressionGetVariableString : ExpressionGetVariable<string> { }
+    
     #endregion
 
-    #region LogicSetVariable<T>
+    #region ExpressionSetVariable<T>
 
-    public abstract class LogicSetVariable<T> : Expression
+    public abstract class ExpressionSetVariable<T> : Expression
     {
         [BlocklySourceSlot("变量名", 1)]
         public string variableName;
@@ -214,7 +214,7 @@ namespace Vena.Blockly
         [BlocklySourceSlot("值", 2)]
         public Expression value;
 
-        protected internal sealed class Node : Block<LogicSetVariable<T>>
+        protected internal sealed class Node : Block<ExpressionSetVariable<T>>
         {
             private IExpressionBlock _value;
 
@@ -238,17 +238,17 @@ namespace Vena.Blockly
         }
     }
 
-    [BlocklySource("程序节点/变量/设置Int变量", typeof(LogicSetVariable<int>.Node))]
-    public sealed class LogicSetVariableInt : LogicSetVariable<int> { }
+    [BlocklySource("程序节点/变量/设置Int变量", typeof(ExpressionSetVariable<int>.Node))]
+    public sealed class ExpressionSetVariableInt : ExpressionSetVariable<int> { }
 
-    [BlocklySource("程序节点/变量/设置Bool变量", typeof(LogicSetVariable<bool>.Node))]
-    public sealed class LogicSetVariableBool : LogicSetVariable<bool> { }
+    [BlocklySource("程序节点/变量/设置Bool变量", typeof(ExpressionSetVariable<bool>.Node))]
+    public sealed class ExpressionSetVariableBool : ExpressionSetVariable<bool> { }
 
-    [BlocklySource("程序节点/变量/设置Float变量", typeof(LogicSetVariable<float>.Node))]
-    public sealed class LogicSetVariableFloat : LogicSetVariable<float> { }
+    [BlocklySource("程序节点/变量/设置Float变量", typeof(ExpressionSetVariable<float>.Node))]
+    public sealed class ExpressionSetVariableFloat : ExpressionSetVariable<float> { }
 
-    [BlocklySource("程序节点/变量/设置String变量", typeof(LogicSetVariable<string>.Node))]
-    public sealed class LogicSetVariableString : LogicSetVariable<string> { }
+    [BlocklySource("程序节点/变量/设置String变量", typeof(ExpressionSetVariable<string>.Node))]
+    public sealed class ExpressionSetVariableString : ExpressionSetVariable<string> { }
 
     #endregion
 
