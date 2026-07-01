@@ -176,12 +176,12 @@ namespace Vena.Blockly
 
     #region ExpressionVariableGetter<T>
 
-    public abstract class ExpressionGetVariable<T> : Expression
+    public abstract class ExpressionVariableGetter<T> : Expression
     {
         [BlocklySourceSlot("变量名", 1)]
         public string variableName;
 
-        protected internal sealed class Node : Block<ExpressionGetVariable<T>>
+        protected internal sealed class Node : Block<ExpressionVariableGetter<T>>
         {
             public override void Evaluate()
             {
@@ -190,23 +190,23 @@ namespace Vena.Blockly
         }
     }
 
-    [BlocklySource("程序节点/变量/获取Int变量", typeof(ExpressionGetVariable<int>.Node))]
-    public sealed class ExpressionGetVariableInt : ExpressionGetVariable<int> { }
+    [BlocklySource("程序节点/变量/获取Int变量", typeof(ExpressionVariableGetter<int>.Node))]
+    public sealed class ExpressionVariableGetterInt : ExpressionVariableGetter<int> { }
     
-    [BlocklySource("程序节点/变量/获取Bool变量", typeof(ExpressionGetVariable<bool>.Node))]
-    public sealed class ExpressionGetVariableBool : ExpressionGetVariable<bool> { }
+    [BlocklySource("程序节点/变量/获取Bool变量", typeof(ExpressionVariableGetter<bool>.Node))]
+    public sealed class ExpressionVariableGetterBool : ExpressionVariableGetter<bool> { }
     
-    [BlocklySource("程序节点/变量/获取Float变量", typeof(ExpressionGetVariable<float>.Node))]
-    public sealed class ExpressionGetVariableFloat : ExpressionGetVariable<float> { }
+    [BlocklySource("程序节点/变量/获取Float变量", typeof(ExpressionVariableGetter<float>.Node))]
+    public sealed class ExpressionVariableGetterFloat : ExpressionVariableGetter<float> { }
 
-    [BlocklySource("程序节点/变量/获取String变量", typeof(ExpressionGetVariable<string>.Node))]
-    public sealed class ExpressionGetVariableString : ExpressionGetVariable<string> { }
+    [BlocklySource("程序节点/变量/获取String变量", typeof(ExpressionVariableGetter<string>.Node))]
+    public sealed class ExpressionVariableGetterString : ExpressionVariableGetter<string> { }
     
     #endregion
 
-    #region ExpressionSetVariable<T>
+    #region ExpressionVariableSetter<T>
 
-    public abstract class ExpressionSetVariable<T> : Expression
+    public abstract class ExpressionVariableSetter<T> : Expression
     {
         [BlocklySourceSlot("变量名", 1)]
         public string variableName;
@@ -214,7 +214,7 @@ namespace Vena.Blockly
         [BlocklySourceSlot("值", 2)]
         public Expression value;
 
-        protected internal sealed class Node : Block<ExpressionSetVariable<T>>
+        protected internal sealed class Node : Block<ExpressionVariableSetter<T>>
         {
             private IExpressionBlock _value;
 
@@ -238,17 +238,17 @@ namespace Vena.Blockly
         }
     }
 
-    [BlocklySource("程序节点/变量/设置Int变量", typeof(ExpressionSetVariable<int>.Node))]
-    public sealed class ExpressionSetVariableInt : ExpressionSetVariable<int> { }
+    [BlocklySource("程序节点/变量/设置Int变量", typeof(ExpressionVariableSetter<int>.Node))]
+    public sealed class ExpressionVariableSetterInt : ExpressionVariableSetter<int> { }
 
-    [BlocklySource("程序节点/变量/设置Bool变量", typeof(ExpressionSetVariable<bool>.Node))]
-    public sealed class ExpressionSetVariableBool : ExpressionSetVariable<bool> { }
+    [BlocklySource("程序节点/变量/设置Bool变量", typeof(ExpressionVariableSetter<bool>.Node))]
+    public sealed class ExpressionVariableSetterBool : ExpressionVariableSetter<bool> { }
 
-    [BlocklySource("程序节点/变量/设置Float变量", typeof(ExpressionSetVariable<float>.Node))]
-    public sealed class ExpressionSetVariableFloat : ExpressionSetVariable<float> { }
+    [BlocklySource("程序节点/变量/设置Float变量", typeof(ExpressionVariableSetter<float>.Node))]
+    public sealed class ExpressionVariableSetterFloat : ExpressionVariableSetter<float> { }
 
-    [BlocklySource("程序节点/变量/设置String变量", typeof(ExpressionSetVariable<string>.Node))]
-    public sealed class ExpressionSetVariableString : ExpressionSetVariable<string> { }
+    [BlocklySource("程序节点/变量/设置String变量", typeof(ExpressionVariableSetter<string>.Node))]
+    public sealed class ExpressionVariableSetterString : ExpressionVariableSetter<string> { }
 
     #endregion
 
