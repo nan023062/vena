@@ -21,7 +21,7 @@ namespace Vena.Blockly
             _raw[name] = value;
         }
 
-        public void SetUValue(string name, IBoxedValue value)
+        public void SetBoxedValue(string name, IBoxedValue value)
         {
             _boxed[name] = value;
         }

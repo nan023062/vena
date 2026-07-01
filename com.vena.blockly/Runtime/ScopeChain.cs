@@ -129,7 +129,7 @@ namespace Vena.Blockly
 
             public void SetValue<T>(string name, T value) => _inner.SetValue(name, value);
 
-            public void SetUValue(string name, IBoxedValue value) => _inner.SetUValue(name, value);
+            public void SetBoxedValue(string name, IBoxedValue value) => _inner.SetBoxedValue(name, value);
 
             public T GetValue<T>(string name) => _inner.GetValue<T>(name);
 
