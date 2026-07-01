@@ -38,8 +38,8 @@ namespace Vena.Blockly
     /// Expression Blockly 源数据。对应可视化编辑器中的一个 Expression 图。
     /// 内含 Blockly 内部类作为运行时实例。
     /// </summary>
-    [BlocklySource("表达式图", typeof(LogicGraph.Blockly))]
-    public sealed class LogicGraph : IBlocklySource
+    [BlocklySource("表达式图", typeof(ExpressionBlockly.Blockly))]
+    public sealed class ExpressionBlockly : IBlocklySource
     {
         // 包心 plain 路径自动分配进程内单调递增 InstanceId（构造时即赋值）。
         // setter 保留 public：GraphLoader.TrySetInstanceId 通过反射用 IR Guid 折叠值覆盖（公共 BindingFlags）。
@@ -63,7 +63,7 @@ namespace Vena.Blockly
         {
             private ILogicNode _entry;
 
-            public void SetSource(LogicGraph source)
+            public void SetSource(ExpressionBlockly source)
             {
                 if (source?.root == null) return;
                 _entry = CreateBlock(source.root);

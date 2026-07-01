@@ -14,8 +14,8 @@ namespace Vena.Blockly
     /// <summary>
     /// Behavior 图源数据
     /// </summary>
-    [BlocklySource("逻辑图", typeof(BehaviorGraph.Blockly))]
-    public sealed class BehaviorGraph : IBlocklySource
+    [BlocklySource("逻辑图", typeof(BehaviorBlockly.Blockly))]
+    public sealed class BehaviorBlockly : IBlocklySource
     {
         public ulong InstanceId { get; set; } = 0;
 
@@ -45,7 +45,7 @@ namespace Vena.Blockly
 
             #region Source
 
-            public void SetSource(BehaviorGraph source)
+            public void SetSource(BehaviorBlockly source)
             {
                 if (_playing)
                 {
@@ -58,7 +58,7 @@ namespace Vena.Blockly
                 }
                 else
                 {
-                    Host?.Logger.Warning("[BehaviorGraph] 无效的行为图。");
+                    Host?.Logger.Warning("[BehaviorBlockly] 无效的行为图。");
                 }
             }
 

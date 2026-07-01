@@ -52,7 +52,7 @@ namespace Vena.Blockly.Editor.UI
                 if (ir.Kind == GraphKind.Behavior)
                 {
                     var graph = loader.LoadBehavior(ir);
-                    var blockly = new BehaviorGraph.Blockly();
+                    var blockly = new BehaviorBlockly.Blockly();
                     blockly.SetSource(graph);
                     blockly.Start(subject: owner, host: host);
                     blockly.Update(deltaTime: 0.016f);
@@ -62,7 +62,7 @@ namespace Vena.Blockly.Editor.UI
                 else
                 {
                     var graph = loader.LoadLogic(ir);
-                    var blockly = new LogicGraph.Blockly();
+                    var blockly = new ExpressionBlockly.Blockly();
                     blockly.Set(subject: owner, host: host);
                     blockly.SetSource(graph);
                     blockly.Invoke();

@@ -16,31 +16,31 @@ namespace Vena.Blockly
     {
         [ExpressionSignature]
         [BlocklySourceSlot("启动时", 1)]
-        public LogicGraph onStart;
+        public ExpressionBlockly onStart;
 
         [ExpressionSignature(typeof(bool))]
         [BlocklySourceSlot("每帧", 2)]
-        public LogicGraph onTick;
+        public ExpressionBlockly onTick;
 
         [ExpressionSignature]
         [BlocklySourceSlot("延迟帧", 3)]
-        public LogicGraph onLateTick;
+        public ExpressionBlockly onLateTick;
 
         [ExpressionSignature]
         [BlocklySourceSlot("结束时", 4)]
-        public LogicGraph onFinish;
+        public ExpressionBlockly onFinish;
     }
 
     /// <summary>
     /// Expression 驱动的叶子行为运行时节点。
-    /// 通过 UGCWorld 工厂创建 LogicGraph 作为局部作用域。
+    /// 通过 UGCWorld 工厂创建 ExpressionBlockly 作为局部作用域。
     /// </summary>
     sealed class LogicBehavior : CompositeBehavior<LogicBehaviorSource>
     {
-        private LogicGraph.Blockly _onStartScope;
-        private LogicGraph.Blockly _onTickScope;
-        private LogicGraph.Blockly _onLateTickScope;
-        private LogicGraph.Blockly _onFinishScope;
+        private ExpressionBlockly.Blockly _onStartScope;
+        private ExpressionBlockly.Blockly _onTickScope;
+        private ExpressionBlockly.Blockly _onLateTickScope;
+        private ExpressionBlockly.Blockly _onFinishScope;
 
         protected override void Initialize()
         {

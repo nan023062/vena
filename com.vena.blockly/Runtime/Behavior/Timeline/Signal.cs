@@ -25,7 +25,7 @@ namespace Vena.Blockly
 
         [ExpressionSignature]
         [BlocklySourceSlot("表达式", 1)]
-        public LogicGraph source;
+        public ExpressionBlockly source;
 
         public void Serialize(IBlocklySerializer writer) { }
 
@@ -38,7 +38,7 @@ namespace Vena.Blockly
 
         sealed class Object : ISignalObject
         {
-            private LogicGraph.Blockly _blockly;
+            private ExpressionBlockly.Blockly _blockly;
 
             private Signal _signal;
 

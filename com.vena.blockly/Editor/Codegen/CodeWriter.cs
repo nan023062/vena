@@ -426,7 +426,7 @@ namespace Vena.Blockly.Editor
             {
                 sb.Append(indent).Append("    [BlocklySourceSlot(\"").Append(EscapeStringLiteral(slot.DisplayName))
                     .Append("\", ").Append(slot.Order).Append(")]").Append(NL);
-                sb.Append(indent).Append("    public LogicGraph ").Append(slot.FieldName).Append(";").Append(NL);
+                sb.Append(indent).Append("    public ExpressionBlockly ").Append(slot.FieldName).Append(";").Append(NL);
                 sb.Append(NL);
             }
 
@@ -442,7 +442,7 @@ namespace Vena.Blockly.Editor
 
             foreach (var slot in slots)
             {
-                sb.Append(indent).Append("    private LogicGraph.Blockly _").Append(slot.FieldName).Append(";").Append(NL);
+                sb.Append(indent).Append("    private ExpressionBlockly.Blockly _").Append(slot.FieldName).Append(";").Append(NL);
             }
             sb.Append(NL);
 
@@ -524,7 +524,7 @@ namespace Vena.Blockly.Editor
                 sb.Append(indent).Append("        new NodePropertyMetadata(\"")
                     .Append(EscapeStringLiteral(slot.DisplayName)).Append("\", ")
                     .Append(slot.Order).Append(", \"")
-                    .Append(slot.FieldName).Append("\", typeof(LogicGraph)),").Append(NL);
+                    .Append(slot.FieldName).Append("\", typeof(ExpressionBlockly)),").Append(NL);
             }
             sb.Append(indent).Append("    }),").Append(NL);
         }
@@ -575,7 +575,7 @@ namespace Vena.Blockly.Editor
             {
                 sb.Append(indent).Append("    [BlocklySourceSlot(\"").Append(EscapeStringLiteral(slot.DisplayName))
                     .Append("\", ").Append(slot.Order).Append(")]").Append(NL);
-                sb.Append(indent).Append("    public LogicGraph ").Append(slot.FieldName).Append(";").Append(NL);
+                sb.Append(indent).Append("    public ExpressionBlockly ").Append(slot.FieldName).Append(";").Append(NL);
                 sb.Append(NL);
             }
 
@@ -591,7 +591,7 @@ namespace Vena.Blockly.Editor
 
             foreach (var slot in slots)
             {
-                sb.Append(indent).Append("    private LogicGraph.Blockly _").Append(slot.FieldName).Append(";").Append(NL);
+                sb.Append(indent).Append("    private ExpressionBlockly.Blockly _").Append(slot.FieldName).Append(";").Append(NL);
             }
             sb.Append(NL);
 
@@ -672,7 +672,7 @@ namespace Vena.Blockly.Editor
                 sb.Append(indent).Append("        new NodePropertyMetadata(\"")
                     .Append(EscapeStringLiteral(slot.DisplayName)).Append("\", ")
                     .Append(slot.Order).Append(", \"")
-                    .Append(slot.FieldName).Append("\", typeof(LogicGraph)),").Append(NL);
+                    .Append(slot.FieldName).Append("\", typeof(ExpressionBlockly)),").Append(NL);
             }
             sb.Append(indent).Append("    }),").Append(NL);
         }

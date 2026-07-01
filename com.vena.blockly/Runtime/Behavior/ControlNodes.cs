@@ -15,7 +15,7 @@ namespace Vena.Blockly
     {
         [ExpressionSignature(typeof(bool))]
         [BlocklySourceSlot("条件", 1)]
-        public LogicGraph condition;
+        public ExpressionBlockly condition;
 
         [BlocklySourceSlot("为真时", 2)]
         public BehaviorNodeSource trueSource;
@@ -25,7 +25,7 @@ namespace Vena.Blockly
 
         sealed class Node : CompositeBehavior<BranchNode>
         {
-            LogicGraph.Blockly _condition;
+            ExpressionBlockly.Blockly _condition;
 
             IBehaviorNode _trueNode;
 
@@ -100,7 +100,7 @@ namespace Vena.Blockly
     {
         [ExpressionSignature(typeof(int))]
         [BlocklySourceSlot("分支值", 1)]
-        public LogicGraph switchValue;
+        public ExpressionBlockly switchValue;
 
         [BlocklySourceSlot("分支列表", 2)]
         public BehaviorNodeSource[] caseSources;
@@ -110,7 +110,7 @@ namespace Vena.Blockly
 
         sealed class Node : CompositeBehavior<SwitchNode>
         {
-            private LogicGraph.Blockly _caseValue;
+            private ExpressionBlockly.Blockly _caseValue;
 
             private IBehaviorNode _selectedSource;
 
@@ -213,14 +213,14 @@ namespace Vena.Blockly
     public sealed class SelectorNode : BehaviorNodeSource
     {
         [BlocklySourceSlot("条件列表", 1)]
-        public LogicGraph[] conditions;
+        public ExpressionBlockly[] conditions;
 
         [BlocklySourceSlot("行为列表", 2)]
         public BehaviorNodeSource[] behaviors;
 
         sealed class Node : CompositeBehavior<SelectorNode>
         {
-            LogicGraph.Blockly[] _conditions;
+            ExpressionBlockly.Blockly[] _conditions;
 
             IBehaviorNode[] _behaviors;
 
@@ -235,7 +235,7 @@ namespace Vena.Blockly
                     source.conditions.Length == source.behaviors.Length)
                 {
                     _behaviors = new IBehaviorNode[source.conditions.Length];
-                    _conditions = new LogicGraph.Blockly[source.conditions.Length];
+                    _conditions = new ExpressionBlockly.Blockly[source.conditions.Length];
 
                     for (int i = 0; i < source.conditions.Length; i++)
                     {
@@ -324,14 +324,14 @@ namespace Vena.Blockly
     {
         [ExpressionSignature(typeof(int))]
         [BlocklySourceSlot("循环次数", 1)]
-        public LogicGraph loopCount;
+        public ExpressionBlockly loopCount;
 
         [BlocklySourceSlot("循环体", 2)]
         public BehaviorNodeSource behavior;
 
         sealed class Node : CompositeBehavior<LoopNode>
         {
-            private LogicGraph.Blockly _loopCount;
+            private ExpressionBlockly.Blockly _loopCount;
 
             private IBehaviorNode _behavior;
 

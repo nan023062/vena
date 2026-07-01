@@ -14,7 +14,7 @@ namespace Vena.Blockly
 
     /// <summary>
     /// 逻辑节点接口，所有逻辑节点（Expression、Procedure、Function）都实现该接口
-    /// 行为节点接口, 所有行为节点（BehaviorGraph、BehaviorClip）都实现该接口
+    /// 行为节点接口, 所有行为节点（BehaviorBlockly、BehaviorClip）都实现该接口
     /// </summary>
     public interface IBlock
     {

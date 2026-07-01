@@ -12,21 +12,21 @@ namespace Vena.Blockly
     {
         [ExpressionSignature]
         [BlocklySourceSlot("开始时", 1)]
-        public LogicGraph onBegin;
+        public ExpressionBlockly onBegin;
 
         [ExpressionSignature(typeof(void), typeof(FrameInfo))]
         [BlocklySourceSlot("每帧", 2)]
-        public LogicGraph onFrame;
+        public ExpressionBlockly onFrame;
 
         [ExpressionSignature(typeof(void), typeof(FrameInfo))]
         [BlocklySourceSlot("结束时", 3)]
-        public LogicGraph onEnd;
+        public ExpressionBlockly onEnd;
 
         private Timeline _timeline;
         private LogicClip _source;
-        private LogicGraph.Blockly _onBegin;
-        private LogicGraph.Blockly _onFrame;
-        private LogicGraph.Blockly _onEnd;
+        private ExpressionBlockly.Blockly _onBegin;
+        private ExpressionBlockly.Blockly _onFrame;
+        private ExpressionBlockly.Blockly _onEnd;
 
         Timeline ITimelineObject.timeline => _timeline;
 

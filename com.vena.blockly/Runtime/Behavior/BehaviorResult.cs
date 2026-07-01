@@ -13,7 +13,7 @@ namespace Vena.Blockly
     ///
     /// 双态语义：仅表达「未完成 / 已完成」两种正常推进状态，**不**承载成败。
     /// 异常路径由基类 try/catch 经 IBlocklyLogger.Error 旁路报告，并以 Done 收尾本节点本次活动周期。
-    /// 节点间分支选择由 LogicGraph 条件表达式承担；叶子内部「再 tick 一帧 / 收尾」属时长门控，与分支语义正交。
+    /// 节点间分支选择由 ExpressionBlockly 条件表达式承担；叶子内部「再 tick 一帧 / 收尾」属时长门控，与分支语义正交。
     /// </summary>
     public enum BehaviorResult
     {

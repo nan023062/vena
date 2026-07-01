@@ -272,7 +272,7 @@ namespace Vena.Blockly.Editor
 
         /// <summary>
         /// 扫 Impl 类（实现 <see cref="IBehavior"/> / <see cref="IClip"/>）上贴 [BlocklySourceSlot] 的 public 实例字段。
-        /// 仅 Public | Instance | DeclaredOnly。字段类型 hard fail：禁 <see cref="LogicGraph"/> / <see cref="Expression"/>。
+        /// 仅 Public | Instance | DeclaredOnly。字段类型 hard fail：禁 <see cref="ExpressionBlockly"/> / <see cref="Expression"/>。
         /// </summary>
         private static IReadOnlyList<ImplSlotInfo> CollectImplSlots(Type type)
         {
@@ -284,17 +284,17 @@ namespace Vena.Blockly.Editor
                 var slotAttr = field.GetCustomAttribute<BlocklySourceSlotAttribute>();
                 if (slotAttr == null) continue;
 
-                if (field.FieldType == typeof(LogicGraph))
+                if (field.FieldType == typeof(ExpressionBlockly))
                 {
                     throw new InvalidOperationException(
-                        $"[Vena.Blockly] {type.FullName}.{field.Name}: Impl 字段不允许声明 LogicGraph 类型；" +
-                        "请声明实际值类型（codegen 自动生成 LogicGraph 槽位、Init 时 Call<T>() 求值）。");
+                        $"[Vena.Blockly] {type.FullName}.{field.Name}: Impl 字段不允许声明 ExpressionBlockly 类型；" +
+                        "请声明实际值类型（codegen 自动生成 ExpressionBlockly 槽位、Init 时 Call<T>() 求值）。");
                 }
                 if (typeof(Expression).IsAssignableFrom(field.FieldType))
                 {
                     throw new InvalidOperationException(
                         $"[Vena.Blockly] {type.FullName}.{field.Name}: Impl 字段不允许声明 Expression 类型" +
-                        "（Behavior 侧无 LogicGraph 5 步协议栈，依赖其求值会撞空栈）。");
+                        "（Behavior 侧无 ExpressionBlockly 5 步协议栈，依赖其求值会撞空栈）。");
                 }
 
                 list.Add(new ImplSlotInfo(
@@ -371,7 +371,7 @@ namespace Vena.Blockly.Editor
 
         private static bool IsRuntimeNodeRootType(Type t)
         {
-            // LogicGraph / BehaviorGraph 侧
+            // ExpressionBlockly / BehaviorBlockly 侧
             if (t == typeof(Expression)) return true;
             if (t == typeof(BehaviorNodeSource)) return true;
             if (t.IsGenericType)

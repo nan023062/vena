@@ -93,9 +93,9 @@ namespace Vena.Blockly
 
         #region Sub-Blockly Create / Destroy
 
-        public LogicGraph.Blockly CreateBlockly(LogicGraph source)
+        public ExpressionBlockly.Blockly CreateBlockly(ExpressionBlockly source)
         {
-            var blockly = Host.Pool.Get<LogicGraph.Blockly>();
+            var blockly = Host.Pool.Get<ExpressionBlockly.Blockly>();
 
             RegisterInstanceInternal( source.InstanceId, blockly);
 

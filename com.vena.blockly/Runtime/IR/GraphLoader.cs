@@ -16,7 +16,7 @@ namespace Vena.Blockly
     /// IR → Source 树加载器。
     ///
     /// 输入：<see cref="GraphIR"/>（已由 Editor 侧 <c>IBlocklyGraphSerializer.FromJson</c> 解码）。
-    /// 输出：根 <see cref="IBlocklySource"/>（`BehaviorGraph` / `LogicGraph`），调用方再交给 NodeFactory 构造运行期节点。
+    /// 输出：根 <see cref="IBlocklySource"/>（`BehaviorBlockly` / `ExpressionBlockly`），调用方再交给 NodeFactory 构造运行期节点。
     ///
     /// 不进 IBlocklyHost、不扩聚合门面；调用方持有引用即可。
     /// AOT 友好：source 实例化经 <see cref="ISourceActivator"/> 抽象（默认走反射；codegen 可注入静态产物）。
@@ -36,21 +36,21 @@ namespace Vena.Blockly
         }
 
         /// <summary>加载 Behavior 图。kind 不匹配抛 <see cref="InvalidOperationException"/>。</summary>
-        public BehaviorGraph LoadBehavior(GraphIR ir)
+        public BehaviorBlockly LoadBehavior(GraphIR ir)
         {
             if (ir == null) throw new ArgumentNullException(nameof(ir));
             if (ir.Kind != GraphKind.Behavior)
                 throw new InvalidOperationException($"GraphIR.Kind = {ir.Kind}; expected Behavior.");
-            return (BehaviorGraph)Build(ir, expectRoot: typeof(BehaviorGraph));
+            return (BehaviorBlockly)Build(ir, expectRoot: typeof(BehaviorBlockly));
         }
 
         /// <summary>加载 Logic 图。kind 不匹配抛 <see cref="InvalidOperationException"/>。</summary>
-        public LogicGraph LoadLogic(GraphIR ir)
+        public ExpressionBlockly LoadLogic(GraphIR ir)
         {
             if (ir == null) throw new ArgumentNullException(nameof(ir));
             if (ir.Kind != GraphKind.Logic)
                 throw new InvalidOperationException($"GraphIR.Kind = {ir.Kind}; expected Logic.");
-            return (LogicGraph)Build(ir, expectRoot: typeof(LogicGraph));
+            return (ExpressionBlockly)Build(ir, expectRoot: typeof(ExpressionBlockly));
         }
 
         // ---------------------------------------------------------------- internals

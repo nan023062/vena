@@ -33,9 +33,9 @@ namespace Vena.Blockly
     /// </summary>
     public interface IBehaviorNode : IBlock
     {
-        BehaviorGraph.Blockly blockly { get; }
+        BehaviorBlockly.Blockly blockly { get; }
 
-        void Init(BehaviorGraph.Blockly blockly, BehaviorNodeSource source);
+        void Init(BehaviorBlockly.Blockly blockly, BehaviorNodeSource source);
 
         void Start();
 
@@ -53,13 +53,13 @@ namespace Vena.Blockly
     /// </summary>
     public interface IBehavior
     {
-        void Start(BehaviorGraph.Blockly blockly);
+        void Start(BehaviorBlockly.Blockly blockly);
 
-        BehaviorResult Tick(BehaviorGraph.Blockly blockly, float deltaTime);
+        BehaviorResult Tick(BehaviorBlockly.Blockly blockly, float deltaTime);
 
-        void LateTick(BehaviorGraph.Blockly blockly, float deltaTime);
+        void LateTick(BehaviorBlockly.Blockly blockly, float deltaTime);
 
-        void Finish(BehaviorGraph.Blockly blockly);
+        void Finish(BehaviorBlockly.Blockly blockly);
     }
 
     internal interface ICompositeBehaviorNode : IBehaviorNode
@@ -72,7 +72,7 @@ namespace Vena.Blockly
     /// </summary>
     public abstract class BehaviorNode<TSource, TImpl> : IBehaviorNode where TSource : BehaviorNodeSource<TImpl> where TImpl : IBehavior, new()
     {
-        public BehaviorGraph.Blockly blockly { get; private set; }
+        public BehaviorBlockly.Blockly blockly { get; private set; }
 
         Blockly IBlock.scope => blockly;
 
@@ -100,7 +100,7 @@ namespace Vena.Blockly
 
         #region behavior
 
-        void IBehaviorNode.Init(BehaviorGraph.Blockly blockly, BehaviorNodeSource source)
+        void IBehaviorNode.Init(BehaviorBlockly.Blockly blockly, BehaviorNodeSource source)
         {
             if (isPlaying)
             {
@@ -236,7 +236,7 @@ namespace Vena.Blockly
     /// </summary>
     public abstract class CompositeBehavior<TSource> : ICompositeBehaviorNode where TSource : class, IBlocklySource
     {
-        public BehaviorGraph.Blockly blockly { get; private set; }
+        public BehaviorBlockly.Blockly blockly { get; private set; }
 
         Blockly IBlock.scope => blockly;
 
@@ -263,7 +263,7 @@ namespace Vena.Blockly
 
         #region behavior
 
-        void IBehaviorNode.Init(BehaviorGraph.Blockly blockly,BehaviorNodeSource source)
+        void IBehaviorNode.Init(BehaviorBlockly.Blockly blockly,BehaviorNodeSource source)
         {
             if (isPlaying)
             {

@@ -24,10 +24,10 @@ namespace Vena.Blockly.Editor
         private const string LogicMenu    = "Assets/Create/Vena/Blockly/Logic Graph";
 
         [MenuItem(BehaviorMenu, priority = 200)]
-        public static void CreateBehaviorGraph() => CreateAt(GraphKind.Behavior, "BehaviorGraph");
+        public static void CreateBehaviorBlockly() => CreateAt(GraphKind.Behavior, "BehaviorBlockly");
 
         [MenuItem(LogicMenu, priority = 201)]
-        public static void CreateLogicGraph() => CreateAt(GraphKind.Logic, "LogicGraph");
+        public static void CreateExpressionBlockly() => CreateAt(GraphKind.Logic, "ExpressionBlockly");
 
         private static void CreateAt(GraphKind kind, string defaultName)
         {

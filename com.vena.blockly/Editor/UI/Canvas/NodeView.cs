@@ -61,7 +61,7 @@ namespace Vena.Blockly.Editor.UI
                 }
             }
 
-            // 值出端口（用于 LogicGraph 节点）—— 默认提供单 "out"；后续可按 ExpressionSignature 锁返回型。
+            // 值出端口（用于 ExpressionBlockly 节点）—— 默认提供单 "out"；后续可按 ExpressionSignature 锁返回型。
             var valueOut = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(ValueFlow));
             valueOut.portName = "out";
             valueOut.userData = WireKind.Value;

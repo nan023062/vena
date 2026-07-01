@@ -72,13 +72,7 @@ namespace Vena.Blockly
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             protected internal static T Pop<T>() => Expression.Stack.Pop<T>();
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            protected internal static IBoxedValue Pop() => Expression.Stack.Pop();
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            protected internal static int CurrentStackDepth() => Expression.Stack.CurrentDepth();
-
+            
             public LogicGraph.Blockly Blockly { get; private set; }
 
             Blockly IBlock.scope => Blockly;
