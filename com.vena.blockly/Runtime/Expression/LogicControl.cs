@@ -252,4 +252,30 @@ namespace Vena.Blockly
 
     #endregion
 
+    #region ExpressionConst
+
+    public abstract class ExpressionConst<T> : Expression
+    {
+        public T value;
+
+        internal sealed class Node : Block<ExpressionConst<T>>
+        {
+            public override void Evaluate() => Push<T>(source.value);
+        }
+    }
+
+    [BlocklySource("程序节点/常量/Int常量", typeof(ExpressionConst<int>.Node))]
+    public sealed class ExpressionConstInt : ExpressionConst<int> { }
+
+    [BlocklySource("程序节点/常量/Bool常量", typeof(ExpressionConst<bool>.Node))]
+    public sealed class ExpressionConstBool : ExpressionConst<bool> { }
+
+    [BlocklySource("程序节点/常量/Float常量", typeof(ExpressionConst<float>.Node))]
+    public sealed class ExpressionConstFloat : ExpressionConst<float> { }
+
+    [BlocklySource("程序节点/常量/String常量", typeof(ExpressionConst<string>.Node))]
+    public sealed class ExpressionConstString : ExpressionConst<string> { }
+
+    #endregion
+
 }
